@@ -8,6 +8,7 @@ export interface NotificationUiModel {
   type: NotificationType;
   isRead: boolean;
   lectureId?: string;
+  createdAt?: string;
 }
 
 export const MOCK_NOTIFICATIONS: NotificationUiModel[] = [
@@ -19,6 +20,7 @@ export const MOCK_NOTIFICATIONS: NotificationUiModel[] = [
     type: 'lecture_ready',
     isRead: false,
     lectureId: 'lec_01',
+    createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
   },
   {
     id: 'notif_2',
@@ -28,6 +30,7 @@ export const MOCK_NOTIFICATIONS: NotificationUiModel[] = [
     type: 'study_reminder',
     isRead: false,
     lectureId: 'lec_01',
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 'notif_3',
@@ -36,5 +39,6 @@ export const MOCK_NOTIFICATIONS: NotificationUiModel[] = [
     timeAgo: '1 ngày trước',
     type: 'system',
     isRead: true,
+    createdAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
   },
 ];

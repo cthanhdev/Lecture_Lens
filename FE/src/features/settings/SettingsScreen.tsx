@@ -14,6 +14,7 @@ import { WashiTapeAccent } from '../../shared/widgets/washi_tape/WashiTapeAccent
 import { useAuthStore } from '../../shared/stores/useAuthStore';
 import { useAppStore } from '../../shared/stores/useAppStore';
 import { LlIcon, LlIconName } from '../../shared/widgets/icons/LlIcon';
+import { AppConstants } from '../../core/constants/appConstants';
 
 type SettingsScreenNavProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Settings'>,
@@ -25,7 +26,7 @@ interface SettingsScreenProps {
 }
 
 export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
-  const { colors, isDark, mode, setThemeMode, borderRadius } = useAppTheme();
+  const { colors, mode, setThemeMode, borderRadius } = useAppTheme();
   const { user, logout } = useAuthStore();
   const { appLockEnabled, toggleAppLock } = useAppStore();
 
@@ -277,7 +278,7 @@ export const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
 
           <View style={styles.aboutMetaRow}>
             <Text style={[AppTypography.bodyMedium, { color: colors.textSecondary }]}>Phiên bản</Text>
-            <Text style={[AppTypography.labelMd, { color: colors.text, fontWeight: '700' }]}>v1.2.0</Text>
+            <Text style={[AppTypography.labelMd, { color: colors.text, fontWeight: '700' }]}>v{AppConstants.appVersion}</Text>
           </View>
 
           <View style={styles.aboutMetaRow}>

@@ -105,7 +105,7 @@ export const AudioPlayerCapsule = ({ title, subject }: AudioPlayerCapsuleProps) 
         {/* Replay 10s */}
         <TouchableOpacity
           activeOpacity={0.8}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           onPress={() => skipBackward(10)}
           style={[styles.skipRoundBtn, { backgroundColor: colors.surfaceContainer }]}
         >
@@ -137,7 +137,7 @@ export const AudioPlayerCapsule = ({ title, subject }: AudioPlayerCapsuleProps) 
         {/* Forward 10s */}
         <TouchableOpacity
           activeOpacity={0.8}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           onPress={() => skipForward(10)}
           style={[styles.skipRoundBtn, { backgroundColor: colors.surfaceContainer }]}
         >
@@ -148,6 +148,7 @@ export const AudioPlayerCapsule = ({ title, subject }: AudioPlayerCapsuleProps) 
         <View style={{ position: 'relative' }}>
           <TouchableOpacity
             activeOpacity={0.85}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             onPress={() => setShowSpeedMenu(!showSpeedMenu)}
             style={[
               styles.speedPill,

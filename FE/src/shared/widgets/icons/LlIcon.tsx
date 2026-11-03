@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Path, Circle, Rect, Line, Polyline, G, Text as SvgText } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, Line, Polyline, Text as SvgText } from 'react-native-svg';
 import { StyleProp, ViewStyle } from 'react-native';
 
 export type LlIconName =

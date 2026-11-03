@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -169,7 +169,11 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
                     placeholderTextColor={colors.textSecondary}
                   />
                   {searchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+                    <TouchableOpacity
+                      onPress={() => setSearchQuery('')}
+                      hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                      style={styles.clearBtn}
+                    >
                       <LlIcon name="close" size={14} color={colors.textSecondary} />
                     </TouchableOpacity>
                   )}
@@ -233,26 +237,28 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
                 </Text>
 
                 {/* Quick Demo Switcher (List / Empty / Skeleton) */}
-                <View style={[styles.viewModePill, { backgroundColor: colors.surfaceContainerHigh }]}>
-                  <TouchableOpacity
-                    onPress={() => setViewMode('normal')}
-                    style={[styles.viewModeBtn, viewMode === 'normal' && styles.viewModeBtnActive]}
-                  >
-                    <LlIcon name="style" size={13} color={viewMode === 'normal' ? colors.primary : colors.textSecondary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setViewMode('empty')}
-                    style={[styles.viewModeBtn, viewMode === 'empty' && styles.viewModeBtnActive]}
-                  >
-                    <LlIcon name="bedtime" size={13} color={viewMode === 'empty' ? colors.primary : colors.textSecondary} filled />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setViewMode('skeleton')}
-                    style={[styles.viewModeBtn, viewMode === 'skeleton' && styles.viewModeBtnActive]}
-                  >
-                    <LlIcon name="sync" size={13} color={viewMode === 'skeleton' ? colors.primary : colors.textSecondary} />
-                  </TouchableOpacity>
-                </View>
+                {__DEV__ && (
+                  <View style={[styles.viewModePill, { backgroundColor: colors.surfaceContainerHigh }]}>
+                    <TouchableOpacity
+                      onPress={() => setViewMode('normal')}
+                      style={[styles.viewModeBtn, viewMode === 'normal' && styles.viewModeBtnActive]}
+                    >
+                      <LlIcon name="style" size={13} color={viewMode === 'normal' ? colors.primary : colors.textSecondary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setViewMode('empty')}
+                      style={[styles.viewModeBtn, viewMode === 'empty' && styles.viewModeBtnActive]}
+                    >
+                      <LlIcon name="bedtime" size={13} color={viewMode === 'empty' ? colors.primary : colors.textSecondary} filled />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setViewMode('skeleton')}
+                      style={[styles.viewModeBtn, viewMode === 'skeleton' && styles.viewModeBtnActive]}
+                    >
+                      <LlIcon name="sync" size={13} color={viewMode === 'skeleton' ? colors.primary : colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </>
           }

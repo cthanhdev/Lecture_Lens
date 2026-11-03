@@ -18,12 +18,26 @@ describe('formatDuration', () => {
   it('handles negative input gracefully', () => {
     expect(formatDuration(-10)).toBe('00:00');
   });
+
+  it('handles NaN, non-number and Infinity gracefully', () => {
+    expect(formatDuration(NaN)).toBe('00:00');
+    expect(formatDuration(undefined as unknown as number)).toBe('00:00');
+    expect(formatDuration(Infinity)).toBe('00:00');
+    expect(formatDuration(-Infinity)).toBe('00:00');
+  });
+
+  it('floors float inputs before formatting', () => {
+    expect(formatDuration(65.8)).toBe('01:05');
+    expect(formatDuration(3665.4)).toBe('1:01:05');
+  });
 });
 
 describe('formatRelativeTime', () => {
-  it('returns "Vừa xong" for times under 1 minute', () => {
+  it('returns "Vừa xong" for times under 1 minute or future times', () => {
     const now = new Date();
     expect(formatRelativeTime(now)).toBe('Vừa xong');
+    const future = new Date(Date.now() + 60 * 1000);
+    expect(formatRelativeTime(future)).toBe('Vừa xong');
   });
 
   it('returns minutes ago', () => {
@@ -39,5 +53,16 @@ describe('formatRelativeTime', () => {
   it('returns "Hôm qua" for 1 day ago', () => {
     const yesterday = new Date(Date.now() - 25 * 60 * 60 * 1000);
     expect(formatRelativeTime(yesterday)).toBe('Hôm qua');
+  });
+
+  it('returns "X ngày trước" for less than 7 days ago', () => {
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    expect(formatRelativeTime(threeDaysAgo)).toBe('3 ngày trước');
+  });
+
+  it('handles invalid dates or non-date gracefully', () => {
+    expect(formatRelativeTime(new Date('invalid'))).toBe('Vừa xong');
+    expect(formatRelativeTime(null as unknown as Date)).toBe('Vừa xong');
+    expect(formatRelativeTime(undefined as unknown as Date)).toBe('Vừa xong');
   });
 });

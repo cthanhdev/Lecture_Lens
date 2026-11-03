@@ -164,7 +164,7 @@ export const CuMeoWidget = ({
       cancelAnimation(tilt);
       cancelAnimation(bounceScale);
     };
-  }, [isAnimated, variant]);
+  }, [isAnimated, variant, bounceScale, tilt, translateY]);
 
   const handleMascotTap = () => {
     bounceScale.value = withSequence(
@@ -174,7 +174,7 @@ export const CuMeoWidget = ({
 
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (_) {}
+    } catch {}
 
     onTap?.();
   };

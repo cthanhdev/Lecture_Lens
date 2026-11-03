@@ -18,14 +18,14 @@ type SplashScreenProps = {
 export const SplashScreen = ({ navigation }: SplashScreenProps) => {
   const { colors } = useAppTheme();
   const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
-  const [loadingProgress] = useState(new Animated.Value(0.1));
+  const [progress] = useState(new Animated.Value(0.1));
 
   useEffect(() => {
     // Animate the loading progress bar
-    Animated.timing(loadingProgress, {
+    Animated.timing(progress, {
       toValue: 1,
       duration: 2000,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
 
     const timer = setTimeout(() => {
@@ -37,12 +37,7 @@ export const SplashScreen = ({ navigation }: SplashScreenProps) => {
     }, 2400);
 
     return () => clearTimeout(timer);
-  }, [hasCompletedOnboarding, loadingProgress, navigation]);
-
-  const progressWidth = loadingProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['10%', '100%'],
-  });
+  }, [hasCompletedOnboarding, progress, navigation]);
 
   return (
     <DotBackground>
@@ -76,7 +71,16 @@ export const SplashScreen = ({ navigation }: SplashScreenProps) => {
               style={[
                 styles.progressBar,
                 {
-                  width: progressWidth,
+                  width: '100%',
+                  transform: [
+                    {
+                      translateX: progress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-100, 0],
+                      }),
+                    },
+                    { scaleX: progress },
+                  ],
                   backgroundColor: AppColors.primaryContainer,
                 },
               ]}

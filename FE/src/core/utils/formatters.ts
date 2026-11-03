@@ -1,6 +1,10 @@
 export const formatRelativeTime = (date: Date): string => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return 'Vừa xong';
+  }
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
+  if (diffMs < 0) return 'Vừa xong';
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHours = Math.floor(diffMin / 60);
@@ -19,10 +23,13 @@ export const formatRelativeTime = (date: Date): string => {
 };
 
 export const formatDuration = (totalSeconds: number): string => {
-  if (totalSeconds < 0) totalSeconds = 0;
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+  if (typeof totalSeconds !== 'number' || !Number.isFinite(totalSeconds) || totalSeconds <= 0) {
+    return '00:00';
+  }
+  const total = Math.floor(totalSeconds);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
 
   const mm = minutes.toString().padStart(2, '0');
   const ss = seconds.toString().padStart(2, '0');

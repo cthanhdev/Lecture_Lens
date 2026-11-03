@@ -1,4 +1,18 @@
+import React from 'react';
+
+jest.mock('react-native', () => ({
+  StyleSheet: { create: (styles: any) => styles },
+  Platform: { OS: 'ios', select: (objs: any) => objs.ios || objs.default },
+  View: (props: any) => React.createElement('div', props, props.children),
+  Text: (props: any) => React.createElement('span', props, props.children),
+}));
+
 import { AppColors } from '../src/core/theme/colors';
+import { AppTypography } from '../src/core/theme/typography';
+import {
+  getWashiTapeBgColor,
+  getWashiTapeTextColor,
+} from '../src/shared/widgets/washi_tape/WashiTapeAccent';
 import {
   filterLecturesList,
   selectLectures,
@@ -134,5 +148,34 @@ describe('FAB bottom calculation for safe area insets', () => {
 
   it('computes correct bottom position on small insets (inset 8)', () => {
     expect(computeFabBottom(8)).toBe(84);
+  });
+});
+
+describe('Sprint 3: WashiTapeAccent Color Tokens (E027)', () => {
+  it('returns pastel yellow #FEF3C7 and deep brown #78350F for yellow tape', () => {
+    expect(getWashiTapeBgColor('yellow')).toBe('#FEF3C7');
+    expect(getWashiTapeTextColor('yellow')).toBe('#78350F');
+  });
+
+  it('returns correct tokens for other tape variants', () => {
+    expect(getWashiTapeBgColor('mint')).toBe(AppColors.tertiaryFixed);
+    expect(getWashiTapeTextColor('mint')).toBe(AppColors.onTertiaryFixedVariant);
+
+    expect(getWashiTapeBgColor('lavender')).toBe(AppColors.primaryFixed);
+    expect(getWashiTapeTextColor('lavender')).toBe(AppColors.primary);
+
+    expect(getWashiTapeBgColor('sakura')).toBe(AppColors.secondaryFixed);
+    expect(getWashiTapeTextColor('sakura')).toBe(AppColors.onSecondaryContainer);
+  });
+});
+
+describe('Sprint 3: Typography Android Font Normalization (E025)', () => {
+  it('does not have redundant fontWeight when font family specifies PostScript weight', () => {
+    expect(AppTypography.displayLarge.fontWeight).toBeUndefined();
+    expect(AppTypography.headlineLg.fontWeight).toBeUndefined();
+    expect(AppTypography.headlineMedium.fontWeight).toBeUndefined();
+    expect(AppTypography.bodyMedium.fontWeight).toBeUndefined();
+    expect(AppTypography.labelLarge.fontWeight).toBeUndefined();
+    expect(AppTypography.labelMedium.fontWeight).toBeUndefined();
   });
 });

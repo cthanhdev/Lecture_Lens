@@ -43,7 +43,8 @@ const RECENT_CHIPS = [
 
 export const SearchScreen = ({ navigation }: SearchScreenProps) => {
   const { colors, borderRadius } = useAppTheme();
-  const [query, setQuery] = useState('REST API');
+  const [query, setQuery] = useState('');
+  const [recentSearches, setRecentSearches] = useState(RECENT_CHIPS);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const lectures = useLectureStore(selectLectures);
   const seekTo = useAudioPlayerStore((state) => state.seekTo);
@@ -62,11 +63,33 @@ export const SearchScreen = ({ navigation }: SearchScreenProps) => {
     return lectures.filter((lec) => {
       const inTitle = lec.title.toLowerCase().includes(trimmed);
       const inSubject = lec.subject.toLowerCase().includes(trimmed);
-      const inTranscripts = lec.transcripts?.some((t) => t.content.toLowerCase().includes(trimmed));
+      const inTranscripts = lec.transcripts?.some(
+        (t) =>
+          t.content.toLowerCase().includes(trimmed) ||
+          (t.speaker && t.speaker.toLowerCase().includes(trimmed))
+      );
+      const inTopics = lec.topics?.some((t) => t.title.toLowerCase().includes(trimmed));
       const inTags = lec.tags?.some((t) => t.toLowerCase().includes(trimmed));
-      return inTitle || inSubject || inTranscripts || inTags;
+      return inTitle || inSubject || inTranscripts || inTopics || inTags;
     });
   }, [lectures, query]);
+
+  const totalMatchingTimestamps = useMemo(() => {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) return 0;
+    return matchingLectures.reduce((count, lec) => {
+      const transcriptMatches = (lec.transcripts || []).filter(
+        (t) =>
+          t.content.toLowerCase().includes(trimmed) ||
+          (t.speaker && t.speaker.toLowerCase().includes(trimmed))
+      ).length;
+      const topicMatches = (lec.topics || []).filter((t) =>
+        t.title.toLowerCase().includes(trimmed)
+      ).length;
+      const directMatches = transcriptMatches + topicMatches;
+      return count + (directMatches > 0 ? directMatches : 1);
+    }, 0);
+  }, [matchingLectures, query]);
 
   const handleJumpToLecture = (lectureId: string, seconds: number) => {
     seekTo(seconds);
@@ -134,55 +157,268 @@ export const SearchScreen = ({ navigation }: SearchScreenProps) => {
 
             {/* Matching Snippets List */}
             <View style={styles.snippetsList}>
-              {lec.transcripts && lec.transcripts.length > 0 ? (
-                lec.transcripts.slice(0, 2).map((seg, sIdx) => (
+              {(() => {
+                const trimmed = query.trim().toLowerCase();
+                const matchedTranscripts = (lec.transcripts || []).filter(
+                  (t) =>
+                    t.content.toLowerCase().includes(trimmed) ||
+                    (t.speaker && t.speaker.toLowerCase().includes(trimmed))
+                );
+
+                if (matchedTranscripts.length > 0) {
+                  return matchedTranscripts.slice(0, 2).map((seg, sIdx) => (
+                    <TouchableOpacity
+                      key={`trans_${sIdx}`}
+                      activeOpacity={0.88}
+                      onPress={() => handleJumpToLecture(lec.id, seg.startSeconds)}
+                      style={[
+                        styles.snippetBox,
+                        { backgroundColor: AppColors.surfaceContainerLow },
+                      ]}
+                    >
+                      <View style={styles.snippetTopRow}>
+                        <View
+                          style={[
+                            styles.mintTimeChip,
+                            {
+                              backgroundColor: AppColors.tertiaryFixed,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 4,
+                            },
+                          ]}
+                        >
+                          <LlIcon
+                            name="play_arrow"
+                            size={10}
+                            color={AppColors.onTertiaryFixed}
+                            filled
+                          />
+                          <Text
+                            style={[
+                              AppTypography.labelSm,
+                              {
+                                color: AppColors.onTertiaryFixed,
+                                fontWeight: '700',
+                              },
+                            ]}
+                          >
+                            {seg.timestamp}
+                          </Text>
+                        </View>
+                        <Text
+                          style={[
+                            AppTypography.labelSm,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {seg.speaker ? `${seg.speaker}` : 'Bản ghi âm'}
+                        </Text>
+                      </View>
+
+                      <Text
+                        style={[
+                          AppTypography.bodyMedium,
+                          styles.snippetText,
+                          { color: colors.text },
+                        ]}
+                      >
+                        “{seg.content}”
+                      </Text>
+                    </TouchableOpacity>
+                  ));
+                }
+
+                const matchedTopics = (lec.topics || []).filter((tp) =>
+                  tp.title.toLowerCase().includes(trimmed)
+                );
+                if (matchedTopics.length > 0) {
+                  return matchedTopics.slice(0, 2).map((tp, tpIdx) => (
+                    <TouchableOpacity
+                      key={`topic_${tpIdx}`}
+                      activeOpacity={0.88}
+                      onPress={() => handleJumpToLecture(lec.id, tp.startSeconds)}
+                      style={[
+                        styles.snippetBox,
+                        { backgroundColor: AppColors.surfaceContainerLow },
+                      ]}
+                    >
+                      <View style={styles.snippetTopRow}>
+                        <View
+                          style={[
+                            styles.mintTimeChip,
+                            {
+                              backgroundColor: AppColors.tertiaryFixed,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 4,
+                            },
+                          ]}
+                        >
+                          <LlIcon
+                            name="play_arrow"
+                            size={10}
+                            color={AppColors.onTertiaryFixed}
+                            filled
+                          />
+                          <Text
+                            style={[
+                              AppTypography.labelSm,
+                              {
+                                color: AppColors.onTertiaryFixed,
+                                fontWeight: '700',
+                              },
+                            ]}
+                          >
+                            {tp.timestamp}
+                          </Text>
+                        </View>
+                        <Text
+                          style={[
+                            AppTypography.labelSm,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          Mục lục bài giảng
+                        </Text>
+                      </View>
+
+                      <Text
+                        style={[
+                          AppTypography.bodyMedium,
+                          styles.snippetText,
+                          { color: colors.text },
+                        ]}
+                      >
+                        {tp.title}
+                      </Text>
+                    </TouchableOpacity>
+                  ));
+                }
+
+                if (lec.transcripts && lec.transcripts.length > 0) {
+                  return lec.transcripts.slice(0, 2).map((seg, sIdx) => (
+                    <TouchableOpacity
+                      key={`fb_trans_${sIdx}`}
+                      activeOpacity={0.88}
+                      onPress={() => handleJumpToLecture(lec.id, seg.startSeconds)}
+                      style={[
+                        styles.snippetBox,
+                        { backgroundColor: AppColors.surfaceContainerLow },
+                      ]}
+                    >
+                      <View style={styles.snippetTopRow}>
+                        <View
+                          style={[
+                            styles.mintTimeChip,
+                            {
+                              backgroundColor: AppColors.tertiaryFixed,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 4,
+                            },
+                          ]}
+                        >
+                          <LlIcon
+                            name="play_arrow"
+                            size={10}
+                            color={AppColors.onTertiaryFixed}
+                            filled
+                          />
+                          <Text
+                            style={[
+                              AppTypography.labelSm,
+                              {
+                                color: AppColors.onTertiaryFixed,
+                                fontWeight: '700',
+                              },
+                            ]}
+                          >
+                            {seg.timestamp}
+                          </Text>
+                        </View>
+                        <Text
+                          style={[
+                            AppTypography.labelSm,
+                            { color: colors.textSecondary },
+                          ]}
+                        >
+                          {seg.speaker || 'Đoạn ghi âm'}
+                        </Text>
+                      </View>
+
+                      <Text
+                        style={[
+                          AppTypography.bodyMedium,
+                          styles.snippetText,
+                          { color: colors.text },
+                        ]}
+                      >
+                        “{seg.content}”
+                      </Text>
+                    </TouchableOpacity>
+                  ));
+                }
+
+                return (
                   <TouchableOpacity
-                    key={sIdx}
-                    activeOpacity={0.88}
-                    onPress={() => handleJumpToLecture(lec.id, seg.startSeconds)}
+                    onPress={() => handleJumpToLecture(lec.id, 0)}
                     style={[
                       styles.snippetBox,
                       { backgroundColor: AppColors.surfaceContainerLow },
                     ]}
                   >
                     <View style={styles.snippetTopRow}>
-                      <View style={[styles.mintTimeChip, { backgroundColor: AppColors.tertiaryFixed, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-                        <LlIcon name="play_arrow" size={10} color={AppColors.onTertiaryFixed} filled />
-                        <Text style={[AppTypography.labelSm, { color: AppColors.onTertiaryFixed, fontWeight: '700' }]}>
-                          {seg.timestamp}
+                      <View
+                        style={[
+                          styles.mintTimeChip,
+                          {
+                            backgroundColor: AppColors.tertiaryFixed,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 4,
+                          },
+                        ]}
+                      >
+                        <LlIcon
+                          name="play_arrow"
+                          size={10}
+                          color={AppColors.onTertiaryFixed}
+                          filled
+                        />
+                        <Text
+                          style={[
+                            AppTypography.labelSm,
+                            {
+                              color: AppColors.onTertiaryFixed,
+                              fontWeight: '700',
+                            },
+                          ]}
+                        >
+                          00:00
                         </Text>
                       </View>
-                      <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
-                        Độ trùng khớp 98%
+                      <Text
+                        style={[
+                          AppTypography.labelSm,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        Khớp tiêu đề
                       </Text>
                     </View>
-
-                    <Text style={[AppTypography.bodyMedium, styles.snippetText, { color: colors.text }]}>
-                      “{seg.content}”
+                    <Text
+                      style={[
+                        AppTypography.bodyMedium,
+                        styles.snippetText,
+                        { color: colors.text },
+                      ]}
+                    >
+                      {lec.title} ({lec.subject})
                     </Text>
                   </TouchableOpacity>
-                ))
-              ) : (
-                <TouchableOpacity
-                  onPress={() => handleJumpToLecture(lec.id, 755)}
-                  style={[styles.snippetBox, { backgroundColor: AppColors.surfaceContainerLow }]}
-                >
-                  <View style={styles.snippetTopRow}>
-                    <View style={[styles.mintTimeChip, { backgroundColor: AppColors.tertiaryFixed, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-                      <LlIcon name="play_arrow" size={10} color={AppColors.onTertiaryFixed} filled />
-                      <Text style={[AppTypography.labelSm, { color: AppColors.onTertiaryFixed, fontWeight: '700' }]}>
-                        12:35
-                      </Text>
-                    </View>
-                    <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
-                      Độ trùng khớp 95%
-                    </Text>
-                  </View>
-                  <Text style={[AppTypography.bodyMedium, styles.snippetText, { color: colors.text }]}>
-                    “REST API hoạt động theo kiến trúc Client-Server vô trạng thái (Stateless)...”
-                  </Text>
-                </TouchableOpacity>
-              )}
+                );
+              })()}
             </View>
           </View>
         )}
@@ -212,6 +448,7 @@ export const SearchScreen = ({ navigation }: SearchScreenProps) => {
                 {query.length > 0 && (
                   <TouchableOpacity
                     onPress={() => setQuery('')}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                     style={[styles.clearBtn, { backgroundColor: AppColors.surfaceContainerHigh }]}
                   >
                     <LlIcon name="close" size={14} color={colors.textSecondary} />
@@ -221,57 +458,62 @@ export const SearchScreen = ({ navigation }: SearchScreenProps) => {
             </View>
 
             {/* Recent Searches Chips (Max 4 Pastel Chips) */}
-            <View style={styles.recentSection}>
-              <View style={styles.recentHeaderRow}>
-                <View style={styles.recentTitleGroup}>
-                  <LlIcon name="clock" size={16} color={AppColors.secondary} style={{ marginRight: 6 }} />
-                  <Text style={[AppTypography.labelMd, { color: AppColors.secondary, fontWeight: '700' }]}>
-                    Tìm kiếm gần đây
-                  </Text>
+            {recentSearches.length > 0 && (
+              <View style={styles.recentSection}>
+                <View style={styles.recentHeaderRow}>
+                  <View style={styles.recentTitleGroup}>
+                    <LlIcon name="clock" size={16} color={AppColors.secondary} style={{ marginRight: 6 }} />
+                    <Text style={[AppTypography.labelMd, { color: AppColors.secondary, fontWeight: '700' }]}>
+                      Tìm kiếm gần đây
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setRecentSearches([])}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  >
+                    <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
+                      Xóa lịch sử
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity onPress={() => setQuery('')}>
-                  <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
-                    Xóa lịch sử
-                  </Text>
-                </TouchableOpacity>
+
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+                  {recentSearches.map((chip, idx) => {
+                    const bg =
+                      chip.color === 'pink'
+                        ? AppColors.secondaryContainer
+                        : chip.color === 'mint'
+                        ? AppColors.tertiaryFixed
+                        : chip.color === 'lavender'
+                        ? AppColors.surfaceContainerHigh
+                        : AppColors.butterYellow;
+
+                    const textColor =
+                      chip.color === 'pink'
+                        ? AppColors.onSecondaryContainer
+                        : chip.color === 'mint'
+                        ? AppColors.onTertiaryFixed
+                        : chip.color === 'lavender'
+                        ? AppColors.primary
+                        : AppColors.butterYellowDark;
+
+                    return (
+                      <TouchableOpacity
+                        key={idx}
+                        activeOpacity={0.8}
+                        onPress={() => setQuery(chip.label)}
+                        style={[styles.pastelChip, { backgroundColor: bg }]}
+                      >
+                        <Text style={[AppTypography.labelMd, { color: textColor, fontWeight: '700' }]}>
+                          {chip.label}
+                        </Text>
+                        <LlIcon name="north_west" size={12} color={textColor} style={{ marginLeft: 4, opacity: 0.7 }} />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
               </View>
-
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
-                {RECENT_CHIPS.map((chip, idx) => {
-                  const bg =
-                    chip.color === 'pink'
-                      ? AppColors.secondaryContainer
-                      : chip.color === 'mint'
-                      ? AppColors.tertiaryFixed
-                      : chip.color === 'lavender'
-                      ? AppColors.surfaceContainerHigh
-                      : AppColors.butterYellow;
-
-                  const textColor =
-                    chip.color === 'pink'
-                      ? AppColors.onSecondaryContainer
-                      : chip.color === 'mint'
-                      ? AppColors.onTertiaryFixed
-                      : chip.color === 'lavender'
-                      ? AppColors.primary
-                      : AppColors.butterYellowDark;
-
-                  return (
-                    <TouchableOpacity
-                      key={idx}
-                      activeOpacity={0.8}
-                      onPress={() => setQuery(chip.label)}
-                      style={[styles.pastelChip, { backgroundColor: bg }]}
-                    >
-                      <Text style={[AppTypography.labelMd, { color: textColor, fontWeight: '700' }]}>
-                        {chip.label}
-                      </Text>
-                      <LlIcon name="north_west" size={12} color={textColor} style={{ marginLeft: 4, opacity: 0.7 }} />
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
+            )}
 
             {/* Search Count Status */}
             {query.trim().length > 0 && (
@@ -279,7 +521,7 @@ export const SearchScreen = ({ navigation }: SearchScreenProps) => {
                 <Text style={[AppTypography.bodyMedium, { color: colors.textSecondary }]}>
                   Tìm thấy{' '}
                   <Text style={{ color: colors.primary, fontWeight: '700' }}>
-                    {matchingLectures.length * 2 + 1}
+                    {totalMatchingTimestamps}
                   </Text>{' '}
                   mốc thời gian trong{' '}
                   <Text style={{ color: colors.text, fontWeight: '700' }}>
@@ -315,7 +557,7 @@ export const SearchScreen = ({ navigation }: SearchScreenProps) => {
                 Không tìm thấy kết quả phù hợp
               </Text>
               <Text style={[AppTypography.bodyMedium, styles.emptySearchSub, { color: colors.textSecondary }]}>
-                Thử tìm kiếm với từ khóa khác như "REST API", "Giải tích" hoặc "MIPS".
+                Thử tìm kiếm với từ khóa khác như &quot;REST API&quot;, &quot;Giải tích&quot; hoặc &quot;MIPS&quot;.
               </Text>
             </View>
           ) : undefined

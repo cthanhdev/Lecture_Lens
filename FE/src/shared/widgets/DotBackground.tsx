@@ -1,13 +1,11 @@
 import React, { ReactNode } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Svg, { Circle, Pattern, Rect, Defs } from 'react-native-svg';
 import { useAppTheme } from '../../core/theme/ThemeContext';
 
 interface DotBackgroundProps {
   children: ReactNode;
 }
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 /**
  * Nền sổ tay chấm bi (Dot Grid Notebook Canvas)
