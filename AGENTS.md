@@ -25,9 +25,13 @@ Run lint and typecheck before declaring any task done.
 
 ## Navigation & Routing
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
+- Use **React Navigation v7** for all navigation (NativeStack + BottomTabs). Routes and navigators live in `src/navigation/`.
+  - Type definitions: `src/navigation/types.ts` (`RootStackParamList`, `MainTabParamList`)
+  - Root navigator: `src/navigation/RootNavigator.tsx` (`createNativeStackNavigator`)
+  - Main tab navigator: `src/navigation/MainTabNavigator.tsx` (`createBottomTabNavigator`) with custom pill tab bar `LlBottomNavBar`
+  - Screens live in feature folders (`src/features/<feature_name>/<Feature>Screen.tsx`). Keep non-route code (components, hooks, utils) outside feature folders in `src/core/` and `src/shared/`.
+- Navigation hooks & utilities: Import `useNavigation`, `useRoute`, `NavigatorScreenParams` from `@react-navigation/native`, and specific navigation props from `@react-navigation/native-stack` or `@react-navigation/bottom-tabs`.
+- Docs: https://reactnavigation.org/docs/getting-started
 
 ## Building with EAS
 

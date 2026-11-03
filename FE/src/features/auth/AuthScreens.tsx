@@ -6,6 +6,10 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
@@ -53,7 +57,16 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
 
   return (
     <DotBackground>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
         {/* Mascot Greeting Area */}
         <View style={styles.mascotArea}>
           <View style={styles.cloudMascotWrapper}>
@@ -100,7 +113,7 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
               </Text>
             </View>
 
-            <View style={[styles.inputBox, { backgroundColor: AppColors.surfaceContainerLow }]}>
+            <View style={[styles.inputBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.border }]}>
               <View style={styles.iconWrap}>
                 <LlIcon name="mail" size={18} color={colors.textSecondary} />
               </View>
@@ -114,7 +127,7 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
                 autoCapitalize="none"
                 keyboardType="email-address"
                 placeholder="vidu@daihoc.edu.vn"
-                placeholderTextColor="#7D7893"
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
           </View>
@@ -137,7 +150,7 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
               Mật khẩu
             </Text>
 
-            <View style={[styles.inputBox, { backgroundColor: AppColors.surfaceContainerLow }]}>
+            <View style={[styles.inputBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.border }]}>
               <View style={styles.iconWrap}>
                 <LlIcon name="lock" size={18} color={colors.textSecondary} />
               </View>
@@ -150,7 +163,7 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
                 }}
                 secureTextEntry={!showPassword}
                 placeholder="Nhập mật khẩu của bạn"
-                placeholderTextColor="#7D7893"
+                placeholderTextColor={colors.textSecondary}
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
@@ -161,7 +174,7 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
             </View>
 
             <TouchableOpacity style={styles.forgotPassBtn}>
-              <Text style={[AppTypography.labelSm, { color: AppColors.primary, textAlign: 'right' }]}>
+              <Text style={[AppTypography.labelSm, { color: colors.primary, textAlign: 'right' }]}>
                 Quên mật khẩu?
               </Text>
             </TouchableOpacity>
@@ -173,7 +186,7 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
             onPress={handleLogin}
             style={[
               styles.submitBtn,
-              { backgroundColor: AppColors.primaryContainer },
+              { backgroundColor: colors.primaryContainer },
               AppShadows.buttonPrimary,
             ]}
           >
@@ -197,7 +210,9 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </DotBackground>
   );
 };
@@ -221,7 +236,16 @@ export const RegisterScreen = ({ navigation }: RegisterScreenProps) => {
 
   return (
     <DotBackground>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
         <View style={styles.mascotArea}>
           <CuMeoWidget variant="star_eyes" size={110} />
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8 }}>
@@ -254,7 +278,7 @@ export const RegisterScreen = ({ navigation }: RegisterScreenProps) => {
             <Text style={[AppTypography.labelMd, { color: colors.text, fontWeight: '700' }]}>
               Họ và tên sinh viên
             </Text>
-            <View style={[styles.inputBox, { backgroundColor: AppColors.surfaceContainerLow }]}>
+            <View style={[styles.inputBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.border }]}>
               <View style={styles.iconWrap}>
                 <LlIcon name="person" size={18} color={colors.textSecondary} />
               </View>
@@ -263,7 +287,7 @@ export const RegisterScreen = ({ navigation }: RegisterScreenProps) => {
                 value={name}
                 onChangeText={setName}
                 placeholder="Nhập họ và tên"
-                placeholderTextColor="#7D7893"
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
           </View>
@@ -272,7 +296,7 @@ export const RegisterScreen = ({ navigation }: RegisterScreenProps) => {
             <Text style={[AppTypography.labelMd, { color: colors.text, fontWeight: '700' }]}>
               Trường đại học / Học viện
             </Text>
-            <View style={[styles.inputBox, { backgroundColor: AppColors.surfaceContainerLow }]}>
+            <View style={[styles.inputBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.border }]}>
               <View style={styles.iconWrap}>
                 <LlIcon name="account_balance" size={18} color={colors.textSecondary} />
               </View>
@@ -281,7 +305,7 @@ export const RegisterScreen = ({ navigation }: RegisterScreenProps) => {
                 value={school}
                 onChangeText={setSchool}
                 placeholder="Ví dụ: ĐH Bách Khoa"
-                placeholderTextColor="#7D7893"
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
           </View>
@@ -290,7 +314,7 @@ export const RegisterScreen = ({ navigation }: RegisterScreenProps) => {
             <Text style={[AppTypography.labelMd, { color: colors.text, fontWeight: '700' }]}>
               Email (.edu.vn)
             </Text>
-            <View style={[styles.inputBox, { backgroundColor: AppColors.surfaceContainerLow }]}>
+            <View style={[styles.inputBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.border }]}>
               <View style={styles.iconWrap}>
                 <LlIcon name="mail" size={18} color={colors.textSecondary} />
               </View>
@@ -299,7 +323,7 @@ export const RegisterScreen = ({ navigation }: RegisterScreenProps) => {
                 value={email}
                 onChangeText={setEmail}
                 placeholder="minh.nguyen@hust.edu.vn"
-                placeholderTextColor="#7D7893"
+                placeholderTextColor={colors.textSecondary}
                 autoCapitalize="none"
               />
             </View>
@@ -309,7 +333,7 @@ export const RegisterScreen = ({ navigation }: RegisterScreenProps) => {
             <Text style={[AppTypography.labelMd, { color: colors.text, fontWeight: '700' }]}>
               Mật khẩu
             </Text>
-            <View style={[styles.inputBox, { backgroundColor: AppColors.surfaceContainerLow }]}>
+            <View style={[styles.inputBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.border }]}>
               <View style={styles.iconWrap}>
                 <LlIcon name="lock" size={18} color={colors.textSecondary} />
               </View>
@@ -319,7 +343,7 @@ export const RegisterScreen = ({ navigation }: RegisterScreenProps) => {
                 onChangeText={setPassword}
                 secureTextEntry
                 placeholder="Tối thiểu 6 ký tự"
-                placeholderTextColor="#7D7893"
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
           </View>
@@ -329,7 +353,7 @@ export const RegisterScreen = ({ navigation }: RegisterScreenProps) => {
             onPress={handleRegister}
             style={[
               styles.submitBtn,
-              { backgroundColor: AppColors.primaryContainer },
+              { backgroundColor: colors.primaryContainer },
               AppShadows.buttonPrimary,
             ]}
           >
@@ -352,7 +376,9 @@ export const RegisterScreen = ({ navigation }: RegisterScreenProps) => {
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </DotBackground>
   );
 };

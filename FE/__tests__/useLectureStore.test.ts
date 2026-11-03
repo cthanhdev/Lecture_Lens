@@ -57,4 +57,19 @@ describe('useLectureStore', () => {
     expect(lec?.processingProgress).toBe(1.0);
     expect(lec?.status).toBe('ready');
   });
+
+  it('adds a new lecture and prepends it to the list', () => {
+    const newLec = {
+      id: 'lec_test_new',
+      title: 'Bài Giảng Test Tự Động',
+      subject: 'Kiểm Thử Phần Mềm',
+      university: 'ĐH Bách Khoa',
+      status: 'ready' as const,
+      durationSeconds: 1200,
+      relativeTime: 'Vừa xong',
+    };
+    useLectureStore.getState().addLecture(newLec);
+    const firstLec = useLectureStore.getState().lectures[0];
+    expect(firstLec.id).toBe('lec_test_new');
+  });
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,12 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../../navigation/types';
 import { useAppTheme } from '../../core/theme/ThemeContext';
 import { AppColors } from '../../core/theme/colors';
@@ -41,6 +44,8 @@ const SUGGESTED_QUESTIONS = [
 
 export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenProps) => {
   const { lectureId, initialTabIndex = 1 } = route.params;
+  const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
   const { colors, borderRadius } = useAppTheme();
   const lectures = useLectureStore((state) => state.lectures);
   const seekTo = useAudioPlayerStore((state) => state.seekTo);
@@ -87,6 +92,9 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
     };
     setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setChatInput('');
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
 
     setTimeout(() => {
       const cuMeoReply = {
@@ -98,6 +106,9 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
         citationSeconds: 755,
       };
       setMessages((prev) => [...prev, cuMeoReply]);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     }, 900);
   };
 
@@ -125,13 +136,13 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
           <View style={styles.topActionsRow}>
             <TouchableOpacity
               onPress={() => Alert.alert('Chia sẻ bài giảng', 'Đã sao chép liên kết ghi chú!')}
-              style={[styles.roundActionBtn, { backgroundColor: AppColors.surfaceContainerLow }]}
+              style={[styles.roundActionBtn, { backgroundColor: colors.surfaceContainerLow }]}
             >
               <LlIcon name="share" size={18} color={colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setIsSkeletonDemo(!isSkeletonDemo)}
-              style={[styles.roundActionBtn, { backgroundColor: AppColors.surfaceContainerLow }]}
+              style={[styles.roundActionBtn, { backgroundColor: colors.surfaceContainerLow }]}
             >
               <LlIcon name="sync" size={16} color={colors.primary} />
             </TouchableOpacity>
@@ -139,11 +150,16 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
         }
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={[styles.scrollContent, activeTab === 2 && { paddingBottom: 20 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
         {/* TOP META & TITLE CARD (Notebook Stationery Style) */}
         <View
           style={[
@@ -162,7 +178,7 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
           </View>
 
           <View style={styles.cardBadgeRow}>
-            <View style={[styles.subjectPill, { backgroundColor: AppColors.surfaceContainer }]}>
+            <View style={[styles.subjectPill, { backgroundColor: colors.surfaceContainer }]}>
               <Text style={[AppTypography.labelSm, { color: colors.primary, fontWeight: '700' }]}>
                 {lecture.subject}
               </Text>
@@ -197,7 +213,7 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
 
         {/* NOTEBOOK SEGMENTED NAVIGATION TABS */}
         <View style={styles.tabBarWrapper}>
-          <View style={[styles.segmentedTabBar, { backgroundColor: AppColors.surfaceContainerHigh }]}>
+          <View style={[styles.segmentedTabBar, { backgroundColor: colors.surfaceContainerHigh }]}>
             {[
               { idx: 0, label: 'Mục lục', icon: 'toc' as LlIconName },
               { idx: 1, label: 'Bản ghi', icon: 'description' as LlIconName },
@@ -261,7 +277,7 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
                     AppShadows.card,
                   ]}
                 >
-                  <View style={[styles.topicIndexBadge, { backgroundColor: AppColors.surfaceContainer }]}>
+                  <View style={[styles.topicIndexBadge, { backgroundColor: colors.surfaceContainer }]}>
                     <Text style={[AppTypography.labelSm, { color: colors.primary, fontWeight: '700' }]}>
                       {i + 1}
                     </Text>
@@ -309,9 +325,9 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
                 value={transcriptSearch}
                 onChangeText={setTranscriptSearch}
                 placeholder="Tìm trong bản ghi..."
-                placeholderTextColor="#7D7893"
+                placeholderTextColor={colors.textSecondary}
               />
-              <View style={[styles.matchCounterBadge, { backgroundColor: AppColors.surfaceContainerLow, flexDirection: 'row', alignItems: 'center' }]}>
+              <View style={[styles.matchCounterBadge, { backgroundColor: colors.surfaceContainerLow, flexDirection: 'row', alignItems: 'center' }]}>
                 <Text style={[AppTypography.labelSm, { color: colors.primary, fontWeight: '700' }]}>
                   2/7
                 </Text>
@@ -423,7 +439,7 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
             ) : null}
 
             {/* Cheerful End of Transcript Card */}
-            <View style={[styles.endMascotCard, { backgroundColor: AppColors.surfaceContainer }]}>
+            <View style={[styles.endMascotCard, { backgroundColor: colors.surfaceContainer }]}>
               <View style={[styles.endMascotIconBox, { backgroundColor: colors.card }]}>
                 <CuMeoWidget variant="happy" size={36} isAnimated={false} />
               </View>
@@ -477,7 +493,7 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
                     style={[styles.chatRow, isUser ? styles.chatRowUser : styles.chatRowCuMeo]}
                   >
                     {!isUser && (
-                      <View style={[styles.cuMeoChatAvatar, { backgroundColor: AppColors.surfaceContainerHighest }]}>
+                      <View style={[styles.cuMeoChatAvatar, { backgroundColor: colors.surfaceContainerHighest }]}>
                         <CuMeoWidget variant="happy" size={26} isAnimated={false} />
                       </View>
                     )}
@@ -486,7 +502,7 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
                       style={[
                         styles.chatBubble,
                         isUser
-                          ? [styles.userBubble, { backgroundColor: AppColors.primary }]
+                          ? [styles.userBubble, { backgroundColor: colors.primary }]
                           : [styles.cuMeoBubble, { backgroundColor: colors.card, borderColor: colors.border }],
                         AppShadows.card,
                       ]}
@@ -547,37 +563,61 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
                 );
               })}
             </View>
-
-            {/* Sticky Desk Input Bar */}
-            <View style={[styles.bottomInputBar, { backgroundColor: colors.card, borderColor: colors.border }, AppShadows.floatingPill]}>
-              <TextInput
-                style={[AppTypography.bodyMedium, styles.qaTextInput, { color: colors.text }]}
-                value={chatInput}
-                onChangeText={setChatInput}
-                placeholder="Hỏi về bài giảng này..."
-                placeholderTextColor="#7D7893"
-                onSubmitEditing={() => handleSendChat()}
-              />
-              <TouchableOpacity
-                onPress={() => Alert.alert('Ghi âm câu hỏi', 'Đang nhận diện giọng nói câu hỏi của bạn...')}
-                style={styles.micInputBtn}
-              >
-                <LlIcon name="mic" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                activeOpacity={0.88}
-                onPress={() => handleSendChat()}
-                style={[styles.sendInputBtn, { backgroundColor: AppColors.primary }]}
-              >
-                <LlIcon name="send" size={18} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
           </View>
         )}
 
-        <View style={{ height: 60 }} />
+        <View style={{ height: activeTab === 2 ? 20 : 60 }} />
       </ScrollView>
-    </DotBackground>
+
+      {/* Sticky Fixed Desk Input Bar at bottom when on Tab 2 */}
+      {activeTab === 2 && (
+        <View
+          style={[
+            styles.fixedInputContainer,
+            {
+              backgroundColor: colors.card,
+              paddingBottom: Math.max(insets.bottom, 12),
+              borderTopColor: colors.border,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.bottomInputBar,
+              { backgroundColor: colors.surfaceContainerLow, borderColor: colors.border },
+              AppShadows.floatingPill,
+            ]}
+          >
+            <TextInput
+              style={[AppTypography.bodyMedium, styles.qaTextInput, { color: colors.text }]}
+              value={chatInput}
+              onChangeText={setChatInput}
+              placeholder="Hỏi về bài giảng này..."
+              placeholderTextColor="#7D7893"
+              onSubmitEditing={() => handleSendChat()}
+            />
+            <TouchableOpacity
+              onPress={() => Alert.alert('Ghi âm câu hỏi', 'Đang nhận diện giọng nói câu hỏi của bạn...')}
+              style={styles.micInputBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Ghi âm câu hỏi"
+            >
+              <LlIcon name="mic" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.88}
+              onPress={() => handleSendChat()}
+              style={[styles.sendInputBtn, { backgroundColor: colors.primary }]}
+              accessibilityRole="button"
+              accessibilityLabel="Gửi câu hỏi"
+            >
+              <LlIcon name="send" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </KeyboardAvoidingView>
+  </DotBackground>
   );
 };
 
@@ -843,6 +883,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     gap: 8,
   },
+  fixedInputContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    borderTopWidth: 1,
+  },
   bottomInputBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -850,7 +895,6 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     paddingHorizontal: 14,
     borderWidth: 1,
-    marginTop: 10,
   },
   qaTextInput: {
     flex: 1,

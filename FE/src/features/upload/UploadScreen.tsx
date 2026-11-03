@@ -7,6 +7,10 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as DocumentPicker from 'expo-document-picker';
@@ -153,11 +157,16 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
         onBackPress={() => navigation.goBack()}
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
         {/* VIEW 1: UPLOAD DROPZONE CARD */}
         <View
           style={[
@@ -176,8 +185,8 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
           </View>
 
           {/* Cloud upload bubble */}
-          <View style={[styles.cloudCircle, { backgroundColor: AppColors.surfaceContainerHigh }]}>
-            <LlIcon name="cloud_upload" size={38} color={AppColors.primary} />
+          <View style={[styles.cloudCircle, { backgroundColor: colors.surfaceContainerHigh }]}>
+            <LlIcon name="cloud_upload" size={38} color={colors.primary} />
           </View>
 
           <Text style={[AppTypography.headlineSm, styles.cardTitle, { color: colors.text }]}>
@@ -194,7 +203,7 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
             onPress={handlePickAudio}
             style={[
               styles.browseBtn,
-              { backgroundColor: AppColors.primary },
+              { backgroundColor: colors.primary },
               AppShadows.buttonPrimary,
             ]}
           >
@@ -206,16 +215,16 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
 
           {/* Divider with "hoặc" */}
           <View style={styles.dividerRow}>
-            <View style={[styles.dividerLine, { backgroundColor: AppColors.outlineVariant }]} />
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>HOẶC</Text>
-            <View style={[styles.dividerLine, { backgroundColor: AppColors.outlineVariant }]} />
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
           </View>
 
           {/* Secondary Action Button: Instant Record */}
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={() => Alert.alert('Ghi âm trực tiếp', 'Đang kết nối micro để ghi âm bài giảng tại lớp.')}
-            style={[styles.recordBtn, { backgroundColor: AppColors.surfaceContainerHigh }]}
+            style={[styles.recordBtn, { backgroundColor: colors.surfaceContainerHigh }]}
           >
             <LlIcon name="mic" size={18} color={AppColors.error} />
             <Text style={[AppTypography.labelMd, { color: colors.text, fontWeight: '700', marginLeft: 8 }]}>
@@ -238,7 +247,7 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
         >
           {/* File Header Chip if file exists */}
           {selectedFile && (
-            <View style={[styles.filePreviewChip, { backgroundColor: AppColors.surfaceContainerLow }]}>
+            <View style={[styles.filePreviewChip, { backgroundColor: colors.surfaceContainerLow }]}>
               <View style={[styles.fileIconBox, { backgroundColor: AppColors.tertiaryFixed }]}>
                 <LlIcon name="graphic_eq" size={20} color={AppColors.onTertiaryFixed} />
               </View>
@@ -261,13 +270,13 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
             <Text style={[AppTypography.labelMd, { color: colors.text, fontWeight: '700', marginBottom: 6 }]}>
               Tên bài giảng <Text style={{ color: AppColors.error }}>*</Text>
             </Text>
-            <View style={[styles.formInputBox, { backgroundColor: AppColors.surfaceContainerLow }]}>
+            <View style={[styles.formInputBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.border }]}>
               <TextInput
                 style={[AppTypography.bodyMedium, styles.formInput, { color: colors.text }]}
                 value={title}
                 onChangeText={setTitle}
                 placeholder="Nhập tên bài học..."
-                placeholderTextColor="#7D7893"
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
           </View>
@@ -277,13 +286,13 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
             <Text style={[AppTypography.labelMd, { color: colors.text, fontWeight: '700', marginBottom: 6 }]}>
               Môn học
             </Text>
-            <View style={[styles.formInputBox, { backgroundColor: AppColors.surfaceContainerLow }]}>
+            <View style={[styles.formInputBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.border }]}>
               <TextInput
                 style={[AppTypography.bodyMedium, styles.formInput, { color: colors.text }]}
                 value={subject}
                 onChangeText={setSubject}
                 placeholder="Ví dụ: Công nghệ phần mềm"
-                placeholderTextColor="#7D7893"
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
           </View>
@@ -293,13 +302,13 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
             <Text style={[AppTypography.labelMd, { color: colors.text, fontWeight: '700', marginBottom: 6 }]}>
               Trường học / Học viện
             </Text>
-            <View style={[styles.formInputBox, { backgroundColor: AppColors.surfaceContainerLow }]}>
+            <View style={[styles.formInputBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.border }]}>
               <TextInput
                 style={[AppTypography.bodyMedium, styles.formInput, { color: colors.text }]}
                 value={university}
                 onChangeText={setUniversity}
                 placeholder="Ví dụ: ĐH Bách Khoa"
-                placeholderTextColor="#7D7893"
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
           </View>
@@ -324,7 +333,7 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
             onPress={handleStartProcessing}
             style={[
               styles.startProcBtn,
-              { backgroundColor: AppColors.primary },
+              { backgroundColor: colors.primary },
               AppShadows.buttonPrimary,
             ]}
           >
@@ -338,7 +347,9 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
         </View>
 
         <View style={{ height: 40 }} />
-      </ScrollView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </DotBackground>
   );
 };

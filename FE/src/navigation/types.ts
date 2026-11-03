@@ -3,7 +3,6 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 export type MainTabParamList = {
   Library: undefined;
   Search: undefined;
-  AiAssistant: undefined;
   Settings: undefined;
 };
 
