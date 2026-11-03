@@ -16,8 +16,9 @@ interface AudioPlayerCapsuleProps {
 const SPEED_OPTIONS = [1.0, 1.25, 1.5, 2.0];
 
 export const AudioPlayerCapsule = ({ title, subject }: AudioPlayerCapsuleProps) => {
-  const { colors, borderRadius } = useAppTheme();
+  const { colors, borderRadius, isDark } = useAppTheme();
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [trackWidth, setTrackWidth] = useState(0);
 
   const {
     isPlaying,
@@ -51,33 +52,44 @@ export const AudioPlayerCapsule = ({ title, subject }: AudioPlayerCapsuleProps) 
       <View style={styles.scrubberArea}>
         <TouchableOpacity
           activeOpacity={0.9}
+          hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+          accessibilityRole="adjustable"
+          accessibilityLabel="Thanh tua thời gian bài giảng"
+          accessibilityValue={{ min: 0, max: durationSeconds, now: positionSeconds }}
+          onLayout={(e) => {
+            const { width } = e.nativeEvent.layout;
+            if (width > 0) {
+              setTrackWidth(width);
+            }
+          }}
           onPress={(e) => {
             const { locationX } = e.nativeEvent;
-            // approximate 300px track
-            const ratio = Math.max(0, Math.min(1, locationX / 300));
+            const currentWidth = trackWidth > 0 ? trackWidth : 300;
+            const ratio = Math.max(0, Math.min(1, locationX / currentWidth));
             seekTo(Math.round(ratio * durationSeconds));
           }}
-          style={[styles.scrubberTrack, { backgroundColor: AppColors.surfaceContainerHigh }]}
+          style={[styles.scrubberTrack, { backgroundColor: colors.surfaceContainerHigh }]}
         >
           {/* Active fill */}
           <View
+            pointerEvents="none"
             style={[
               styles.scrubberFill,
-              { width: `${progressPercent}%`, backgroundColor: AppColors.primaryContainer },
+              { width: `${progressPercent}%`, backgroundColor: colors.primaryContainer },
             ]}
           />
 
           {/* Key Topic Bookmark Dots on Track */}
-          <View style={[styles.topicDot, { left: '10%', backgroundColor: AppColors.tertiaryContainer }]} />
-          <View style={[styles.topicDot, { left: '35%', backgroundColor: AppColors.tertiaryContainer }]} />
-          <View style={[styles.topicDot, { left: '60%', backgroundColor: AppColors.secondary }]} />
-          <View style={[styles.topicDot, { left: '85%', backgroundColor: AppColors.tertiaryContainer }]} />
+          <View pointerEvents="none" style={[styles.topicDot, { left: '10%', backgroundColor: colors.tertiaryContainer }]} />
+          <View pointerEvents="none" style={[styles.topicDot, { left: '35%', backgroundColor: colors.tertiaryContainer }]} />
+          <View pointerEvents="none" style={[styles.topicDot, { left: '60%', backgroundColor: colors.secondary }]} />
+          <View pointerEvents="none" style={[styles.topicDot, { left: '85%', backgroundColor: colors.tertiaryContainer }]} />
         </TouchableOpacity>
 
         {/* Timers Row */}
         <View style={styles.timersRow}>
           <View style={styles.currentTimeWrapper}>
-            <View style={[styles.pulsingDot, { backgroundColor: AppColors.primary }]} />
+            <View style={[styles.pulsingDot, { backgroundColor: colors.primary }]} />
             <Text style={[AppTypography.labelSm, { color: colors.primary, fontWeight: '700' }]}>
               {formatDuration(positionSeconds)}
             </Text>
@@ -93,8 +105,9 @@ export const AudioPlayerCapsule = ({ title, subject }: AudioPlayerCapsuleProps) 
         {/* Replay 10s */}
         <TouchableOpacity
           activeOpacity={0.8}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           onPress={() => skipBackward(10)}
-          style={[styles.skipRoundBtn, { backgroundColor: AppColors.surfaceContainer }]}
+          style={[styles.skipRoundBtn, { backgroundColor: colors.surfaceContainer }]}
         >
           <LlIcon name="replay_10" size={24} color={colors.primary} />
         </TouchableOpacity>
@@ -105,7 +118,7 @@ export const AudioPlayerCapsule = ({ title, subject }: AudioPlayerCapsuleProps) 
           onPress={togglePlay}
           style={[
             styles.mainPlayCapsule,
-            { backgroundColor: AppColors.primaryContainer },
+            { backgroundColor: colors.primaryContainer },
             AppShadows.buttonPrimary,
           ]}
         >
@@ -124,8 +137,9 @@ export const AudioPlayerCapsule = ({ title, subject }: AudioPlayerCapsuleProps) 
         {/* Forward 10s */}
         <TouchableOpacity
           activeOpacity={0.8}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           onPress={() => skipForward(10)}
-          style={[styles.skipRoundBtn, { backgroundColor: AppColors.surfaceContainer }]}
+          style={[styles.skipRoundBtn, { backgroundColor: colors.surfaceContainer }]}
         >
           <LlIcon name="forward_10" size={24} color={colors.primary} />
         </TouchableOpacity>
@@ -135,13 +149,31 @@ export const AudioPlayerCapsule = ({ title, subject }: AudioPlayerCapsuleProps) 
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={() => setShowSpeedMenu(!showSpeedMenu)}
-            style={[styles.speedPill, { backgroundColor: AppColors.secondaryFixed }]}
+            style={[
+              styles.speedPill,
+              {
+                backgroundColor: isDark ? colors.surfaceContainerHighest : AppColors.secondaryFixed,
+              },
+            ]}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Text style={[AppTypography.labelSm, { color: AppColors.onSecondaryFixed, fontWeight: '700' }]}>
+              <Text
+                style={[
+                  AppTypography.labelSm,
+                  {
+                    color: isDark ? colors.text : AppColors.onSecondaryFixed,
+                    fontWeight: '700',
+                  },
+                ]}
+              >
                 {playbackRate}x
               </Text>
-              <LlIcon name="arrow_drop_down" size={14} color={AppColors.onSecondaryFixed} filled />
+              <LlIcon
+                name="arrow_drop_down"
+                size={14}
+                color={isDark ? colors.textSecondary : AppColors.onSecondaryFixed}
+                filled
+              />
             </View>
           </TouchableOpacity>
 
@@ -163,14 +195,16 @@ export const AudioPlayerCapsule = ({ title, subject }: AudioPlayerCapsuleProps) 
                   }}
                   style={[
                     styles.speedOption,
-                    playbackRate === rate && { backgroundColor: AppColors.secondaryContainer },
+                    playbackRate === rate && {
+                      backgroundColor: colors.surfaceContainerHigh,
+                    },
                   ]}
                 >
                   <Text
                     style={[
                       AppTypography.labelSm,
                       {
-                        color: playbackRate === rate ? AppColors.onSecondaryContainer : colors.text,
+                        color: playbackRate === rate ? colors.primary : colors.text,
                         fontWeight: playbackRate === rate ? '700' : '500',
                       },
                     ]}

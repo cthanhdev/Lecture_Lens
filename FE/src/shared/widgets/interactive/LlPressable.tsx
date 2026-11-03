@@ -1,5 +1,11 @@
 import React, { ReactNode } from 'react';
-import { Pressable, StyleProp, ViewStyle } from 'react-native';
+import {
+  Pressable,
+  PressableProps,
+  GestureResponderEvent,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,13 +14,11 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { AppMotionTokens } from '../../../core/motion/motionTokens';
 
-interface LlPressableProps {
-  children: ReactNode;
-  onPress?: () => void;
+export interface LlPressableProps extends Omit<PressableProps, 'style'> {
+  children?: ReactNode;
   style?: StyleProp<ViewStyle>;
   scaleFactor?: number;
   enableHaptic?: boolean;
-  disabled?: boolean;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -22,10 +26,17 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export const LlPressable = ({
   children,
   onPress,
+  onPressIn,
+  onPressOut,
   style,
   scaleFactor = AppMotionTokens.scalePressFactor,
   enableHaptic = true,
   disabled = false,
+  accessibilityRole,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityState,
+  ...restProps
 }: LlPressableProps) => {
   const scale = useSharedValue(1);
 
@@ -33,7 +44,7 @@ export const LlPressable = ({
     transform: [{ scale: scale.value }],
   }));
 
-  const handlePressIn = () => {
+  const handlePressIn = (event: GestureResponderEvent) => {
     if (disabled) return;
     scale.value = withSpring(scaleFactor, AppMotionTokens.springDefault);
     if (enableHaptic) {
@@ -41,11 +52,13 @@ export const LlPressable = ({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       } catch (_) {}
     }
+    onPressIn?.(event);
   };
 
-  const handlePressOut = () => {
-    if (disabled) return;
+  const handlePressOut = (event: GestureResponderEvent) => {
     scale.value = withSpring(1, AppMotionTokens.springBouncy);
+    if (disabled) return;
+    onPressOut?.(event);
   };
 
   return (
@@ -54,7 +67,12 @@ export const LlPressable = ({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={accessibilityState}
       style={[style, animatedStyle]}
+      {...restProps}
     >
       {children}
     </AnimatedPressable>

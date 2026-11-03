@@ -22,7 +22,7 @@ import { DotBackground } from '../../shared/widgets/DotBackground';
 import { LlAppBar } from '../../shared/widgets/navigation/LlAppBar';
 import { WashiTapeAccent } from '../../shared/widgets/washi_tape/WashiTapeAccent';
 import { CuMeoWidget } from '../../shared/widgets/mascot/CuMeoWidget';
-import { useLectureStore } from '../../shared/stores/useLectureStore';
+import { useLectureStore, selectLectures } from '../../shared/stores/useLectureStore';
 import { useAudioPlayerStore } from '../../shared/stores/useAudioPlayerStore';
 
 type SearchScreenNavProp = CompositeNavigationProp<
@@ -45,7 +45,7 @@ export const SearchScreen = ({ navigation }: SearchScreenProps) => {
   const { colors, borderRadius } = useAppTheme();
   const [query, setQuery] = useState('REST API');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const lectures = useLectureStore((state) => state.lectures);
+  const lectures = useLectureStore(selectLectures);
   const seekTo = useAudioPlayerStore((state) => state.seekTo);
   const play = useAudioPlayerStore((state) => state.play);
 

@@ -12,6 +12,7 @@ import {
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { useAppTheme } from '../../core/theme/ThemeContext';
 import { AppColors } from '../../core/theme/colors';
@@ -23,9 +24,15 @@ import { LlAppBar } from '../../shared/widgets/navigation/LlAppBar';
 import { LectureCard, ProcessingCard } from '../../shared/widgets/cards/LectureCards';
 import { CuMeoWidget } from '../../shared/widgets/mascot/CuMeoWidget';
 import { LectureListSkeleton } from '../../shared/widgets/skeleton/SkeletonShimmer';
-import { useLectureStore } from '../../shared/stores/useLectureStore';
+import {
+  useLectureStore,
+  useLecturesList,
+  selectActiveFilter,
+  selectSetFilter,
+  selectToggleBookmark,
+} from '../../shared/stores/useLectureStore';
 import { useAuthStore } from '../../shared/stores/useAuthStore';
-import { useNotificationStore } from '../../shared/stores/useNotificationStore';
+import { useNotificationStore, selectUnreadCount } from '../../shared/stores/useNotificationStore';
 
 type LibraryScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Library'>,
@@ -46,10 +53,15 @@ const FILTER_TABS = [
 ];
 
 export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
+  const insets = useSafeAreaInsets();
+  const fabBottom = Math.max(insets.bottom, 12) + 72;
+
   const { colors, borderRadius } = useAppTheme();
   const user = useAuthStore((state) => state.user);
-  const { activeFilter, setFilter, toggleBookmark, getFilteredLectures } = useLectureStore();
-  const unreadCount = useNotificationStore((state) => state.unreadCount());
+  const activeFilter = useLectureStore(selectActiveFilter);
+  const setFilter = useLectureStore(selectSetFilter);
+  const toggleBookmark = useLectureStore(selectToggleBookmark);
+  const unreadCount = useNotificationStore(selectUnreadCount);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'normal' | 'empty' | 'skeleton'>('normal');
@@ -62,16 +74,8 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
     }, 600);
   }, []);
 
-  const allFiltered = useMemo(() => getFilteredLectures(), [getFilteredLectures, activeFilter]);
-  const filteredLectures = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return allFiltered;
-    return allFiltered.filter(
-      (l) =>
-        l.title.toLowerCase().includes(q) ||
-        l.subject.toLowerCase().includes(q)
-    );
-  }, [allFiltered, searchQuery]);
+  const allFiltered = useLecturesList(activeFilter, '');
+  const filteredLectures = useLecturesList(activeFilter, searchQuery);
 
   const handleCardPress = (lectureId: string, status: string) => {
     if (status === 'processing') {
@@ -137,7 +141,7 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
                   onPress={() => navigation.navigate('Settings')}
                   style={styles.avatarWrapper}
                 >
-                  <View style={[styles.avatarCircle, { backgroundColor: AppColors.primaryContainer }]}>
+                  <View style={[styles.avatarCircle, { backgroundColor: colors.primaryContainer }]}>
                     <CuMeoWidget variant="happy" size={32} isAnimated={false} />
                   </View>
                   <View style={styles.onlinePip} />
@@ -162,19 +166,19 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     placeholder="Tìm bài giảng, môn học, từ khóa..."
-                    placeholderTextColor="#7D7893"
+                    placeholderTextColor={colors.textSecondary}
                   />
                   {searchQuery.length > 0 && (
                     <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
                       <LlIcon name="close" size={14} color={colors.textSecondary} />
                     </TouchableOpacity>
                   )}
-                  <View style={[styles.inputDivider, { backgroundColor: AppColors.surfaceContainer }]} />
+                  <View style={[styles.inputDivider, { backgroundColor: colors.border }]} />
                   <TouchableOpacity
                     onPress={() => navigation.navigate('Upload')}
-                    style={[styles.micBtn, { backgroundColor: AppColors.surfaceContainer }]}
+                    style={[styles.micBtn, { backgroundColor: colors.surfaceContainer }]}
                   >
-                    <LlIcon name="mic" size={18} color={AppColors.primary} />
+                    <LlIcon name="mic" size={18} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -198,7 +202,7 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
                         style={[
                           styles.filterChip,
                           isSelected
-                            ? [styles.filterChipActive, { backgroundColor: AppColors.primaryContainer }]
+                            ? [styles.filterChipActive, { backgroundColor: colors.primaryContainer }]
                             : [styles.filterChipInactive, { backgroundColor: colors.card, borderColor: colors.border }],
                         ]}
                       >
@@ -229,7 +233,7 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
                 </Text>
 
                 {/* Quick Demo Switcher (List / Empty / Skeleton) */}
-                <View style={[styles.viewModePill, { backgroundColor: AppColors.surfaceContainerHigh }]}>
+                <View style={[styles.viewModePill, { backgroundColor: colors.surfaceContainerHigh }]}>
                   <TouchableOpacity
                     onPress={() => setViewMode('normal')}
                     style={[styles.viewModeBtn, viewMode === 'normal' && styles.viewModeBtnActive]}
@@ -277,7 +281,7 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
                 <TouchableOpacity
                   activeOpacity={0.88}
                   onPress={() => navigation.navigate('Upload')}
-                  style={[styles.emptyUploadBtn, { backgroundColor: AppColors.primaryContainer }]}
+                  style={[styles.emptyUploadBtn, { backgroundColor: colors.primaryContainer }]}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                     <LlIcon name="add" size={18} color="#FFFFFF" strokeWidth={2.5} />
@@ -289,7 +293,7 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
               </View>
             )
           }
-          ListFooterComponent={<View style={{ height: 110 }} />}
+          ListFooterComponent={<View style={{ height: fabBottom + 36 }} />}
           initialNumToRender={5}
           maxToRenderPerBatch={5}
           windowSize={5}
@@ -303,7 +307,7 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => navigation.navigate('Upload')}
-          style={[styles.fabButton, AppShadows.buttonPrimary]}
+          style={[styles.fabButton, { bottom: fabBottom, backgroundColor: colors.primary }, AppShadows.buttonPrimary]}
         >
           <LlIcon name="cloud_upload" size={20} color="#FFFFFF" />
           <Text style={[AppTypography.labelLarge, styles.fabText]}>

@@ -8,6 +8,7 @@ import Animated, {
   withSequence,
   withSpring,
   Easing,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import Svg, { Path, Circle, Rect, Ellipse, Line, G } from 'react-native-svg';
@@ -157,6 +158,12 @@ export const CuMeoWidget = ({
       translateY.value = 0;
       tilt.value = 0;
     }
+
+    return () => {
+      cancelAnimation(translateY);
+      cancelAnimation(tilt);
+      cancelAnimation(bounceScale);
+    };
   }, [isAnimated, variant]);
 
   const handleMascotTap = () => {

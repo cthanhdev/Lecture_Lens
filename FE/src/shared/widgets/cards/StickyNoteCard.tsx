@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { View, Text, StyleSheet, StyleProp, ViewStyle, TouchableOpacity } from 'react-native';
+import { useAppTheme } from '../../../core/theme/ThemeContext';
 import { AppColors } from '../../../core/theme/colors';
 import { AppTypography } from '../../../core/theme/typography';
 import { AppShadows } from '../../../core/theme/layout';
@@ -37,13 +38,14 @@ export const StickyNoteCard = ({
   onJumpPress,
   style,
 }: StickyNoteCardProps) => {
+  const { colors, isDark } = useAppTheme();
   const isPink = variant === 'pink';
   const isMint = variant === 'mint';
 
-  const bgColor = isPink ? '#FDEEF3' : isMint ? '#E8F8F3' : '#FFF9E6';
-  const textColor = isPink ? '#692E44' : isMint ? '#1F6B58' : '#5C4813';
-  const accentColor = isPink ? '#C46D8E' : isMint ? '#1F6B58' : '#A67814';
-  const borderColor = isPink ? '#E79EB7' : isMint ? '#9FDAC4' : '#D8BA5C';
+  const bgColor = isPink ? colors.stickyPinkBg : isMint ? colors.stickyMintBg : colors.stickyYellowBg;
+  const textColor = isPink ? colors.stickyPinkText : isMint ? colors.stickyMintText : colors.stickyYellowText;
+  const accentColor = isPink ? colors.stickyPinkAccent : isMint ? colors.stickyMintAccent : colors.stickyYellowAccent;
+  const borderColor = isPink ? colors.stickyPinkBorder : isMint ? colors.stickyMintBorder : colors.stickyYellowBorder;
 
   return (
     <View style={[styles.container, { transform: [{ rotate: rotation }] }, style]}>
@@ -71,9 +73,9 @@ export const StickyNoteCard = ({
             </View>
 
             {timestamp && (
-              <View style={[styles.timestampBadge, { backgroundColor: AppColors.tertiaryFixed, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-                <LlIcon name="play_arrow" size={10} color={AppColors.onTertiaryFixed} filled />
-                <Text style={[AppTypography.labelSm, { color: AppColors.onTertiaryFixed }]}>
+              <View style={[styles.timestampBadge, { backgroundColor: isDark ? colors.surfaceContainerHighest : AppColors.tertiaryFixed, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                <LlIcon name="play_arrow" size={10} color={isDark ? colors.text : AppColors.onTertiaryFixed} filled />
+                <Text style={[AppTypography.labelSm, { color: isDark ? colors.text : AppColors.onTertiaryFixed }]}>
                   {timestamp}
                 </Text>
               </View>
@@ -97,10 +99,19 @@ export const StickyNoteCard = ({
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={onJumpPress}
-            style={[styles.jumpButton, { backgroundColor: textColor, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
+            style={[
+              styles.jumpButton,
+              {
+                backgroundColor: isDark ? accentColor : textColor,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              },
+            ]}
           >
-            <LlIcon name="headphones" size={14} color="#FFFFFF" />
-            <Text style={[AppTypography.labelMd, { color: '#FFFFFF', fontWeight: '700' }]}>
+            <LlIcon name="headphones" size={14} color={isDark ? '#1D1831' : '#FFFFFF'} />
+            <Text style={[AppTypography.labelMd, { color: isDark ? '#1D1831' : '#FFFFFF', fontWeight: '700' }]}>
               {jumpLabel}
             </Text>
           </TouchableOpacity>

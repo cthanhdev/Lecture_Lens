@@ -26,8 +26,7 @@ export const LectureCard = ({
   const { colors, borderRadius } = useAppTheme();
 
   return (
-    <LlPressable
-      onPress={onPress}
+    <View
       style={[
         styles.card,
         {
@@ -39,13 +38,17 @@ export const LectureCard = ({
       ]}
     >
       {/* Washi Tape Accent on Top */}
-      <View style={styles.tapeAnchor}>
+      <View style={styles.tapeAnchor} pointerEvents="none">
         <WashiTapeAccent color="sakura" width={56} height={12} rotation="-1deg" />
       </View>
 
       {/* Card Top Badge Row */}
       <View style={styles.topBadgeRow}>
-        <View style={styles.badgeGroup}>
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={onPress}
+          style={styles.badgeGroup}
+        >
           <View style={[styles.readyPill, { backgroundColor: AppColors.tertiaryFixed, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
             <LlIcon name="check_circle" size={12} color={AppColors.tertiary} filled />
             <Text style={[AppTypography.labelSm, { color: AppColors.tertiary, fontWeight: '700' }]}>
@@ -53,7 +56,7 @@ export const LectureCard = ({
             </Text>
           </View>
 
-          <View style={[styles.subjectTag, { backgroundColor: AppColors.surfaceContainerHigh }]}>
+          <View style={[styles.subjectTag, { backgroundColor: colors.surfaceContainerHigh }]}>
             <Text
               style={[AppTypography.labelSm, { color: colors.textSecondary }]}
               numberOfLines={1}
@@ -62,71 +65,83 @@ export const LectureCard = ({
               {lecture.university ? ` • ${lecture.university}` : ''}
             </Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity
           onPress={onBookmarkPress}
           style={styles.bookmarkButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={lecture.isBookmarked ? 'Bỏ đánh dấu' : 'Đánh dấu bài giảng'}
         >
           <LlIcon
             name="bookmark"
             size={18}
-            color={lecture.isBookmarked ? AppColors.primary : colors.textSecondary}
+            color={lecture.isBookmarked ? colors.primary : colors.textSecondary}
             filled={lecture.isBookmarked}
           />
         </TouchableOpacity>
       </View>
 
-      {/* Lecture Title */}
-      <Text style={[AppTypography.headlineSm, styles.title, { color: colors.text }]} numberOfLines={2}>
-        {lecture.title}
-      </Text>
+      {/* Card Body Clickable Area */}
+      <LlPressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={lecture.title}
+        scaleFactor={0.99}
+      >
+        {/* Lecture Title */}
+        <Text style={[AppTypography.headlineSm, styles.title, { color: colors.text }]} numberOfLines={2}>
+          {lecture.title}
+        </Text>
 
-      {/* Sticky Note Mini Citation Snippet */}
-      {lecture.stickySnippet && (
-        <View style={styles.stickySnippetBox}>
-          <View style={styles.stickySnippetHeader}>
-            <LlIcon name="push_pin" size={14} color="#A67814" style={{ marginRight: 4 }} />
-            <Text style={[AppTypography.labelSm, styles.stickySnippetLabel]}>
-              Điểm nhấn cốt lõi của bài
+        {/* Sticky Note Mini Citation Snippet */}
+        {lecture.stickySnippet && (
+          <View style={[styles.stickySnippetBox, { backgroundColor: colors.stickyYellowBg }]}>
+            <View style={styles.stickySnippetHeader}>
+              <LlIcon name="push_pin" size={14} color={colors.stickyYellowAccent} style={{ marginRight: 4 }} />
+              <Text style={[AppTypography.labelSm, styles.stickySnippetLabel, { color: colors.stickyYellowAccent }]}>
+                Điểm nhấn cốt lõi của bài
+              </Text>
+            </View>
+            <Text style={[AppTypography.bodyMedium, styles.stickySnippetText, { color: colors.stickyYellowText }]} numberOfLines={2}>
+              “{lecture.stickySnippet}”
             </Text>
           </View>
-          <Text style={[AppTypography.bodyMedium, styles.stickySnippetText]} numberOfLines={2}>
-            “{lecture.stickySnippet}”
-          </Text>
-        </View>
-      )}
+        )}
 
-      {/* Metrics Row */}
-      <View style={styles.metricsRow}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <LlIcon name="clock" size={13} color={colors.textSecondary} />
+        {/* Metrics Row */}
+        <View style={styles.metricsRow}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <LlIcon name="clock" size={13} color={colors.textSecondary} />
+            <Text style={[AppTypography.bodySmall, { color: colors.textSecondary }]}>
+              {formatDuration(lecture.durationSeconds || 0)}
+            </Text>
+          </View>
+          <Text style={[styles.metricDot, { color: colors.border }]}>•</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <LlIcon name="toc" size={13} color={colors.textSecondary} />
+            <Text style={[AppTypography.bodySmall, { color: colors.textSecondary }]}>
+              {lecture.topicsCount || (lecture.topics ? lecture.topics.length : 4)} chủ đề
+            </Text>
+          </View>
+          <Text style={[styles.metricDot, { color: colors.border }]}>•</Text>
           <Text style={[AppTypography.bodySmall, { color: colors.textSecondary }]}>
-            {formatDuration(lecture.durationSeconds || 0)}
+            {lecture.relativeTime}
           </Text>
         </View>
-        <Text style={[styles.metricDot, { color: colors.border }]}>•</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <LlIcon name="toc" size={13} color={colors.textSecondary} />
-          <Text style={[AppTypography.bodySmall, { color: colors.textSecondary }]}>
-            {lecture.topicsCount || (lecture.topics ? lecture.topics.length : 4)} chủ đề
-          </Text>
-        </View>
-        <Text style={[styles.metricDot, { color: colors.border }]}>•</Text>
-        <Text style={[AppTypography.bodySmall, { color: colors.textSecondary }]}>
-          {lecture.relativeTime}
-        </Text>
-      </View>
+      </LlPressable>
 
       {/* Card Action Footer */}
       <View style={styles.footerRow}>
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={onResumePlay || onPress}
-          style={[styles.resumeButton, { backgroundColor: AppColors.surfaceContainer }]}
+          style={[styles.resumeButton, { backgroundColor: colors.surfaceContainer }]}
+          accessibilityRole="button"
+          accessibilityLabel={`Nghe tiếp từ ${formatDuration(lecture.resumePositionSeconds || 755)}`}
         >
-          <View style={[styles.miniPlayIcon, { backgroundColor: AppColors.primaryContainer }]}>
+          <View style={[styles.miniPlayIcon, { backgroundColor: colors.primaryContainer }]}>
             <LlIcon name="play_arrow" size={10} color="#FFFFFF" filled />
           </View>
           <Text style={[AppTypography.labelMd, { color: colors.primary, fontWeight: '700' }]}>
@@ -137,12 +152,14 @@ export const LectureCard = ({
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={onPress}
-          style={[styles.noteButton, { backgroundColor: AppColors.surfaceContainerHigh }]}
+          style={[styles.noteButton, { backgroundColor: colors.surfaceContainerHigh }]}
+          accessibilityRole="button"
+          accessibilityLabel="Xem chi tiết ghi chú"
         >
           <LlIcon name="description" size={16} color={colors.primary} />
         </TouchableOpacity>
       </View>
-    </LlPressable>
+    </View>
   );
 };
 
@@ -157,8 +174,7 @@ export const ProcessingCard = ({
   const progressPercent = Math.round((lecture.processingProgress || 0.68) * 100);
 
   return (
-    <LlPressable
-      onPress={onPress}
+    <View
       style={[
         styles.card,
         {
@@ -170,13 +186,17 @@ export const ProcessingCard = ({
       ]}
     >
       {/* Washi Tape Accent (Mint) */}
-      <View style={styles.tapeAnchor}>
+      <View style={styles.tapeAnchor} pointerEvents="none">
         <WashiTapeAccent color="mint" width={56} height={12} rotation="1.5deg" />
       </View>
 
       {/* Top Badge Row */}
       <View style={styles.topBadgeRow}>
-        <View style={styles.badgeGroup}>
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={onPress}
+          style={styles.badgeGroup}
+        >
           <View style={[styles.processingPill, { backgroundColor: AppColors.warningContainer }]}>
             <View style={styles.pingAmberDot} />
             <Text style={[AppTypography.labelSm, { color: AppColors.warningDark, fontWeight: '700' }]}>
@@ -184,75 +204,89 @@ export const ProcessingCard = ({
             </Text>
           </View>
 
-          <View style={[styles.subjectTag, { backgroundColor: AppColors.surfaceContainerHigh }]}>
+          <View style={[styles.subjectTag, { backgroundColor: colors.surfaceContainerHigh }]}>
             <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
               {lecture.subject}
             </Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
-        <View style={[styles.spinIconBox, { backgroundColor: AppColors.surfaceContainer }]}>
+        <View style={[styles.spinIconBox, { backgroundColor: colors.surfaceContainer }]}>
           <LlIcon name="sync" size={16} color={AppColors.warningDark} />
         </View>
       </View>
 
-      {/* Title */}
-      <Text style={[AppTypography.headlineSm, styles.title, { color: colors.text }]} numberOfLines={2}>
-        {lecture.title}
-      </Text>
+      {/* Main Body Clickable Area */}
+      <LlPressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={lecture.title}
+        scaleFactor={0.99}
+      >
+        {/* Title */}
+        <Text style={[AppTypography.headlineSm, styles.title, { color: colors.text }]} numberOfLines={2}>
+          {lecture.title}
+        </Text>
 
-      {/* Real-time Processing Visual Box */}
-      <View style={[styles.processingBox, { backgroundColor: AppColors.surfaceContainerLow }]}>
-        <View style={styles.procStatusRow}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <LlIcon name="auto_awesome" size={14} color={colors.primary} filled />
-            <Text style={[AppTypography.labelSm, { color: colors.primary, fontWeight: '700' }]}>
-              Cú Mèo đang lắng nghe & tổng hợp...
+        {/* Real-time Processing Visual Box */}
+        <View style={[styles.processingBox, { backgroundColor: colors.surfaceContainerLow }]}>
+          <View style={styles.procStatusRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <LlIcon name="auto_awesome" size={14} color={colors.primary} filled />
+              <Text style={[AppTypography.labelSm, { color: colors.primary, fontWeight: '700' }]}>
+                Cú Mèo đang lắng nghe & tổng hợp...
+              </Text>
+            </View>
+            <Text style={[AppTypography.labelSm, { color: colors.textSecondary, fontWeight: '700' }]}>
+              {progressPercent}%
             </Text>
           </View>
-          <Text style={[AppTypography.labelSm, { color: colors.textSecondary, fontWeight: '700' }]}>
-            {progressPercent}%
-          </Text>
-        </View>
 
-        {/* Gradient-like Progress Bar */}
-        <View style={[styles.progressTrack, { backgroundColor: AppColors.surfaceContainer }]}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: `${progressPercent}%`, backgroundColor: AppColors.primaryContainer },
-            ]}
-          />
-        </View>
+          {/* Gradient-like Progress Bar */}
+          <View style={[styles.progressTrack, { backgroundColor: colors.surfaceContainer }]}>
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${progressPercent}%`, backgroundColor: colors.primaryContainer },
+              ]}
+            />
+          </View>
 
-        <View style={styles.procFooterRow}>
-          <Text style={[AppTypography.bodySmall, { color: colors.textSecondary, fontStyle: 'italic' }]}>
-            {lecture.processingStatusText || 'Đang tách chủ đề & lập mục lục thông minh...'}
-          </Text>
-          <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
-            {lecture.remainingTimeText || '~ 45 giây nữa'}
-          </Text>
+          <View style={styles.procFooterRow}>
+            <Text style={[AppTypography.bodySmall, { color: colors.textSecondary, fontStyle: 'italic' }]}>
+              {lecture.processingStatusText || 'Đang tách chủ đề & lập mục lục thông minh...'}
+            </Text>
+            <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
+              {lecture.remainingTimeText || '~ 45 giây nữa'}
+            </Text>
+          </View>
         </View>
-      </View>
+      </LlPressable>
 
       {/* Audio Spec & File Metadata */}
       <View style={styles.fileMetaRow}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 }}>
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={onPress}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 }}
+        >
           <LlIcon name="mic" size={14} color={colors.textSecondary} />
           <Text style={[AppTypography.bodySmall, { color: colors.textSecondary }]} numberOfLines={1}>
             {lecture.audioFileName || 'Bản ghi phòng học'} ({lecture.audioFileSize || '42.5 MB'})
           </Text>
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={onPress}
-          style={[styles.detailChip, { backgroundColor: AppColors.surfaceContainer }]}
+          style={[styles.detailChip, { backgroundColor: colors.surfaceContainer }]}
+          accessibilityRole="button"
+          accessibilityLabel="Xem chi tiết tiến trình bài giảng"
         >
           <Text style={[AppTypography.labelSm, { color: colors.primary, fontWeight: '700' }]}>
             Xem chi tiết
           </Text>
         </TouchableOpacity>
       </View>
-    </LlPressable>
+    </View>
   );
 };
 
