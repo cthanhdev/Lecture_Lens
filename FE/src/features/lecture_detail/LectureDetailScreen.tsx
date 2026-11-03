@@ -29,6 +29,7 @@ import { LectureDetailSkeleton } from '../../shared/widgets/skeleton/SkeletonShi
 import { useLectureStore } from '../../shared/stores/useLectureStore';
 import { useAudioPlayerStore } from '../../shared/stores/useAudioPlayerStore';
 import { formatDuration } from '../../core/utils/formatters';
+import { filterTranscripts } from '../../core/utils/transcriptUtils';
 
 type LectureDetailScreenProps = {
   route: RouteProp<RootStackParamList, 'LectureDetail'>;
@@ -58,7 +59,7 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
   const [chatInput, setChatInput] = useState('');
   const [transcriptSearch, setTranscriptSearch] = useState('');
   const [isSkeletonDemo, setIsSkeletonDemo] = useState(false);
-  const [messages, setMessages] = useState(lecture.aiMessages || [
+  const [messages, setMessages] = useState(lecture?.aiMessages || [
     {
       id: 'msg_init_1',
       sender: 'user' as const,
@@ -79,6 +80,7 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
     seekTo(seconds);
     play();
   };
+
 
   const handleSendChat = (textToSend?: string) => {
     const text = (textToSend || chatInput).trim();
@@ -112,6 +114,32 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
     }, 900);
   };
 
+  if (!lecture) {
+    return (
+      <DotBackground>
+        <LlAppBar
+          title="Chi Tiết Bài Giảng"
+          showBack={true}
+          onBackPress={() => navigation.goBack()}
+        />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <CuMeoWidget size={100} variant="sleeping" />
+          <Text style={[AppTypography.titleMedium, { color: colors.text, marginTop: 16 }]}>
+            Không tìm thấy bài giảng
+          </Text>
+          <Text style={[AppTypography.bodyMedium, { color: colors.textSecondary, marginTop: 8, textAlign: 'center' }]}>
+            Bài giảng này không tồn tại hoặc đã bị xóa khỏi thư viện.
+          </Text>
+        </View>
+      </DotBackground>
+    );
+  }
+
+  const rawTranscripts = lecture.transcripts || [];
+  const totalCount = rawTranscripts.length;
+  const filteredTranscripts = filterTranscripts(rawTranscripts, transcriptSearch);
+  const matchCount = transcriptSearch.trim().length > 0 ? filteredTranscripts.length : totalCount;
+
   if (isSkeletonDemo) {
     return (
       <DotBackground>
@@ -136,16 +164,20 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
           <View style={styles.topActionsRow}>
             <TouchableOpacity
               onPress={() => Alert.alert('Chia sẻ bài giảng', 'Đã sao chép liên kết ghi chú!')}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={[styles.roundActionBtn, { backgroundColor: colors.surfaceContainerLow }]}
             >
               <LlIcon name="share" size={18} color={colors.primary} />
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setIsSkeletonDemo(!isSkeletonDemo)}
-              style={[styles.roundActionBtn, { backgroundColor: colors.surfaceContainerLow }]}
-            >
-              <LlIcon name="sync" size={16} color={colors.primary} />
-            </TouchableOpacity>
+            {__DEV__ && (
+              <TouchableOpacity
+                onPress={() => setIsSkeletonDemo(!isSkeletonDemo)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                style={[styles.roundActionBtn, { backgroundColor: colors.surfaceContainerLow }]}
+              >
+                <LlIcon name="sync" size={16} color={colors.primary} />
+              </TouchableOpacity>
+            )}
           </View>
         }
       />
@@ -327,9 +359,18 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
                 placeholder="Tìm trong bản ghi..."
                 placeholderTextColor={colors.textSecondary}
               />
+              {transcriptSearch.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => setTranscriptSearch('')}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  style={{ marginRight: 6 }}
+                >
+                  <LlIcon name="close" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+              )}
               <View style={[styles.matchCounterBadge, { backgroundColor: colors.surfaceContainerLow, flexDirection: 'row', alignItems: 'center' }]}>
                 <Text style={[AppTypography.labelSm, { color: colors.primary, fontWeight: '700' }]}>
-                  2/7
+                  {matchCount}/{totalCount}
                 </Text>
                 <LlIcon name="swap_vert" size={14} color={colors.primary} style={{ marginLeft: 3 }} />
               </View>
@@ -346,8 +387,8 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
             </View>
 
             {/* Transcript Timeline Blocks */}
-            {lecture.transcripts && lecture.transcripts.length > 0 ? (
-              lecture.transcripts.map((seg, i) => {
+            {filteredTranscripts.length > 0 ? (
+              filteredTranscripts.map((seg, i) => {
                 const isNearActive =
                   positionSeconds >= seg.startSeconds && positionSeconds < seg.startSeconds + 300;
 
@@ -436,7 +477,15 @@ export const LectureDetailScreen = ({ route, navigation }: LectureDetailScreenPr
                   </View>
                 );
               })
-            ) : null}
+            ) : (
+              <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+                <Text style={[AppTypography.bodyMedium, { color: colors.textSecondary, textAlign: 'center' }]}>
+                  {transcriptSearch.trim().length > 0
+                    ? `Không tìm thấy đoạn ghi âm phù hợp với "${transcriptSearch}"`
+                    : 'Chưa có bản ghi âm cho bài giảng này.'}
+                </Text>
+              </View>
+            )}
 
             {/* Cheerful End of Transcript Card */}
             <View style={[styles.endMascotCard, { backgroundColor: colors.surfaceContainer }]}>

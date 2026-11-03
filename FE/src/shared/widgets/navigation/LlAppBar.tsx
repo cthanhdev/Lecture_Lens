@@ -96,10 +96,6 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     paddingVertical: 6,
   },
-  backArrow: {
-    fontSize: 22,
-    fontWeight: '700',
-  },
   titleContainer: {
     flex: 1,
   },

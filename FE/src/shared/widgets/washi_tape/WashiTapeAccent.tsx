@@ -14,6 +14,34 @@ interface WashiTapeAccentProps {
   style?: StyleProp<ViewStyle>;
 }
 
+export const getWashiTapeBgColor = (color: WashiTapeColor = 'sakura'): string => {
+  switch (color) {
+    case 'mint':
+      return AppColors.tertiaryFixed;
+    case 'yellow':
+      return '#FEF3C7';
+    case 'lavender':
+      return AppColors.primaryFixed;
+    case 'sakura':
+    default:
+      return AppColors.secondaryFixed;
+  }
+};
+
+export const getWashiTapeTextColor = (color: WashiTapeColor = 'sakura'): string => {
+  switch (color) {
+    case 'mint':
+      return AppColors.onTertiaryFixedVariant;
+    case 'yellow':
+      return '#78350F';
+    case 'lavender':
+      return AppColors.primary;
+    case 'sakura':
+    default:
+      return AppColors.onSecondaryContainer;
+  }
+};
+
 export const WashiTapeAccent = ({
   color = 'sakura',
   width = 64,
@@ -22,33 +50,7 @@ export const WashiTapeAccent = ({
   label,
   style,
 }: WashiTapeAccentProps) => {
-  const getBackgroundColor = () => {
-    switch (color) {
-      case 'mint':
-        return AppColors.tertiaryFixed;
-      case 'yellow':
-        return AppColors.secondaryContainer;
-      case 'lavender':
-        return AppColors.primaryFixed;
-      case 'sakura':
-      default:
-        return AppColors.secondaryFixed;
-    }
-  };
 
-  const getTextColor = () => {
-    switch (color) {
-      case 'mint':
-        return AppColors.onTertiaryFixedVariant;
-      case 'yellow':
-        return AppColors.onSecondaryContainer;
-      case 'lavender':
-        return AppColors.primary;
-      case 'sakura':
-      default:
-        return AppColors.onSecondaryContainer;
-    }
-  };
 
   return (
     <View
@@ -57,7 +59,7 @@ export const WashiTapeAccent = ({
         {
           width: label ? Math.max(width, 100) : width,
           height: label ? Math.max(height, 22) : height,
-          backgroundColor: getBackgroundColor(),
+          backgroundColor: getWashiTapeBgColor(color),
           transform: [{ rotate: rotation }],
         },
         style,
@@ -67,7 +69,7 @@ export const WashiTapeAccent = ({
         <Text
           style={[
             AppTypography.labelSm,
-            { color: getTextColor(), textAlign: 'center', opacity: 0.9 },
+            { color: getWashiTapeTextColor(color), textAlign: 'center', opacity: 0.9 },
           ]}
           numberOfLines={1}
         >

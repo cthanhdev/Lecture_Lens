@@ -12,16 +12,11 @@ import { WashiTapeAccent } from '../../shared/widgets/washi_tape/WashiTapeAccent
 import { useNotificationStore } from '../../shared/stores/useNotificationStore';
 import { LlIcon } from '../../shared/widgets/icons/LlIcon';
 
+import { isNotificationToday } from '../../core/utils/notificationUtils';
+
 type NotificationsScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Notifications'>;
 };
-
-const FILTER_TYPES = [
-  { key: 'all', label: 'Tất cả (5)' },
-  { key: 'lecture', label: 'Bài giảng' },
-  { key: 'qa', label: 'Hỏi đáp AI' },
-  { key: 'system', label: 'Hệ thống' },
-];
 
 export const NotificationsScreen = ({ navigation }: NotificationsScreenProps) => {
   const { colors, borderRadius } = useAppTheme();
@@ -29,6 +24,13 @@ export const NotificationsScreen = ({ navigation }: NotificationsScreenProps) =>
   const [activeFilter, setActiveFilter] = useState('all');
 
   const unreadCount = getUnread();
+
+  const filterTypes = [
+    { key: 'all', label: `Tất cả (${notifications.length})` },
+    { key: 'lecture', label: 'Bài giảng' },
+    { key: 'qa', label: 'Hỏi đáp AI' },
+    { key: 'system', label: 'Hệ thống' },
+  ];
 
   const filteredNotifs = notifications.filter((item) => {
     if (activeFilter === 'all') return true;
@@ -38,8 +40,8 @@ export const NotificationsScreen = ({ navigation }: NotificationsScreenProps) =>
     return true;
   });
 
-  const todayNotifs = filteredNotifs.slice(0, 2);
-  const earlierNotifs = filteredNotifs.slice(2);
+  const todayNotifs = filteredNotifs.filter(isNotificationToday);
+  const earlierNotifs = filteredNotifs.filter((item) => !isNotificationToday(item));
 
   const handleOpenNotif = (notifId: string, lectureId?: string) => {
     markAsRead(notifId);
@@ -85,7 +87,7 @@ export const NotificationsScreen = ({ navigation }: NotificationsScreenProps) =>
 
         {/* Quick Filter Chips */}
         <View style={styles.filterGrid}>
-          {FILTER_TYPES.map((chip) => {
+          {filterTypes.map((chip) => {
             const isActive = activeFilter === chip.key;
             return (
               <TouchableOpacity
@@ -241,6 +243,14 @@ export const NotificationsScreen = ({ navigation }: NotificationsScreenProps) =>
                 </View>
               </View>
             ))}
+          </View>
+        )}
+
+        {todayNotifs.length === 0 && earlierNotifs.length === 0 && (
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+            <Text style={[AppTypography.bodyMedium, { color: colors.textSecondary, textAlign: 'center' }]}>
+              Không có thông báo nào trong mục này.
+            </Text>
           </View>
         )}
 

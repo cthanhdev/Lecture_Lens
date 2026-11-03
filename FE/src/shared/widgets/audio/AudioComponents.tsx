@@ -1,10 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useAppTheme } from '../../../core/theme/ThemeContext';
-import { AppColors } from '../../../core/theme/colors';
 import { AppTypography } from '../../../core/theme/typography';
 import { formatDuration } from '../../../core/utils/formatters';
-import { LlPressable } from '../interactive/LlPressable';
 
 interface AudioProgressBarProps {
   positionSeconds: number;

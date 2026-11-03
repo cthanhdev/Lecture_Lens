@@ -37,15 +37,11 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
     name: string;
     size: string;
     duration?: string;
-  } | null>({
-    name: 'Bai_giang_REST_API_05.m4a',
-    size: '42.5 MB',
-    duration: '45 phút',
-  });
+  } | null>(null);
 
-  const [title, setTitle] = useState('Lập trình Web - Bài 5: REST API');
-  const [subject, setSubject] = useState('Công nghệ phần mềm');
-  const [university, setUniversity] = useState('ĐH Bách Khoa');
+  const [title, setTitle] = useState('');
+  const [subject, setSubject] = useState('');
+  const [university, setUniversity] = useState('');
 
   const handlePickAudio = async () => {
     try {
@@ -62,16 +58,21 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
           size: `${sizeMb} MB`,
           duration: 'Ước tính 45 phút',
         });
-        if (!title || title === 'Lập trình Web - Bài 5: REST API') {
+        if (!title) {
           setTitle(file.name.replace(/\.[^/.]+$/, ''));
         }
       }
-    } catch (err) {
+    } catch {
       Alert.alert('Thông báo', 'Không thể mở trình chọn tệp tin.');
     }
   };
 
   const handleStartProcessing = () => {
+    if (!selectedFile) {
+      Alert.alert('Chưa chọn tệp tin', 'Vui lòng chọn hoặc ghi âm một bài giảng trước khi tiếp tục.');
+      return;
+    }
+
     if (!title.trim()) {
       Alert.alert('Chưa nhập tiêu đề', 'Vui lòng điền tên bài giảng để tiếp tục.');
       return;
@@ -81,66 +82,35 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
     addLecture({
       id: newId,
       title: title.trim(),
-      subject: subject.trim(),
-      university: university.trim(),
+      subject: subject.trim() || 'Chưa phân loại',
+      university: university.trim() || 'Đại học Bách Khoa',
       status: 'processing',
-      processingProgress: 0.65,
+      processingProgress: 0.15,
       processingStatusText: 'Đang xử lý mô hình Whisper AI...',
-      remainingTimeText: 'Còn khoảng 45 giây',
+      remainingTimeText: 'Còn khoảng 1-2 phút',
       audioFileName: selectedFile?.name || 'lecture_audio.m4a',
-      audioFileSize: selectedFile?.size || '42.5 MB',
-      durationSeconds: 2720,
+      audioFileSize: selectedFile?.size || '25.0 MB',
+      durationSeconds: 1800,
       relativeTime: 'Vừa xong',
       topics: [
-        { title: 'Mở đầu & Giới thiệu REST API', timestamp: '00:00', startSeconds: 0, isCompleted: true },
-        { title: 'Đặc tính Stateless & Client-Server', timestamp: '12:35', startSeconds: 755, isCompleted: false },
-        { title: 'Các phương thức HTTP (GET, POST, PUT, DELETE)', timestamp: '18:40', startSeconds: 1120, isCompleted: false },
-        { title: 'Xác thực JWT Token trong REST API', timestamp: '24:50', startSeconds: 1490, isCompleted: false },
+        { title: `Mở đầu: ${title.trim()}`, timestamp: '00:00', startSeconds: 0, isCompleted: true },
+        { title: 'Nội dung bài giảng trọng tâm', timestamp: '10:00', startSeconds: 600, isCompleted: false },
+        { title: 'Tổng kết & Bài tập ứng dụng', timestamp: '25:00', startSeconds: 1500, isCompleted: false },
       ],
       transcripts: [
         {
-          timestamp: '02:15',
-          startSeconds: 135,
-          speaker: 'Thầy Hoàng',
-          content: 'Hôm nay chúng ta sẽ tìm hiểu về nguyên lý REST API trong thiết kế web service. Đây là tiêu chuẩn nền tảng giúp hệ thống frontend và backend giao tiếp mạch lạc với nhau.',
-        },
-        {
-          timestamp: '12:35',
-          startSeconds: 755,
-          speaker: 'Thầy Hoàng',
-          content: 'REST API hoạt động theo kiến trúc Client-Server vô trạng thái (Stateless). Mỗi request từ phía client gửi lên máy chủ phải chứa đầy đủ mọi thông tin xác thực cần thiết mà không phụ thuộc vào session lưu trên server.',
-          isKeyPoint: true,
-          stickyNoteText: 'Nhớ kỹ đặc tính Stateless: Server không lưu session ID của client giữa các request liên tiếp.',
-        },
-        {
-          timestamp: '18:40',
-          startSeconds: 1120,
-          speaker: 'Thầy Hoàng',
-          content: 'Về các phương thức HTTP cơ bản: GET để đọc dữ liệu, POST để tạo mới, PUT cập nhật toàn phần, PATCH cập nhật một phần và DELETE để xoá dữ liệu.',
-        },
-        {
-          timestamp: '24:50',
-          startSeconds: 1490,
-          speaker: 'Thầy Hoàng',
-          content: 'Chính vì stateless nên chúng ta sử dụng JSON Web Token mang theo thông tin phân quyền của người dùng được mã hóa Base64 và ký bằng bí mật HMAC.',
-          isKeyPoint: true,
-          stickyNoteText: 'JWT Token: Bearer token chứa payload và chữ ký HMAC-SHA256, không lưu session server.',
+          timestamp: '00:15',
+          startSeconds: 15,
+          speaker: 'Giảng viên',
+          content: `Chào cả lớp, hôm nay chúng ta bắt đầu bài giảng "${title.trim()}". Các bạn chú ý theo dõi nhé.`,
         },
       ],
       aiMessages: [
         {
-          id: 'msg_01',
-          sender: 'user',
-          content: 'Thầy giải thích tại sao REST API lại phải là Stateless ở phút thứ mấy vậy bạn?',
-          timestamp: '14:02',
-        },
-        {
-          id: 'msg_02',
+          id: `msg_${Date.now()}`,
           sender: 'cu_meo',
-          content: 'Thầy giải thích cơ chế Stateless (Vô trạng thái) rất kỹ ở mốc 12:35! Mỗi request client gửi lên phải tự chứa đủ token/thông tin xác thực, server không cần lưu trạng thái session.',
+          content: `Chào bạn! Cú Mèo đang lắng nghe bài giảng "${title.trim()}". Bạn có thể đặt câu hỏi bất cứ lúc nào nhé!`,
           timestamp: 'Vừa xong',
-          citationTime: '12:35',
-          citationSeconds: 755,
         },
       ],
     });
@@ -259,7 +229,11 @@ export const UploadScreen = ({ navigation }: UploadScreenProps) => {
                   {selectedFile.size} • {selectedFile.duration || '45 phút'}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setSelectedFile(null)} style={styles.closeFileBtn}>
+              <TouchableOpacity
+                onPress={() => setSelectedFile(null)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                style={styles.closeFileBtn}
+              >
                 <LlIcon name="close" size={14} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>

@@ -14,7 +14,7 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      hasCompletedOnboarding: true,
+      hasCompletedOnboarding: false,
       appLockEnabled: false,
       selectedLanguage: 'Tiếng Việt',
 

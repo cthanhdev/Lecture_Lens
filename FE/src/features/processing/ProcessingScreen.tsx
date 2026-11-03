@@ -49,9 +49,10 @@ export const ProcessingScreen = ({ route, navigation }: ProcessingScreenProps) =
   const updateProgress = useLectureStore((state) => state.updateProgress);
 
   const lecture = lectures.find((l) => l.id === lectureId) || lectures[0];
-  const [progress, setProgress] = useState(0.65);
+  const [progress, setProgress] = useState(lecture?.processingProgress ?? 0.65);
 
   useEffect(() => {
+    if (!lecture) return;
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 1) {
@@ -66,7 +67,7 @@ export const ProcessingScreen = ({ route, navigation }: ProcessingScreenProps) =
     }, 1200);
 
     return () => clearInterval(interval);
-  }, [lecture?.id, updateProgress]);
+  }, [lecture?.id, lecture, updateProgress]);
 
   const progressPercent = Math.round(progress * 100);
   const isDone = progress >= 1;

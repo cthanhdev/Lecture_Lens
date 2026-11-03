@@ -50,7 +50,7 @@ export const LlPressable = ({
     if (enableHaptic) {
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch (_) {}
+      } catch {}
     }
     onPressIn?.(event);
   };
