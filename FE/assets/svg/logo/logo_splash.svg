@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" fill="none">
+  <defs>
+    <linearGradient id="owlBodyGrad" x1="100" y1="35" x2="100" y2="175" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.75" stop-color="#FBF9FE"/>
+      <stop offset="1" stop-color="#F1ECFA"/>
+    </linearGradient>
+    <linearGradient id="headphoneGrad" x1="50" y1="30" x2="150" y2="30" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8072E6"/>
+      <stop offset="1" stop-color="#A594F9"/>
+    </linearGradient>
+    <linearGradient id="blushGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFB3BA" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#FFDFBA" stop-opacity="0.4"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow underneath -->
+  <ellipse cx="100" cy="180" rx="50" ry="9" fill="#E8DED2" fill-opacity="0.7"/>
+  <!-- Feet -->
+  <ellipse cx="85" cy="174" rx="9" ry="5" fill="#F8B179"/>
+  <ellipse cx="115" cy="174" rx="9" ry="5" fill="#F8B179"/>
+  <!-- Body -->
+  <rect x="42" y="46" width="116" height="126" rx="58" fill="url(#owlBodyGrad)" stroke="#E4DCF5" stroke-width="2"/>
+  <!-- Belly -->
+  <path d="M68 114C68 96 82 86 100 86C118 86 132 96 132 114C132 138 118 152 100 152C82 152 68 138 68 114Z" fill="#F4EFFF" fill-opacity="0.7"/>
+  <!-- Wings -->
+  <path d="M42 98C36 108 36 132 48 140C54 144 60 134 56 120C54 110 48 100 42 98Z" fill="#ECE4FA" stroke="#D9CEF2" stroke-width="1.5"/>
+  <path d="M158 98C164 108 164 132 152 140C146 144 140 134 144 120C146 110 152 100 158 98Z" fill="#ECE4FA" stroke="#D9CEF2" stroke-width="1.5"/>
+  <!-- Cheeks -->
+  <circle cx="68" cy="118" r="9" fill="url(#blushGrad)"/>
+  <circle cx="132" cy="118" r="9" fill="url(#blushGrad)"/>
+  <!-- Beak -->
+  <path d="M95 106C95 106 100 114 105 106H95Z" fill="#FCA35D"/>
+  <!-- Eyes -->
+  <circle cx="78" cy="100" r="13" fill="#2D283E"/>
+  <circle cx="74" cy="96" r="4.5" fill="#FFFFFF"/>
+  <circle cx="82" cy="104" r="2" fill="#FFFFFF"/>
+  <circle cx="122" cy="100" r="13" fill="#2D283E"/>
+  <circle cx="118" cy="96" r="4.5" fill="#FFFFFF"/>
+  <circle cx="126" cy="104" r="2" fill="#FFFFFF"/>
+  <!-- Headphones -->
+  <path d="M52 74C52 42 74 26 100 26C126 26 148 42 148 74" stroke="url(#headphoneGrad)" stroke-width="6.5" stroke-linecap="round"/>
+  <rect x="36" y="68" width="16" height="30" rx="8" fill="#5EEAD4" stroke="#0D9488" stroke-width="1.5"/>
+  <rect x="42" y="73" width="7" height="20" rx="3.5" fill="#2DD4BF"/>
+  <circle cx="44" cy="83" r="1.5" fill="#FFFFFF"/>
+  <rect x="148" y="68" width="16" height="30" rx="8" fill="#5EEAD4" stroke="#0D9488" stroke-width="1.5"/>
+  <rect x="151" y="73" width="7" height="20" rx="3.5" fill="#2DD4BF"/>
+  <circle cx="156" cy="83" r="1.5" fill="#FFFFFF"/>
+  <!-- Brand text below -->
+  <text x="100" y="215" text-anchor="middle" font-family="Quicksand, sans-serif" font-weight="700" font-size="22" fill="#2A233A">LectureLens</text>
+  <text x="100" y="232" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="600" font-size="12" fill="#7D7893">Biến bài giảng thành kho kiến thức</text>
+</svg>

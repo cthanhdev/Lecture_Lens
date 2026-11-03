@@ -1,0 +1,121 @@
+# ==============================================================================
+# SmartLecture AI (BE) - Backend Specific Git Ignore Rules
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Bảo Mật & Biến Môi Trường (Secrets & Environment Files)
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+*.env
+!*.env.example
+
+# Private Keys & Keystores
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.jks
+
+# ------------------------------------------------------------------------------
+# 2. Loại Trừ Trọng Số Mô Hình AI Nặng (> 23 GB)
+# ------------------------------------------------------------------------------
+models/**/*.safetensors
+models/**/*.bin
+models/**/*.pt
+models/**/*.pth
+models/**/*.onnx
+models/**/*.onnx_data
+models/**/*.gguf
+models/**/*.tflite
+models/**/*.bpe.model
+models/**/.cache/
+models/**/trees/
+models/**/download/
+models/**/CACHEDIR.TAG
+models/**/onnx/
+models/**/assets/
+models/**/imgs/
+models/**/*.jpg
+models/**/*.png
+
+# BẮT BUỘC GIỮ LẠI: .gitkeep và các file cấu hình json, tokenizer nhẹ (< 100KB)
+!models/**/.gitkeep
+!models/**/.gitattributes
+!models/**/config*.json
+!models/**/tokenizer*.json
+!models/**/special_tokens_map.json
+!models/**/generation_config.json
+!models/**/preprocessor_config.json
+!models/**/processor_config.json
+!models/**/normalizer.json
+!models/**/added_tokens.json
+!models/**/modules.json
+!models/**/sentence_bert_config.json
+!models/**/merges.txt
+!models/**/vocab.json
+!models/**/chat_template.jinja
+!models/**/README.md
+
+# ------------------------------------------------------------------------------
+# 3. Audio & Tệp Media Người Dùng Tải Lên (Upload Storage)
+# ------------------------------------------------------------------------------
+uploads/
+storage/
+shared/
+*.mp3
+*.wav
+*.m4a
+*.flac
+*.aac
+*.ogg
+
+# ------------------------------------------------------------------------------
+# 4. Docker Volume & Database Data Mounts
+# ------------------------------------------------------------------------------
+pgdata/
+ollama_data/
+db_data/
+*.sql.gz
+*.dump
+
+# ------------------------------------------------------------------------------
+# 5. Python Runtime & Caches
+# ------------------------------------------------------------------------------
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+
+# ------------------------------------------------------------------------------
+# 6. Spring Boot Gateway Build Artifacts
+# ------------------------------------------------------------------------------
+spring-gateway/target/
+target/
+*.jar
+*.war
+.gradle/
+
+# ------------------------------------------------------------------------------
+# 7. Logs & OS Metadata
+# ------------------------------------------------------------------------------
+logs/
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/

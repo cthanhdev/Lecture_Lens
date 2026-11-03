@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <!-- Owl in listening mode with headphones & note pad -->
+  <path d="M40 70 C40 34, 120 34, 120 70" stroke="#8072E6" stroke-linecap="round" stroke-width="7"/>
+  <rect x="30" y="62" width="14" height="26" rx="6" fill="#5EEAD4" stroke="#0D9488" stroke-width="1.5"/>
+  <rect x="116" y="62" width="14" height="26" rx="6" fill="#5EEAD4" stroke="#0D9488" stroke-width="1.5"/>
+  <!-- Body -->
+  <rect x="36" y="38" width="88" height="98" rx="44" fill="#FFFFFF" stroke="#E4DCF5" stroke-width="2"/>
+  <ellipse cx="80" cy="94" rx="26" ry="28" fill="#F4EFFF" opacity="0.8"/>
+  <!-- Cheeks -->
+  <circle cx="56" cy="94" r="7" fill="#FFB3BA" opacity="0.85"/>
+  <circle cx="104" cy="94" r="7" fill="#FFB3BA" opacity="0.85"/>
+  <!-- Attentive Eyes -->
+  <circle cx="64" cy="80" r="10" fill="#2D283E"/>
+  <circle cx="61" cy="77" r="3.5" fill="#FFFFFF"/>
+  <circle cx="67" cy="83" r="1.5" fill="#FFFFFF"/>
+  <circle cx="96" cy="80" r="10" fill="#2D283E"/>
+  <circle cx="93" cy="77" r="3.5" fill="#FFFFFF"/>
+  <circle cx="99" cy="83" r="1.5" fill="#FFFFFF"/>
+  <!-- Beak -->
+  <path d="M76 85C76 85 80 92 84 85H76Z" fill="#FCA35D"/>
+  <!-- Feet -->
+  <ellipse cx="68" cy="136" rx="7" ry="4" fill="#F8B179"/>
+  <ellipse cx="92" cy="136" rx="7" ry="4" fill="#F8B179"/>
+  <!-- Musical note in air -->
+  <path d="M125 40v-10h10v6" stroke="#6D5FD0" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="123" cy="40" r="3" fill="#6D5FD0"/>
+</svg>

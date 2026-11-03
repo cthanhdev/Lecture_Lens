@@ -1,0 +1,156 @@
+# ==============================================================================
+# LectureLens Monorepo - Master Git Ignore Rules
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Bảo Mật & Biến Môi Trường (Secrets & Environment Files)
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+.env.staging
+*.env
+!*.env.example
+
+# Private Keys, Certificates & Keystores
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.p8
+*.jks
+*.keystore
+*.mobileprovision
+google-services.json
+GoogleService-Info.plist
+
+# ------------------------------------------------------------------------------
+# 2. Ngăn Chặn Mô Hình AI & Tệp Nhị Phân Nặng (~23GB Weights)
+# ------------------------------------------------------------------------------
+# Trọng số PyTorch, SafeTensors, ONNX, GGUF, Checkpoints
+**/*.safetensors
+**/*.bin
+**/*.pt
+**/*.pth
+**/*.onnx
+**/*.onnx_data
+**/*.gguf
+**/*.tflite
+**/*.bpe.model
+**/*.h5
+**/*.ckpt
+
+# Cache tải về từ Hugging Face
+**/models/**/.cache/
+**/models/**/trees/
+**/models/**/download/
+**/models/**/CACHEDIR.TAG
+**/models/**/onnx/
+**/models/**/assets/
+**/models/**/imgs/
+**/models/**/*.jpg
+**/models/**/*.png
+
+# BẮT BUỘC GIỮ LẠI: .gitkeep và file cấu hình nhẹ (< 100KB)
+!**/models/**/.gitkeep
+!**/models/**/.gitattributes
+!**/models/**/config*.json
+!**/models/**/tokenizer*.json
+!**/models/**/special_tokens_map.json
+!**/models/**/generation_config.json
+!**/models/**/preprocessor_config.json
+!**/models/**/processor_config.json
+!**/models/**/normalizer.json
+!**/models/**/added_tokens.json
+!**/models/**/modules.json
+!**/models/**/sentence_bert_config.json
+!**/models/**/merges.txt
+!**/models/**/vocab.json
+!**/models/**/chat_template.jinja
+!**/models/**/README.md
+
+# ------------------------------------------------------------------------------
+# 3. Âm Thanh Bài Giảng & Dữ Liệu Tải Lên (Audio & Uploads)
+# ------------------------------------------------------------------------------
+**/uploads/
+**/storage/
+**/shared/audio/
+*.mp3
+*.wav
+*.m4a
+*.flac
+*.aac
+*.ogg
+
+# ------------------------------------------------------------------------------
+# 4. Cơ Sở Dữ Liệu & Volume Docker (Persistent Data)
+# ------------------------------------------------------------------------------
+**/pgdata/
+**/ollama_data/
+**/db_data/
+*.sql.gz
+*.dump
+
+# ------------------------------------------------------------------------------
+# 5. Môi Trường Ảo & Package Dependencies
+# ------------------------------------------------------------------------------
+node_modules/
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# ------------------------------------------------------------------------------
+# 6. Expo & Mobile Native Artifacts (Continuous Native Generation)
+# ------------------------------------------------------------------------------
+.expo/
+web-build/
+expo-env.d.ts
+/ios/
+/android/
+.kotlin/
+*.orig.*
+.metro-health-check*
+*.tsbuildinfo
+
+# ------------------------------------------------------------------------------
+# 7. Spring Boot & Java Build Artifacts
+# ------------------------------------------------------------------------------
+**/target/
+*.jar
+*.war
+.gradle/
+
+# ------------------------------------------------------------------------------
+# 8. Logs & Debugging
+# ------------------------------------------------------------------------------
+logs/
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# ------------------------------------------------------------------------------
+# 9. Hệ Điều Hành & IDE Metadata
+# ------------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+# Ignore toàn bộ thư mục model
+/BE/models/

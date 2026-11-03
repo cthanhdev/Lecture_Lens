@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Glowing circle background -->
+  <circle cx="60" cy="60" r="50" fill="#ECE9FE" opacity="0.6"/>
+  <circle cx="60" cy="60" r="38" fill="#DDD6FE" opacity="0.4"/>
+  <!-- Upload cloud -->
+  <path d="M76 68l-16-16-16 16" stroke="#5445B6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60 52v30" stroke="#5445B6" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M85 75a18 18 0 0 0-3-35 22 22 0 0 0-42-4 15 15 0 0 0-14 16" stroke="#6D5FD0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

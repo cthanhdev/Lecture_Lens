@@ -1,0 +1,17 @@
+{
+  "name": "lecturelens-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LectureLens - AI Lecture Summarization & Flashcard App",
+  "scripts": {
+    "start": "npm --prefix FE start",
+    "fe": "npm --prefix FE start",
+    "fe:start": "npm --prefix FE start",
+    "fe:android": "npm --prefix FE run android",
+    "fe:ios": "npm --prefix FE run ios",
+    "fe:web": "npm --prefix FE run web",
+    "fe:test": "npm --prefix FE test",
+    "test": "npm --prefix FE test",
+    "typecheck": "npm --prefix FE run typecheck"
+  }
+}

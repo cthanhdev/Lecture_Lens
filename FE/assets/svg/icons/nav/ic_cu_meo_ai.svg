@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Owl Face / AI sparkles -->
+  <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5V11a2 2 0 0 1-4 0V9.5C8.8 8.8 8 7.5 8 6a4 4 0 0 1 4-4z"/>
+  <circle cx="10" cy="5" r="1" fill="currentColor"/>
+  <circle cx="14" cy="5" r="1" fill="currentColor"/>
+  <!-- AI sparkle rays -->
+  <path d="M12 15v5"/>
+  <path d="M8 18h8"/>
+  <path d="M5 21a7 7 0 0 1 14 0"/>
+</svg>

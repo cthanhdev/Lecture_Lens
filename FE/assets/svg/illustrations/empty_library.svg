@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <!-- Mint Headphones headband -->
+  <path d="M40 76 C40 38, 120 38, 120 76" stroke="#9FDAC4" stroke-linecap="round" stroke-width="8"/>
+  <path d="M48 76 C48 46, 112 46, 112 76" stroke="#5445B6" stroke-dasharray="3 3" stroke-linecap="round" stroke-width="2"/>
+  <!-- Headphone ear pads -->
+  <rect x="30" y="66" width="14" height="28" rx="7" fill="#C7BFFF" stroke="#5445B6" stroke-width="2"/>
+  <rect x="116" y="66" width="14" height="28" rx="7" fill="#C7BFFF" stroke="#5445B6" stroke-width="2"/>
+  <!-- Owl Body -->
+  <ellipse cx="80" cy="94" rx="42" ry="46" fill="#FFFFFF" stroke="#5445B6" stroke-width="2.5"/>
+  <ellipse cx="80" cy="104" rx="28" ry="30" fill="#F4EFFF"/>
+  <!-- Soft Blush Cheeks -->
+  <circle cx="56" cy="95" r="7" fill="#FECDDD" opacity="0.9"/>
+  <circle cx="104" cy="95" r="7" fill="#FECDDD" opacity="0.9"/>
+  <!-- Sleeping Eyes (Curved Lines) -->
+  <path d="M52 86 Q60 92 68 86" fill="none" stroke="#5445B6" stroke-linecap="round" stroke-width="3"/>
+  <path d="M92 86 Q100 92 108 86" fill="none" stroke="#5445B6" stroke-linecap="round" stroke-width="3"/>
+  <!-- Cute Little Beak -->
+  <path d="M77 91 L83 91 L80 97 Z" fill="#FFAA47"/>
+  <!-- Little Feet -->
+  <ellipse cx="70" cy="138" rx="7" ry="4" fill="#FFAA47"/>
+  <ellipse cx="90" cy="138" rx="7" ry="4" fill="#FFAA47"/>
+  <!-- Open Notebook in front -->
+  <path d="M50 144 L80 138 L110 144 L110 152 L80 146 L50 152 Z" fill="#E8DEF8" stroke="#5445B6" stroke-width="1.5"/>
+  <line x1="80" y1="138" x2="80" y2="146" stroke="#5445B6" stroke-width="1.5"/>
+  <!-- Zzz marks -->
+  <text x="115" y="48" font-family="Quicksand, sans-serif" font-size="16" font-weight="700" fill="#5445B6" opacity="0.8">Z</text>
+  <text x="126" y="36" font-family="Quicksand, sans-serif" font-size="12" font-weight="700" fill="#6D5FD0" opacity="0.6">z</text>
+</svg>
