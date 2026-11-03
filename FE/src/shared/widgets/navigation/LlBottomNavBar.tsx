@@ -62,8 +62,6 @@ export const LlBottomNavBar = ({ state, descriptors, navigation }: BottomTabBarP
                   return <LlIcon name="local_library" size={20} color={iconColor} filled={isFocused} />;
                 case 'Search':
                   return <LlIcon name="search" size={20} color={iconColor} filled={isFocused} />;
-                case 'AiAssistant':
-                  return <LlIcon name="auto_awesome" size={20} color={iconColor} filled={isFocused} />;
                 case 'Settings':
                   return <LlIcon name="settings" size={20} color={iconColor} filled={isFocused} />;
                 default:
@@ -77,8 +75,6 @@ export const LlBottomNavBar = ({ state, descriptors, navigation }: BottomTabBarP
                   return 'Thư viện';
                 case 'Search':
                   return 'Tìm kiếm';
-                case 'AiAssistant':
-                  return 'Cú Mèo AI';
                 case 'Settings':
                   return 'Cài đặt';
                 default:

@@ -15,8 +15,10 @@ import {
   Nunito_700Bold,
 } from '@expo-google-fonts/nunito';
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider, useAppTheme } from './src/core/theme/ThemeContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { GlobalErrorBoundary } from './src/core/components/GlobalErrorBoundary';
 
 function MainApp() {
   const { isDark, colors } = useAppTheme();
@@ -48,10 +50,14 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <MainApp />
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <GlobalErrorBoundary>
+            <MainApp />
+          </GlobalErrorBoundary>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

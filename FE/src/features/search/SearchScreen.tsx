@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
+  FlatList,
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -42,21 +44,29 @@ const RECENT_CHIPS = [
 export const SearchScreen = ({ navigation }: SearchScreenProps) => {
   const { colors, borderRadius } = useAppTheme();
   const [query, setQuery] = useState('REST API');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const lectures = useLectureStore((state) => state.lectures);
   const seekTo = useAudioPlayerStore((state) => state.seekTo);
   const play = useAudioPlayerStore((state) => state.play);
 
-  const trimmed = query.trim().toLowerCase();
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 600);
+  }, []);
 
-  const matchingLectures = trimmed.length === 0
-    ? []
-    : lectures.filter((lec) => {
-        const inTitle = lec.title.toLowerCase().includes(trimmed);
-        const inSubject = lec.subject.toLowerCase().includes(trimmed);
-        const inTranscripts = lec.transcripts?.some((t) => t.content.toLowerCase().includes(trimmed));
-        const inTags = lec.tags?.some((t) => t.toLowerCase().includes(trimmed));
-        return inTitle || inSubject || inTranscripts || inTags;
-      });
+  const matchingLectures = useMemo(() => {
+    const trimmed = query.trim().toLowerCase();
+    if (trimmed.length === 0) return [];
+    return lectures.filter((lec) => {
+      const inTitle = lec.title.toLowerCase().includes(trimmed);
+      const inSubject = lec.subject.toLowerCase().includes(trimmed);
+      const inTranscripts = lec.transcripts?.some((t) => t.content.toLowerCase().includes(trimmed));
+      const inTags = lec.tags?.some((t) => t.toLowerCase().includes(trimmed));
+      return inTitle || inSubject || inTranscripts || inTags;
+    });
+  }, [lectures, query]);
 
   const handleJumpToLecture = (lectureId: string, seconds: number) => {
     seekTo(seconds);
@@ -73,226 +83,15 @@ export const SearchScreen = ({ navigation }: SearchScreenProps) => {
         onNotificationPress={() => navigation.navigate('Notifications')}
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Interactive Search Input Box */}
-        <View style={styles.inputWrapper}>
+      <FlatList
+        data={matchingLectures}
+        keyExtractor={(item) => item.id}
+        refreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        renderItem={({ item: lec }) => (
           <View
             style={[
-              styles.searchCard,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-              },
-              AppShadows.card,
-            ]}
-          >
-            <LlIcon name="search" size={22} color={colors.primary} />
-            <TextInput
-              style={[AppTypography.bodyLarge, styles.searchInput, { color: colors.text }]}
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Tìm khái niệm, từ khóa, công thức..."
-              placeholderTextColor="#7D7893"
-            />
-            {query.length > 0 && (
-              <TouchableOpacity
-                onPress={() => setQuery('')}
-                style={[styles.clearBtn, { backgroundColor: AppColors.surfaceContainerHigh }]}
-              >
-                <LlIcon name="close" size={14} color={colors.textSecondary} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Recent Searches Chips (Max 4 Pastel Chips) */}
-        <View style={styles.recentSection}>
-          <View style={styles.recentHeaderRow}>
-            <View style={styles.recentTitleGroup}>
-              <LlIcon name="clock" size={16} color={AppColors.secondary} style={{ marginRight: 6 }} />
-              <Text style={[AppTypography.labelMd, { color: AppColors.secondary, fontWeight: '700' }]}>
-                Tìm kiếm gần đây
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => setQuery('')}>
-              <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
-                Xóa lịch sử
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
-            {RECENT_CHIPS.map((chip, idx) => {
-              const bg =
-                chip.color === 'pink'
-                  ? AppColors.secondaryContainer
-                  : chip.color === 'mint'
-                  ? AppColors.tertiaryFixed
-                  : chip.color === 'lavender'
-                  ? AppColors.surfaceContainerHigh
-                  : AppColors.butterYellow;
-
-              const textColor =
-                chip.color === 'pink'
-                  ? AppColors.onSecondaryContainer
-                  : chip.color === 'mint'
-                  ? AppColors.onTertiaryFixed
-                  : chip.color === 'lavender'
-                  ? AppColors.primary
-                  : AppColors.butterYellowDark;
-
-              return (
-                <TouchableOpacity
-                  key={idx}
-                  activeOpacity={0.8}
-                  onPress={() => setQuery(chip.label)}
-                  style={[styles.pastelChip, { backgroundColor: bg }]}
-                >
-                  <Text style={[AppTypography.labelMd, { color: textColor, fontWeight: '700' }]}>
-                    {chip.label}
-                  </Text>
-                  <LlIcon name="north_west" size={12} color={textColor} style={{ marginLeft: 4, opacity: 0.7 }} />
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* Search Count Status */}
-        {query.trim().length > 0 && (
-          <View style={styles.statusRow}>
-            <Text style={[AppTypography.bodyMedium, { color: colors.textSecondary }]}>
-              Tìm thấy{' '}
-              <Text style={{ color: colors.primary, fontWeight: '700' }}>
-                {matchingLectures.length * 2 + 1}
-              </Text>{' '}
-              mốc thời gian trong{' '}
-              <Text style={{ color: colors.text, fontWeight: '700' }}>
-                {matchingLectures.length}
-              </Text>{' '}
-              bài giảng
-            </Text>
-
-            <View style={[styles.filterBadge, { backgroundColor: AppColors.surfaceContainerLow }]}>
-              <Text style={[AppTypography.labelSm, { color: AppColors.secondary, fontWeight: '600' }]}>
-                Tất cả môn
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* GROUPED RESULTS */}
-        {matchingLectures.length > 0 ? (
-          <View style={styles.resultsGroup}>
-            {matchingLectures.map((lec) => (
-              <View
-                key={lec.id}
-                style={[
-                  styles.resultCard,
-                  {
-                    backgroundColor: colors.card,
-                    borderRadius: borderRadius.modal,
-                    borderColor: colors.border,
-                  },
-                  AppShadows.card,
-                ]}
-              >
-                {/* Washi tape topper */}
-                <View style={styles.cardTape}>
-                  <WashiTapeAccent color="sakura" width={58} height={12} rotation="-1deg" />
-                </View>
-
-                {/* Lecture Info Header */}
-                <View style={styles.resultCardHeader}>
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.tagRow}>
-                      <View style={[styles.miniSubTag, { backgroundColor: AppColors.surfaceContainerHigh }]}>
-                        <Text style={[AppTypography.labelSm, { color: colors.primary, fontWeight: '700' }]}>
-                          {lec.subject}
-                        </Text>
-                      </View>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <LlIcon name="clock" size={12} color={colors.textSecondary} />
-                        <Text style={[AppTypography.bodySmall, { color: colors.textSecondary }]}>
-                          {lec.relativeTime}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <Text style={[AppTypography.headlineSm, styles.resultTitle, { color: colors.text }]}>
-                      {lec.title}
-                    </Text>
-                  </View>
-
-                  <View style={[styles.micIconCircle, { backgroundColor: AppColors.surfaceContainerLow }]}>
-                    <LlIcon name="mic" size={18} color={colors.primary} />
-                  </View>
-                </View>
-
-                {/* Matching Snippets List */}
-                <View style={styles.snippetsList}>
-                  {lec.transcripts && lec.transcripts.length > 0 ? (
-                    lec.transcripts.slice(0, 2).map((seg, sIdx) => (
-                      <TouchableOpacity
-                        key={sIdx}
-                        activeOpacity={0.88}
-                        onPress={() => handleJumpToLecture(lec.id, seg.startSeconds)}
-                        style={[
-                          styles.snippetBox,
-                          { backgroundColor: AppColors.surfaceContainerLow },
-                        ]}
-                      >
-                        <View style={styles.snippetTopRow}>
-                          <View style={[styles.mintTimeChip, { backgroundColor: AppColors.tertiaryFixed, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-                            <LlIcon name="play_arrow" size={10} color={AppColors.onTertiaryFixed} filled />
-                            <Text style={[AppTypography.labelSm, { color: AppColors.onTertiaryFixed, fontWeight: '700' }]}>
-                              {seg.timestamp}
-                            </Text>
-                          </View>
-                          <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
-                            Độ trùng khớp 98%
-                          </Text>
-                        </View>
-
-                        <Text style={[AppTypography.bodyMedium, styles.snippetText, { color: colors.text }]}>
-                          “{seg.content}”
-                        </Text>
-                      </TouchableOpacity>
-                    ))
-                  ) : (
-                    <TouchableOpacity
-                      onPress={() => handleJumpToLecture(lec.id, 755)}
-                      style={[styles.snippetBox, { backgroundColor: AppColors.surfaceContainerLow }]}
-                    >
-                      <View style={styles.snippetTopRow}>
-                        <View style={[styles.mintTimeChip, { backgroundColor: AppColors.tertiaryFixed, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-                          <LlIcon name="play_arrow" size={10} color={AppColors.onTertiaryFixed} filled />
-                          <Text style={[AppTypography.labelSm, { color: AppColors.onTertiaryFixed, fontWeight: '700' }]}>
-                            12:35
-                          </Text>
-                        </View>
-                        <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
-                          Độ trùng khớp 95%
-                        </Text>
-                      </View>
-                      <Text style={[AppTypography.bodyMedium, styles.snippetText, { color: colors.text }]}>
-                        “REST API hoạt động theo kiến trúc Client-Server vô trạng thái (Stateless)...”
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-            ))}
-          </View>
-        ) : query.trim().length > 0 ? (
-          /* Empty Search Result */
-          <View
-            style={[
-              styles.emptySearchCard,
+              styles.resultCard,
               {
                 backgroundColor: colors.card,
                 borderRadius: borderRadius.modal,
@@ -301,18 +100,235 @@ export const SearchScreen = ({ navigation }: SearchScreenProps) => {
               AppShadows.card,
             ]}
           >
-            <CuMeoWidget variant="sleeping" size={130} />
-            <Text style={[AppTypography.headlineSm, styles.emptySearchTitle, { color: colors.text }]}>
-              Không tìm thấy kết quả phù hợp
-            </Text>
-            <Text style={[AppTypography.bodyMedium, styles.emptySearchSub, { color: colors.textSecondary }]}>
-              Thử tìm kiếm với từ khóa khác như "REST API", "Giải tích" hoặc "MIPS".
-            </Text>
-          </View>
-        ) : null}
+            {/* Washi tape topper */}
+            <View style={styles.cardTape}>
+              <WashiTapeAccent color="sakura" width={58} height={12} rotation="-1deg" />
+            </View>
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
+            {/* Lecture Info Header */}
+            <View style={styles.resultCardHeader}>
+              <View style={{ flex: 1 }}>
+                <View style={styles.tagRow}>
+                  <View style={[styles.miniSubTag, { backgroundColor: AppColors.surfaceContainerHigh }]}>
+                    <Text style={[AppTypography.labelSm, { color: colors.primary, fontWeight: '700' }]}>
+                      {lec.subject}
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <LlIcon name="clock" size={12} color={colors.textSecondary} />
+                    <Text style={[AppTypography.bodySmall, { color: colors.textSecondary }]}>
+                      {lec.relativeTime}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={[AppTypography.headlineSm, styles.resultTitle, { color: colors.text }]}>
+                  {lec.title}
+                </Text>
+              </View>
+
+              <View style={[styles.micIconCircle, { backgroundColor: AppColors.surfaceContainerLow }]}>
+                <LlIcon name="mic" size={18} color={colors.primary} />
+              </View>
+            </View>
+
+            {/* Matching Snippets List */}
+            <View style={styles.snippetsList}>
+              {lec.transcripts && lec.transcripts.length > 0 ? (
+                lec.transcripts.slice(0, 2).map((seg, sIdx) => (
+                  <TouchableOpacity
+                    key={sIdx}
+                    activeOpacity={0.88}
+                    onPress={() => handleJumpToLecture(lec.id, seg.startSeconds)}
+                    style={[
+                      styles.snippetBox,
+                      { backgroundColor: AppColors.surfaceContainerLow },
+                    ]}
+                  >
+                    <View style={styles.snippetTopRow}>
+                      <View style={[styles.mintTimeChip, { backgroundColor: AppColors.tertiaryFixed, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                        <LlIcon name="play_arrow" size={10} color={AppColors.onTertiaryFixed} filled />
+                        <Text style={[AppTypography.labelSm, { color: AppColors.onTertiaryFixed, fontWeight: '700' }]}>
+                          {seg.timestamp}
+                        </Text>
+                      </View>
+                      <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
+                        Độ trùng khớp 98%
+                      </Text>
+                    </View>
+
+                    <Text style={[AppTypography.bodyMedium, styles.snippetText, { color: colors.text }]}>
+                      “{seg.content}”
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <TouchableOpacity
+                  onPress={() => handleJumpToLecture(lec.id, 755)}
+                  style={[styles.snippetBox, { backgroundColor: AppColors.surfaceContainerLow }]}
+                >
+                  <View style={styles.snippetTopRow}>
+                    <View style={[styles.mintTimeChip, { backgroundColor: AppColors.tertiaryFixed, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                      <LlIcon name="play_arrow" size={10} color={AppColors.onTertiaryFixed} filled />
+                      <Text style={[AppTypography.labelSm, { color: AppColors.onTertiaryFixed, fontWeight: '700' }]}>
+                        12:35
+                      </Text>
+                    </View>
+                    <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
+                      Độ trùng khớp 95%
+                    </Text>
+                  </View>
+                  <Text style={[AppTypography.bodyMedium, styles.snippetText, { color: colors.text }]}>
+                    “REST API hoạt động theo kiến trúc Client-Server vô trạng thái (Stateless)...”
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
+        ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+        ListHeaderComponent={
+          <>
+            {/* Interactive Search Input Box */}
+            <View style={styles.inputWrapper}>
+              <View
+                style={[
+                  styles.searchCard,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  },
+                  AppShadows.card,
+                ]}
+              >
+                <LlIcon name="search" size={22} color={colors.primary} />
+                <TextInput
+                  style={[AppTypography.bodyLarge, styles.searchInput, { color: colors.text }]}
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder="Tìm khái niệm, từ khóa, công thức..."
+                  placeholderTextColor="#7D7893"
+                />
+                {query.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setQuery('')}
+                    style={[styles.clearBtn, { backgroundColor: AppColors.surfaceContainerHigh }]}
+                  >
+                    <LlIcon name="close" size={14} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            {/* Recent Searches Chips (Max 4 Pastel Chips) */}
+            <View style={styles.recentSection}>
+              <View style={styles.recentHeaderRow}>
+                <View style={styles.recentTitleGroup}>
+                  <LlIcon name="clock" size={16} color={AppColors.secondary} style={{ marginRight: 6 }} />
+                  <Text style={[AppTypography.labelMd, { color: AppColors.secondary, fontWeight: '700' }]}>
+                    Tìm kiếm gần đây
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => setQuery('')}>
+                  <Text style={[AppTypography.labelSm, { color: colors.textSecondary }]}>
+                    Xóa lịch sử
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+                {RECENT_CHIPS.map((chip, idx) => {
+                  const bg =
+                    chip.color === 'pink'
+                      ? AppColors.secondaryContainer
+                      : chip.color === 'mint'
+                      ? AppColors.tertiaryFixed
+                      : chip.color === 'lavender'
+                      ? AppColors.surfaceContainerHigh
+                      : AppColors.butterYellow;
+
+                  const textColor =
+                    chip.color === 'pink'
+                      ? AppColors.onSecondaryContainer
+                      : chip.color === 'mint'
+                      ? AppColors.onTertiaryFixed
+                      : chip.color === 'lavender'
+                      ? AppColors.primary
+                      : AppColors.butterYellowDark;
+
+                  return (
+                    <TouchableOpacity
+                      key={idx}
+                      activeOpacity={0.8}
+                      onPress={() => setQuery(chip.label)}
+                      style={[styles.pastelChip, { backgroundColor: bg }]}
+                    >
+                      <Text style={[AppTypography.labelMd, { color: textColor, fontWeight: '700' }]}>
+                        {chip.label}
+                      </Text>
+                      <LlIcon name="north_west" size={12} color={textColor} style={{ marginLeft: 4, opacity: 0.7 }} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {/* Search Count Status */}
+            {query.trim().length > 0 && (
+              <View style={styles.statusRow}>
+                <Text style={[AppTypography.bodyMedium, { color: colors.textSecondary }]}>
+                  Tìm thấy{' '}
+                  <Text style={{ color: colors.primary, fontWeight: '700' }}>
+                    {matchingLectures.length * 2 + 1}
+                  </Text>{' '}
+                  mốc thời gian trong{' '}
+                  <Text style={{ color: colors.text, fontWeight: '700' }}>
+                    {matchingLectures.length}
+                  </Text>{' '}
+                  bài giảng
+                </Text>
+
+                <View style={[styles.filterBadge, { backgroundColor: AppColors.surfaceContainerLow }]}>
+                  <Text style={[AppTypography.labelSm, { color: AppColors.secondary, fontWeight: '600' }]}>
+                    Tất cả môn
+                  </Text>
+                </View>
+              </View>
+            )}
+          </>
+        }
+        ListEmptyComponent={
+          query.trim().length > 0 ? (
+            <View
+              style={[
+                styles.emptySearchCard,
+                {
+                  backgroundColor: colors.card,
+                  borderRadius: borderRadius.modal,
+                  borderColor: colors.border,
+                },
+                AppShadows.card,
+              ]}
+            >
+              <CuMeoWidget variant="sleeping" size={130} />
+              <Text style={[AppTypography.headlineSm, styles.emptySearchTitle, { color: colors.text }]}>
+                Không tìm thấy kết quả phù hợp
+              </Text>
+              <Text style={[AppTypography.bodyMedium, styles.emptySearchSub, { color: colors.textSecondary }]}>
+                Thử tìm kiếm với từ khóa khác như "REST API", "Giải tích" hoặc "MIPS".
+              </Text>
+            </View>
+          ) : undefined
+        }
+        ListFooterComponent={<View style={{ height: 100 }} />}
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === 'android'}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      />
     </DotBackground>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -52,14 +53,25 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'normal' | 'empty' | 'skeleton'>('normal');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const allFiltered = getFilteredLectures();
-  const filteredLectures = searchQuery.trim()
-    ? allFiltered.filter((l) =>
-        l.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        l.subject.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : allFiltered;
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 600);
+  }, []);
+
+  const allFiltered = useMemo(() => getFilteredLectures(), [getFilteredLectures, activeFilter]);
+  const filteredLectures = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return allFiltered;
+    return allFiltered.filter(
+      (l) =>
+        l.title.toLowerCase().includes(q) ||
+        l.subject.toLowerCase().includes(q)
+    );
+  }, [allFiltered, searchQuery]);
 
   const handleCardPress = (lectureId: string, status: string) => {
     if (status === 'processing') {
@@ -81,208 +93,211 @@ export const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
           onNotificationPress={() => navigation.navigate('Notifications')}
         />
 
-        <ScrollView
+        <FlatList
+          data={(viewMode === 'skeleton' || viewMode === 'empty') ? [] : filteredLectures}
+          keyExtractor={(item) => item.id}
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          renderItem={({ item }) =>
+            item.status === 'processing' ? (
+              <ProcessingCard
+                lecture={item}
+                onPress={() => handleCardPress(item.id, item.status)}
+              />
+            ) : (
+              <LectureCard
+                lecture={item}
+                onPress={() => handleCardPress(item.id, item.status)}
+                onBookmarkPress={() => toggleBookmark(item.id)}
+                onResumePlay={() => {
+                  navigation.navigate('LectureDetail', { lectureId: item.id });
+                }}
+              />
+            )
+          }
+          ItemSeparatorComponent={() => <View style={{ height: 4 }} />}
+          ListHeaderComponent={
+            <>
+              {/* Greeting & Avatar Section */}
+              <View style={styles.greetingRow}>
+                <View style={styles.greetingTextCol}>
+                  <View style={styles.nameRow}>
+                    <Text style={[AppTypography.headlineMd, { color: colors.text }]}>
+                      Xin chào, {user.name.split(' ').pop()}
+                    </Text>
+                    <LlIcon name="auto_awesome" size={18} color="#E5A800" filled style={{ marginLeft: 6 }} />
+                  </View>
+                  <Text style={[AppTypography.bodyMedium, { color: colors.textSecondary }]}>
+                    Bàn học hôm nay đã sẵn sàng rồi nè!
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('Settings')}
+                  style={styles.avatarWrapper}
+                >
+                  <View style={[styles.avatarCircle, { backgroundColor: AppColors.primaryContainer }]}>
+                    <CuMeoWidget variant="happy" size={32} isAnimated={false} />
+                  </View>
+                  <View style={styles.onlinePip} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Search Input Bar (Tactile Stationery Styling) */}
+              <View style={styles.searchBarWrapper}>
+                <View
+                  style={[
+                    styles.searchBar,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                    },
+                    AppShadows.card,
+                  ]}
+                >
+                  <LlIcon name="search" size={20} color={colors.primary} />
+                  <TextInput
+                    style={[AppTypography.bodyMedium, styles.searchInput, { color: colors.text }]}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholder="Tìm bài giảng, môn học, từ khóa..."
+                    placeholderTextColor="#7D7893"
+                  />
+                  {searchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+                      <LlIcon name="close" size={14} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  )}
+                  <View style={[styles.inputDivider, { backgroundColor: AppColors.surfaceContainer }]} />
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('Upload')}
+                    style={[styles.micBtn, { backgroundColor: AppColors.surfaceContainer }]}
+                  >
+                    <LlIcon name="mic" size={18} color={AppColors.primary} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Horizontal Filter Bar */}
+              <View style={styles.filterSection}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+                  {FILTER_TABS.map((tab) => {
+                    const isSelected = activeFilter === tab.key;
+                    const isProcessingTab = tab.key === 'processing';
+                    const isReadyTab = tab.key === 'ready';
+
+                    return (
+                      <TouchableOpacity
+                        key={tab.key}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                          setFilter(tab.key);
+                          if (viewMode === 'empty') setViewMode('normal');
+                        }}
+                        style={[
+                          styles.filterChip,
+                          isSelected
+                            ? [styles.filterChipActive, { backgroundColor: AppColors.primaryContainer }]
+                            : [styles.filterChipInactive, { backgroundColor: colors.card, borderColor: colors.border }],
+                        ]}
+                      >
+                        {isReadyTab && <View style={styles.readyDot} />}
+                        {isProcessingTab && <View style={styles.amberPingDot} />}
+                        <Text
+                          style={[
+                            AppTypography.labelMd,
+                            {
+                              color: isSelected ? '#FFFFFF' : colors.textSecondary,
+                              fontWeight: isSelected ? '700' : '600',
+                            },
+                          ]}
+                        >
+                          {tab.label}
+                          {tab.key === 'all' ? ` (${allFiltered.length})` : ''}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+
+              {/* Section Header & View Mode Switcher */}
+              <View style={styles.sectionHeaderRow}>
+                <Text style={[AppTypography.headlineSm, { color: colors.text }]}>
+                  Bài giảng gần đây
+                </Text>
+
+                {/* Quick Demo Switcher (List / Empty / Skeleton) */}
+                <View style={[styles.viewModePill, { backgroundColor: AppColors.surfaceContainerHigh }]}>
+                  <TouchableOpacity
+                    onPress={() => setViewMode('normal')}
+                    style={[styles.viewModeBtn, viewMode === 'normal' && styles.viewModeBtnActive]}
+                  >
+                    <LlIcon name="style" size={13} color={viewMode === 'normal' ? colors.primary : colors.textSecondary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setViewMode('empty')}
+                    style={[styles.viewModeBtn, viewMode === 'empty' && styles.viewModeBtnActive]}
+                  >
+                    <LlIcon name="bedtime" size={13} color={viewMode === 'empty' ? colors.primary : colors.textSecondary} filled />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setViewMode('skeleton')}
+                    style={[styles.viewModeBtn, viewMode === 'skeleton' && styles.viewModeBtnActive]}
+                  >
+                    <LlIcon name="sync" size={13} color={viewMode === 'skeleton' ? colors.primary : colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </>
+          }
+          ListEmptyComponent={
+            viewMode === 'skeleton' ? (
+              <LectureListSkeleton />
+            ) : (
+              <View
+                style={[
+                  styles.emptyCard,
+                  {
+                    backgroundColor: colors.card,
+                    borderRadius: borderRadius.modal,
+                    borderColor: colors.border,
+                  },
+                  AppShadows.card,
+                ]}
+              >
+                <CuMeoWidget variant="sleeping" size={140} />
+                <Text style={[AppTypography.headlineSm, styles.emptyTitle, { color: colors.text }]}>
+                  Bàn học chưa có bài giảng nào
+                </Text>
+                <Text style={[AppTypography.bodyMedium, styles.emptySub, { color: colors.textSecondary }]}>
+                  Cú Mèo đang ngủ trưa đợi bạn! Hãy tải lên bản ghi âm bài học đầu tiên để bắt đầu học tập nhẹ nhàng nhé.
+                </Text>
+                <TouchableOpacity
+                  activeOpacity={0.88}
+                  onPress={() => navigation.navigate('Upload')}
+                  style={[styles.emptyUploadBtn, { backgroundColor: AppColors.primaryContainer }]}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <LlIcon name="add" size={18} color="#FFFFFF" strokeWidth={2.5} />
+                    <Text style={[AppTypography.labelLarge, { color: '#FFFFFF', fontWeight: '700' }]}>
+                      Tải bản ghi đầu tiên
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )
+          }
+          ListFooterComponent={<View style={{ height: 110 }} />}
+          initialNumToRender={5}
+          maxToRenderPerBatch={5}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-        >
-          {/* Greeting & Avatar Section */}
-          <View style={styles.greetingRow}>
-            <View style={styles.greetingTextCol}>
-              <View style={styles.nameRow}>
-                <Text style={[AppTypography.headlineMd, { color: colors.text }]}>
-                  Xin chào, {user.name.split(' ').pop()}
-                </Text>
-                <LlIcon name="auto_awesome" size={18} color="#E5A800" filled style={{ marginLeft: 6 }} />
-              </View>
-              <Text style={[AppTypography.bodyMedium, { color: colors.textSecondary }]}>
-                Bàn học hôm nay đã sẵn sàng rồi nè!
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate('Settings')}
-              style={styles.avatarWrapper}
-            >
-              <View style={[styles.avatarCircle, { backgroundColor: AppColors.primaryContainer }]}>
-                <CuMeoWidget variant="happy" size={32} isAnimated={false} />
-              </View>
-              <View style={styles.onlinePip} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Search Input Bar (Tactile Stationery Styling) */}
-          <View style={styles.searchBarWrapper}>
-            <View
-              style={[
-                styles.searchBar,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                },
-                AppShadows.card,
-              ]}
-            >
-              <LlIcon name="search" size={20} color={colors.primary} />
-              <TextInput
-                style={[AppTypography.bodyMedium, styles.searchInput, { color: colors.text }]}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="Tìm bài giảng, môn học, từ khóa..."
-                placeholderTextColor="#7D7893"
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
-                  <LlIcon name="close" size={14} color={colors.textSecondary} />
-                </TouchableOpacity>
-              )}
-              <View style={[styles.inputDivider, { backgroundColor: AppColors.surfaceContainer }]} />
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Upload')}
-                style={[styles.micBtn, { backgroundColor: AppColors.surfaceContainer }]}
-              >
-                <LlIcon name="mic" size={18} color={AppColors.primary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Horizontal Filter Bar */}
-          <View style={styles.filterSection}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-              {FILTER_TABS.map((tab) => {
-                const isSelected = activeFilter === tab.key;
-                const isProcessingTab = tab.key === 'processing';
-                const isReadyTab = tab.key === 'ready';
-
-                return (
-                  <TouchableOpacity
-                    key={tab.key}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      setFilter(tab.key);
-                      if (viewMode === 'empty') setViewMode('normal');
-                    }}
-                    style={[
-                      styles.filterChip,
-                      isSelected
-                        ? [styles.filterChipActive, { backgroundColor: AppColors.primaryContainer }]
-                        : [styles.filterChipInactive, { backgroundColor: colors.card, borderColor: colors.border }],
-                    ]}
-                  >
-                    {isReadyTab && <View style={styles.readyDot} />}
-                    {isProcessingTab && <View style={styles.amberPingDot} />}
-                    <Text
-                      style={[
-                        AppTypography.labelMd,
-                        {
-                          color: isSelected ? '#FFFFFF' : colors.textSecondary,
-                          fontWeight: isSelected ? '700' : '600',
-                        },
-                      ]}
-                    >
-                      {tab.label}
-                      {tab.key === 'all' ? ` (${allFiltered.length})` : ''}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-
-          {/* Section Header & View Mode Switcher */}
-          <View style={styles.sectionHeaderRow}>
-            <Text style={[AppTypography.headlineSm, { color: colors.text }]}>
-              Bài giảng gần đây
-            </Text>
-
-            {/* Quick Demo Switcher (List / Empty / Skeleton) */}
-            <View style={[styles.viewModePill, { backgroundColor: AppColors.surfaceContainerHigh }]}>
-              <TouchableOpacity
-                onPress={() => setViewMode('normal')}
-                style={[styles.viewModeBtn, viewMode === 'normal' && styles.viewModeBtnActive]}
-              >
-                <LlIcon name="style" size={13} color={viewMode === 'normal' ? colors.primary : colors.textSecondary} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setViewMode('empty')}
-                style={[styles.viewModeBtn, viewMode === 'empty' && styles.viewModeBtnActive]}
-              >
-                <LlIcon name="bedtime" size={13} color={viewMode === 'empty' ? colors.primary : colors.textSecondary} filled />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setViewMode('skeleton')}
-                style={[styles.viewModeBtn, viewMode === 'skeleton' && styles.viewModeBtnActive]}
-              >
-                <LlIcon name="sync" size={13} color={viewMode === 'skeleton' ? colors.primary : colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* SKELETON STATE VIEW */}
-          {viewMode === 'skeleton' ? (
-            <LectureListSkeleton />
-          ) : viewMode === 'empty' || filteredLectures.length === 0 ? (
-            /* EMPTY STATE VIEW (Sleeping Owl Desk) */
-            <View
-              style={[
-                styles.emptyCard,
-                {
-                  backgroundColor: colors.card,
-                  borderRadius: borderRadius.modal,
-                  borderColor: colors.border,
-                },
-                AppShadows.card,
-              ]}
-            >
-              <CuMeoWidget variant="sleeping" size={140} />
-              <Text style={[AppTypography.headlineSm, styles.emptyTitle, { color: colors.text }]}>
-                Bàn học chưa có bài giảng nào
-              </Text>
-              <Text style={[AppTypography.bodyMedium, styles.emptySub, { color: colors.textSecondary }]}>
-                Cú Mèo đang ngủ trưa đợi bạn! Hãy tải lên bản ghi âm bài học đầu tiên để bắt đầu học tập nhẹ nhàng nhé.
-              </Text>
-              <TouchableOpacity
-                activeOpacity={0.88}
-                onPress={() => navigation.navigate('Upload')}
-                style={[styles.emptyUploadBtn, { backgroundColor: AppColors.primaryContainer }]}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                  <LlIcon name="add" size={18} color="#FFFFFF" strokeWidth={2.5} />
-                  <Text style={[AppTypography.labelLarge, { color: '#FFFFFF', fontWeight: '700' }]}>
-                    Tải bản ghi đầu tiên
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            /* NORMAL LECTURE LIST */
-            <View style={styles.lectureList}>
-              {filteredLectures.map((item) =>
-                item.status === 'processing' ? (
-                  <ProcessingCard
-                    key={item.id}
-                    lecture={item}
-                    onPress={() => handleCardPress(item.id, item.status)}
-                  />
-                ) : (
-                  <LectureCard
-                    key={item.id}
-                    lecture={item}
-                    onPress={() => handleCardPress(item.id, item.status)}
-                    onBookmarkPress={() => toggleBookmark(item.id)}
-                    onResumePlay={() => {
-                      navigation.navigate('LectureDetail', { lectureId: item.id });
-                    }}
-                  />
-                )
-              )}
-            </View>
-          )}
-
-          {/* Safe spacer for floating FAB and Bottom Nav */}
-          <View style={{ height: 110 }} />
-        </ScrollView>
+        />
 
         {/* Floating Action Button (FAB) Above Bottom Bar */}
         <TouchableOpacity
