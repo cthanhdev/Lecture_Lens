@@ -14,6 +14,8 @@
     "fe:lint": "npm --prefix FE run lint",
     "test": "npm --prefix FE test",
     "typecheck": "npm --prefix FE run typecheck",
-    "lint": "npm --prefix FE run lint"
+    "lint": "npm --prefix FE run lint",
+    "understand:scan": "node tools/Understand-Anything/understand-anything-plugin/skills/understand/scan-project.mjs .",
+    "understand:dashboard": "node ~/.understand-anything-plugin/packages/dashboard/serve.mjs"
   }
 }
