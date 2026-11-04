@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "path": ".agents/skills"
+    },
+    {
+      "path": "tools/mattpocock-skills/skills/engineering"
+    },
+    {
+      "path": "tools/mattpocock-skills/skills/productivity"
+    },
+    {
+      "path": "tools/Understand-Anything/understand-anything-plugin/skills"
+    }
+  ]
+}

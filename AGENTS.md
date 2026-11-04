@@ -43,3 +43,29 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Agent Skills & Engineering Workflows
+
+This repository integrates two skill systems in `.agents/skills/` (declared in `.agents/skills.json` and mirrored in `tools/`):
+
+### 1. Matt Pocock Engineering & Productivity Skills (`tools/mattpocock-skills`)
+- **Domain & Vocabulary**: Always consult [GLOSSARY.md](./GLOSSARY.md) and [docs/agents/domain.md](./docs/agents/domain.md) before designing interfaces, naming tests, or formulating domain tickets.
+- **Issue Tracker**: Track tickets according to [docs/agents/issue-tracker.md](./docs/agents/issue-tracker.md) and [docs/agents/triage-labels.md](./docs/agents/triage-labels.md).
+- **Core Engineering Skills**:
+  - `tdd`: Test-driven development with vertical slices and explicit public seams.
+  - `code-review`: Structured code reviews focusing on regressions, boundaries, and simplifications.
+  - `codebase-design`: Vocabulary for deep vs shallow modules, seams, leverage, and locality.
+  - `diagnosing-bugs`: Systematic defect reproduction and root cause isolation.
+  - `to-spec` & `to-tickets`: Decomposing requirements into actionable specs and tickets.
+  - `implement` & `implement-spec`: High-precision test-first feature implementation.
+  - `grill-me` & `grill-with-docs`: Rigorous interrogation of requirements and architecture before coding.
+
+### 2. Understand Anything (`tools/Understand-Anything`)
+- **Codebase Graph & Visualization**:
+  - `/understand`: Scans the repository and builds an interactive knowledge graph (`.ua/knowledge-graph.json`).
+  - `/understand-dashboard`: Starts the local visual dashboard to explore components, dependencies, and architecture.
+  - `/understand-explain <path>`: In-depth explanation of any file or function in context.
+  - `/understand-domain`: Extracts business domain models, execution flows, and steps.
+  - `/understand-diff`: Analyzes impact and ripple effects of current changes before committing.
+  - `/understand-onboard`: Generates structured onboarding walk-throughs for new developers.
+
