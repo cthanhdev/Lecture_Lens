@@ -1,24 +1,15 @@
 {
   "expo": {
-    "name": "lecturelens_rn",
-    "slug": "lecturelens_rn",
+    "name": "FE",
+    "slug": "FE",
     "version": "1.0.0",
-    "scheme": "lecturelens",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.cthanhdev.lecturelens",
-      "infoPlist": {
-        "NSMicrophoneUsageDescription": "LectureLens cần quyền truy cập microphone để ghi âm bài giảng trực tiếp."
-      }
+      "supportsTablet": true
     },
     "android": {
-      "package": "com.cthanhdev.lecturelens",
-      "permissions": [
-        "RECORD_AUDIO"
-      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -29,9 +20,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-font"
-    ]
+    }
   }
 }
