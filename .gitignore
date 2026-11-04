@@ -154,3 +154,11 @@ Desktop.ini
 *.swo
 # Ignore toàn bộ thư mục model
 /BE/models/
+
+# ------------------------------------------------------------------------------
+# 10. AI Agent Skills, Cache & External Cloned Tools
+# ------------------------------------------------------------------------------
+tools/
+.ua/
+.understand-anything/
+.scratch/

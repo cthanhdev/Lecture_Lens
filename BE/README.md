@@ -1,4 +1,4 @@
-# 🎙️📚 SmartLecture AI – RAG-based Intelligent Lecture Assistant
+# 🎙️📚 LectureLens Backend – On-Premise 2-Stage Neural RAG Architecture
 
 [![Architecture](https://img.shields.io/badge/Architecture-Microservices%20%7C%202--Stage%20RAG-007ACC?style=for-the-badge)](#2-kiến-trúc-hệ-thống-system-architecture)
 [![Spring Boot](https://img.shields.io/badge/API%20Gateway-Spring%20Boot%203.3-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -10,7 +10,7 @@
 
 ---
 
-Tài liệu này đặc tả toàn diện kiến trúc kỹ thuật, quy trình xử lý dữ liệu âm thanh, cơ chế tìm kiếm tăng cường truy xuất (Retrieval-Augmented Generation — RAG) 2 giai đoạn, thiết kế cơ sở dữ liệu đa vùng (Multi-Schema), chính sách an toàn mạng và danh mục API cho hệ thống **SmartLecture AI – RAG-based Intelligent Lecture Assistant** (Hạ tầng Backend & Dịch vụ Trí tuệ Nhân tạo xử lý bài giảng của dự án LectureLens).
+Tài liệu này đặc tả toàn diện kiến trúc kỹ thuật, quy trình xử lý dữ liệu âm thanh, cơ chế tìm kiếm tăng cường truy xuất (Retrieval-Augmented Generation — RAG) 2 giai đoạn, thiết kế cơ sở dữ liệu đa vùng (Multi-Schema), chính sách an toàn mạng và danh mục API cho hạ tầng **LectureLens Backend & AI Service** (Hạ tầng Backend & Dịch vụ Trí tuệ Nhân tạo xử lý bài giảng của dự án LectureLens).
 
 ---
 
@@ -26,7 +26,7 @@ Tài liệu này đặc tả toàn diện kiến trúc kỹ thuật, quy trình 
 - [4. Hai Luồng Xử Lý Dữ Liệu Cốt Lõi (Core Pipelines)](#4-hai-luồng-xử-lý-dữ-liệu-cốt-lõi-core-pipelines)
   - [4.1. Pipeline Ingest (Offline) — Audio Transcription & Vectorization](#41-pipeline-ingest-offline--audio-transcription--vectorization)
   - [4.2. Pipeline Query (Online) — 2-Stage Retrieval & Grounded Generation](#42-pipeline-query-online--2-stage-retrieval--grounded-generation)
-- [5. Danh Mục Mô Hình AI & Chiến Lược Quản Lý Trọng Số](#5-danh-mục-mô-hình-ai--chiến-lược-quản-lý-trọng-số)
+- [5. Danh Mục Mô Hình AI & Quản Lý Trọng Số](#5-danh-mục-mô-hình-ai--quản-lý-trọng-số)
 - [6. Thiết Kế Cơ Sở Dữ Liệu & Tối Ưu Chỉ Mục Vector (Database & Index Tuning)](#6-thiết-kế-cơ-sở-dữ-liệu--tối-ưu-chỉ-mục-vector-database--index-tuning)
 - [7. Cơ Chế Bảo Mật & Cô Lập Mạng Docker (Security & Network Isolation)](#7-cơ-chế-bảo-mật--cô-lập-mạng-docker-security--network-isolation)
 - [8. Yêu Cầu Phần Cứng & Phân Bổ Tài Nguyên (Hardware Sizing)](#8-yêu-cầu-phần-cứng--phân-bổ-tài-nguyên-hardware-sizing)
@@ -37,10 +37,11 @@ Tài liệu này đặc tả toàn diện kiến trúc kỹ thuật, quy trình 
 
 ## 1. Tổng Quan Kỹ Thuật (Technical Overview)
 
-Hệ thống **SmartLecture AI – RAG-based Intelligent Lecture Assistant** được thiết kế nhằm đáp ứng 3 yêu cầu công nghệ khắt khe:
-1. **Độ chính xác cao với tiếng Việt (Vietnamese Domain Specificity):** Sử dụng PhoWhisper-base cho nhận dạng tiếng nói (ASR) và BGE-M3 cho embedding ngữ cảnh đa ngữ, có khả năng xử lý tốt thuật ngữ học thuật, từ mượn và dấu thanh điệu tiếng Việt.
+Hạ tầng **LectureLens Backend & AI Service** được thiết kế nhằm đáp ứng 3 yêu cầu công nghệ khắt khe:
+
+1. **Độ chính xác cao với tiếng Việt (Vietnamese Domain Specificity):** Sử dụng `PhoWhisper-base` cho nhận dạng tiếng nói (ASR) và `BGE-M3` cho embedding ngữ cảnh đa ngữ, có khả năng xử lý tốt thuật ngữ học thuật, từ mượn và dấu thanh điệu tiếng Việt.
 2. **Tìm kiếm 2 giai đoạn chính xác tuyệt đối (2-Stage Neural RAG):** Kết hợp khả năng quét nhanh của chỉ mục vector xấp xỉ **HNSW** (Cosine Distance) với độ chính xác cao của bộ tái định vị **Cross-Encoder BGE-Reranker-v2-m3**, loại bỏ hoàn toàn các đoạn văn bản gây nhiễu trước khi đưa vào mô hình ngôn ngữ lớn.
-3. **Bảo mật tuyệt đối & Vận hành Cục bộ (Zero Cloud Leakage):** Hệ thống không sử dụng các dịch vụ AI bên thứ ba (OpenAI, Claude, Google Cloud Speech). Toàn bộ 4 mô hình AI đều được phục vụ trực tiếp trên hạ tầng Docker on-premise của tổ chức giáo dục.
+3. **Bảo mật tuyệt đối & Vận hành Cục bộ (Zero Cloud Leakage — ADR 0001):** Hệ thống không sử dụng các dịch vụ AI bên thứ ba. Toàn bộ 4 mô hình AI đều được phục vụ trực tiếp trên hạ tầng Docker on-premise của tổ chức giáo dục.
 
 ---
 
@@ -48,10 +49,10 @@ Hệ thống **SmartLecture AI – RAG-based Intelligent Lecture Assistant** đ�
 
 Hệ thống tuân thủ mô hình **Microservices Topology** với ranh giới phân tách rõ rệt giữa mạng công khai (Public Ingress) và mạng bảo mật nội bộ (Private Isolated Subnet):
 
-![Sơ Đồ Kiến Trúc SmartLecture AI](./smartlecture_ai_architecture.png)
+![Sơ Đồ Kiến Trúc LectureLens Backend](./smartlecture_ai_architecture.png)
 
 <div align="center">
-  <sub><b>Hình 1:</b> Sơ đồ kiến trúc tổng thể SmartLecture AI — Phân tách giữa Cổng Spring Boot công khai và Mạng nội bộ Docker an toàn.</sub>
+  <sub><b>Hình 1:</b> Sơ đồ kiến trúc tổng thể LectureLens Backend — Phân tách giữa Cổng Spring Boot công khai và Mạng nội bộ Docker an toàn.</sub>
 </div>
 
 <br/>
@@ -106,7 +107,7 @@ flowchart TD
 
 ### 3.1. Spring Boot Gateway Service (`spring`)
 - **Ngôn ngữ & Nền tảng:** Java 17 LTS / Spring Boot 3.3.x.
-- **Vai trò:** Lối vào độc quyền từ Internet vào hạ tầng Backend của SmartLecture AI.
+- **Vai trò:** Lối vào độc quyền từ Internet vào hạ tầng Backend của LectureLens.
 - **Trách nhiệm kỹ thuật:**
   - **Bảo mật & Phân quyền:** Xác thực qua Spring Security 6 với JWT Stateless Tokens. Kiểm soát quyền hạn (RBAC) nghiêm ngặt: `ADMIN`, `LECTURER`, `STUDENT`.
   - **Quản lý Tệp Âm Thanh:** Tiếp nhận tệp âm thanh tải lên (`.mp3`, `.wav`, `.m4a`, dung lượng lên tới 500MB), phân tích metadata âm thanh và lưu trữ tạm thời tại volume dùng chung.
@@ -233,7 +234,7 @@ sequenceDiagram
 
 ```markdown
 [HỆ THỐNG]
-Bạn là Trợ lý SmartLecture AI (Cú Mèo) — hệ thống hỗ trợ học tập bài giảng tiếng Việt.
+Bạn là Trợ lý Cú Mèo của LectureLens — hệ thống hỗ trợ học tập bài giảng tiếng Việt thông minh.
 Nhiệm vụ của bạn là trả lời câu hỏi của người học DỰA TRÊN ngữ cảnh trích xuất dưới đây.
 
 [QUY TẮC BẮT BUỘC]
@@ -248,12 +249,12 @@ Nhiệm vụ của bạn là trả lời câu hỏi của người học DỰA T
 [CÂU HỎI CỦA SINH VIÊN]
 {user_query}
 
-[CÂU TRẢ LỜI CỦA SMARTLECTURE AI]
+[CÂU TRẢ LỜI CỦA LECTURELENS]
 ```
 
 ---
 
-## 5. Danh Mục Mô Hình AI & Chiến Lược Quản Lý Trọng Số
+## 5. Danh Mục Mô Hình AI & Quản Lý Trọng Số
 
 Hệ thống sử dụng bộ 4 mô hình AI chuyên trách:
 
@@ -298,7 +299,7 @@ Hệ thống sử dụng bộ 4 mô hình AI chuyên trách:
 
 ## 6. Thiết Kế Cơ Sở Dữ Liệu & Tối Ưu Chỉ Mục Vector (Database & Index Tuning)
 
-Toàn bộ cấu trúc cơ sở dữ liệu được khởi tạo tự động trong `BE/db/init/`:
+Toàn bộ cấu trúc cơ sở dữ liệu được khởi tạo tự động trong hệ thống:
 
 ```sql
 -- Kích hoạt extension tính toán vector
@@ -443,7 +444,7 @@ CREATE INDEX IF NOT EXISTS idx_chunks_lecture_id ON rag.lecture_chunks(lecture_i
 - **BGE-Reranker-v2-m3 (FP16):** ~2.4 GB VRAM
 - **PhoWhisper-base (FP16):** ~1.2 GB VRAM
 - **CUDA Cache & Activation:** ~3.0 GB VRAM
-- **Tổng VRAM tiêu thụ dự kiến:** ~15.3 GB / 24 GB (Dư dả an toàn cho các tác vụ tải cao song song).
+- **Tổng VRAM tiêu thụ dự kiến:** ~15.3 GB / 24 GB (An toàn cho các tác vụ tải cao song song).
 
 ---
 
@@ -619,6 +620,6 @@ docker compose logs -f ai
 ---
 
 <div align="center">
-  <sub>Tài liệu đặc tả kỹ thuật dự án <b>SmartLecture AI – RAG-based Intelligent Lecture Assistant</b> 🚀</sub><br/>
-  <sub>Phiên bản: <b>2.0.0-PROD</b> • Bản quyền thuộc về <b>LectureLens & SmartLecture AI Team</b></sub>
+  <sub>Tài liệu đặc tả kỹ thuật dự án <b>LectureLens Backend & AI Service</b> 🚀</sub><br/>
+  <sub>Phiên bản: <b>2.0.0-PROD</b> • Bản quyền thuộc về <b>LectureLens Engineering Team</b></sub>
 </div>
