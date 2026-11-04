@@ -11,7 +11,9 @@
     "fe:ios": "npm --prefix FE run ios",
     "fe:web": "npm --prefix FE run web",
     "fe:test": "npm --prefix FE test",
+    "fe:lint": "npm --prefix FE run lint",
     "test": "npm --prefix FE test",
+    "lint": "npm --prefix FE run lint",
     "typecheck": "npm --prefix FE run typecheck"
   }
 }
