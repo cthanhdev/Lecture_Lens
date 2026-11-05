@@ -153,6 +153,7 @@ Desktop.ini
 *.swp
 *.swo
 # Ignore toàn bộ thư mục model
+/backend/models/
 /BE/models/
 
 # ------------------------------------------------------------------------------

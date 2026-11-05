@@ -270,7 +270,7 @@ Hệ thống sử dụng bộ 4 mô hình AI chuyên trách:
 > [!WARNING]
 > GitHub từ chối tất cả các tệp có kích thước lớn hơn **100 MB**. Tuyệt đối không commit các tệp `.safetensors`, `.bin`, `.pt` vào Git repository!
 
-1. **Cấu hình `.gitignore` chuẩn hóa (`BE/.gitignore`):**
+1. **Cấu hình `.gitignore` chuẩn hóa (`backend/.gitignore`):**
    ```gitignore
    # Loại bỏ các tệp nhị phân trọng số AI nặng
    models/**/*.bin
@@ -290,7 +290,7 @@ Hệ thống sử dụng bộ 4 mô hình AI chuyên trách:
 2. **Kịch bản tải tự động (`download_models.py`):**
    Dự án trang bị sẵn script tự động sử dụng `huggingface_hub` để tải đầy đủ weights khi clone về môi trường mới:
    ```bash
-   cd BE
+   cd backend
    pip install huggingface_hub
    python download_models.py
    ```
@@ -579,7 +579,7 @@ docker run --rm --gpus all nvidia/cuda:12.1.0-base-ubuntu22.04 nvidia-smi
 
 ### Bước 2: Tải Trọng Số Các Mô Hình
 ```bash
-cd BE
+cd backend
 pip install huggingface_hub
 python download_models.py
 ```

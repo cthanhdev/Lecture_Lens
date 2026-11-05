@@ -2,14 +2,17 @@
   "name": "lecturelens-workspace",
   "version": "1.0.0",
   "private": true,
-  "description": "LectureLens - AI Lecture Summarization & Flashcard App",
+  "description": "LectureLens - Nền Tảng Học Tập Thông Minh & Trợ Lý Bài Giảng AI Tiếng Việt",
   "scripts": {
-    "start": "npm --prefix frontend run dev",
     "dev": "npm --prefix frontend run dev",
+    "start": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
     "lint": "npm --prefix frontend run lint",
+    "typecheck": "npm --prefix frontend run build",
     "preview": "npm --prefix frontend run preview",
-    "understand:scan": "node tools/Understand-Anything/understand-anything-plugin/skills/understand/scan-project.mjs .",
-    "understand:dashboard": "node ~/.understand-anything-plugin/packages/dashboard/serve.mjs"
+    "understand:scan": "node tools/Understand-Anything/understand-anything-plugin/skills/understand/scan-project.mjs . .ua/manifest.json --exclude \"node_modules/**,.venv/**,backend/models/**,tools/**\"",
+    "understand:dashboard": "node tools/Understand-Anything/understand-anything-plugin/packages/dashboard/serve.mjs",
+    "backend:verify-db": "python backend/db/verify_rag_db.py",
+    "backend:download-models": "python backend/download_models.py"
   }
 }
