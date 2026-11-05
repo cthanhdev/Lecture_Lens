@@ -5,3 +5,4 @@ export * from './WaveformVisualizer';
 export * from './EmptyState';
 export * from './OfflineBanner';
 export * from './LectureCard';
+export * from './SakuraBackdrop';

@@ -99,46 +99,66 @@ export function ReviewScreen() {
         </GlassCard>
       </View>
 
-      {/* Decks Grid */}
-      <View style={styles.decksHeaderRow}>
-        <Text variant="h3">Decks ({decks.length} active)</Text>
-      </View>
+      {/* Decks by Subject Section */}
+      <Text variant="meta" color="muted" style={styles.sectionTitle}>
+        ACTIVE DECKS ({decks.length})
+      </Text>
 
-      <View style={styles.decksGrid}>
-        {decks.map((deck) => (
-          <GlassCard
-            key={deck.id}
-            style={styles.deckCard}
-            padding="base"
-            onPress={() =>
-              navigation.navigate('FlashcardSession', { deckId: deck.id })
-            }
-          >
-            <View style={styles.deckTop}>
-              <Chip label={deck.subjectName} subjectKey={deck.subjectKey} />
-              <View style={styles.dueBadge}>
-                <Text variant="caption" color="coralDeep" style={{ fontWeight: '700' }}>
-                  {deck.dueCount} due
-                </Text>
-              </View>
-            </View>
-
-            <Text variant="title" numberOfLines={1} style={styles.deckTitle}>
-              {deck.title}
-            </Text>
-            <Text variant="caption" color="muted" style={styles.deckCount}>
+      {decks.map((deck) => (
+        <GlassCard
+          key={deck.id}
+          style={styles.deckCard}
+          padding="base"
+          onPress={() =>
+            navigation.navigate('FlashcardSession', { deckId: deck.id })
+          }
+        >
+          <View style={styles.deckHeader}>
+            <Chip label={deck.subjectName} subjectKey={deck.subjectKey} />
+            <Text variant="caption" color="muted">
               {deck.cardCount} cards
             </Text>
+          </View>
 
-            <View style={styles.masteryRow}>
-              <Text variant="caption" color="secondary">
-                Mastery {deck.masteryPercentage}%
+          <Text variant="title" style={styles.deckTitle}>
+            {deck.title}
+          </Text>
+
+          <View style={styles.masteryRow}>
+            <Text variant="caption" color="secondary">
+              Mastery: {deck.masteryPercentage}%
+            </Text>
+            {deck.dueCount > 0 ? (
+              <Text variant="caption" color="coralDeep" style={{ fontWeight: '700' }}>
+                {deck.dueCount} due today
               </Text>
-            </View>
-            <ProgressBar progress={deck.masteryPercentage / 100} height={4} />
-          </GlassCard>
-        ))}
-      </View>
+            ) : (
+              <Text variant="caption" color="muted">
+                All reviewed
+              </Text>
+            )}
+          </View>
+
+          <ProgressBar
+            progress={deck.masteryPercentage / 100}
+            style={styles.progressBar}
+          />
+
+          <View style={styles.deckFooter}>
+            <Text variant="caption" color="muted">
+              Next interval: 7 days
+            </Text>
+            <Button
+              title="Practice →"
+              variant="secondary"
+              size="sm"
+              onPress={() =>
+                navigation.navigate('FlashcardSession', { deckId: deck.id })
+              }
+            />
+          </View>
+        </GlassCard>
+      ))}
     </Screen>
   );
 }
@@ -151,15 +171,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.base,
+    gap: spacing.base,
   },
   dueNumberBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.brand.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.base,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: 'rgba(244, 127, 114, 0.1)',
+    borderRadius: 16,
   },
   heroTextCol: {
     flex: 1,
@@ -167,10 +187,10 @@ const styles = StyleSheet.create({
   timeEstimate: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   heroHeading: {
-    lineHeight: 20,
+    lineHeight: 22,
   },
   startBtn: {
     marginTop: spacing.xs,
@@ -183,42 +203,39 @@ const styles = StyleSheet.create({
   metricTile: {
     flex: 1,
     alignItems: 'center',
+    gap: 4,
   },
   metricVal: {
-    marginVertical: 2,
+    marginTop: 2,
   },
-  decksHeaderRow: {
+  sectionTitle: {
     marginBottom: spacing.base,
-  },
-  decksGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.base,
+    letterSpacing: 0.5,
   },
   deckCard: {
-    width: '47.5%',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.base,
   },
-  deckTop: {
+  deckHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  dueBadge: {
-    backgroundColor: colors.brand.primarySoft,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
+    marginBottom: spacing.xs,
   },
   deckTitle: {
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  deckCount: {
-    marginBottom: spacing.base,
+    marginBottom: spacing.sm,
   },
   masteryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 4,
+  },
+  progressBar: {
+    marginBottom: spacing.sm,
+  },
+  deckFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 });
