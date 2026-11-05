@@ -30,7 +30,8 @@
           "microphonePermission": "Cho phép LectureLens sử dụng microphone để ghi âm bài giảng."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-asset"
     ]
   }
 }

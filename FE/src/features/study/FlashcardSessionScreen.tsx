@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { colors, radius, spacing } from '../../core/theme';
-import { Screen, AppHeader } from '../../shared/components';
+import { colors, palette, radius, spacing, shadows } from '../../core/theme';
+import { Screen, AppHeader, SakuraBackdrop } from '../../shared/components';
 import { Text, GlassCard, ProgressBar, Button, Chip } from '../../shared/ui';
 import { studyRepo } from '../../core/data';
 import { Flashcard, FlashcardGrade } from '../../core/domain/types';
@@ -14,9 +14,10 @@ export function FlashcardSessionScreen() {
   const { deckId = 'deck-macro' } = route.params || {};
 
   const [cards, setCards] = useState<Flashcard[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [isFlipped, setIsFlipped] = useState<boolean>(false);
+  const [showHint, setShowHint] = useState<boolean>(false);
+  const [goodCount, setGoodCount] = useState<number>(0);
 
   useEffect(() => {
     async function load() {
@@ -33,16 +34,22 @@ export function FlashcardSessionScreen() {
       await studyRepo.recordCardReview(currentCard.id, grade);
     }
 
+    if (grade === 'GOOD' || grade === 'EASY') {
+      setGoodCount((g) => g + 1);
+    }
+
     if (currentIndex < cards.length - 1) {
       setCurrentIndex((idx) => idx + 1);
       setIsFlipped(false);
       setShowHint(false);
     } else {
       // Completed session
+      const total = cards.length || 1;
+      const finalMastery = Math.round(((goodCount + 1) / total) * 100);
       navigation.replace('SessionComplete', {
         reviewedCards: cards.length,
         streakDays: 13,
-        masteryPercentage: 82,
+        masteryPercentage: Math.max(finalMastery, 80),
       });
     }
   };
@@ -59,6 +66,9 @@ export function FlashcardSessionScreen() {
       }
       contentContainerStyle={styles.container}
     >
+      <SakuraBackdrop petalCount={4} />
+
+      {/* Progress Bar */}
       <ProgressBar
         progress={(currentIndex + 1) / (cards.length || 1)}
         height={6}
@@ -78,39 +88,50 @@ export function FlashcardSessionScreen() {
               subjectKey="macroeconomics"
             />
             <Text variant="caption" color="muted">
-              {currentIndex + 1} of {cards.length}
+              Card {currentIndex + 1} of {cards.length || 1}
             </Text>
           </View>
 
           <View style={styles.cardBody}>
             {!isFlipped ? (
-              <>
+              <View style={styles.questionSection}>
                 <Text variant="h2" center style={styles.cardQuestion}>
                   {currentCard?.question || 'What is cost-push inflation?'}
                 </Text>
+
                 {showHint && currentCard?.hint && (
                   <View style={styles.hintBox}>
                     <Feather name="info" size={14} color={colors.brand.primary} />
-                    <Text variant="bodySm" color="secondary" style={{ marginLeft: 6 }}>
-                      {currentCard.hint}
+                    <Text variant="bodySm" color="secondary" style={styles.hintText}>
+                      Hint: {currentCard.hint}
                     </Text>
                   </View>
                 )}
-              </>
-            ) : (
-              <>
-                <Text variant="bodyLg" center style={styles.cardAnswer}>
-                  {currentCard?.answer || 'Recall how aggregate supply shifts when input factors become scarcer.'}
-                </Text>
+
                 {currentCard?.sourceContext && (
                   <View style={styles.sourceBox}>
-                    <Feather name="file-text" size={13} color={colors.text.muted} />
+                    <Feather name="book-open" size={12} color={colors.text.muted} />
                     <Text variant="caption" color="muted" style={{ marginLeft: 4 }}>
+                      Context: {currentCard.sourceContext}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View style={styles.answerSection}>
+                <Text variant="bodyLg" center style={styles.cardAnswer}>
+                  {currentCard?.answer || 'Cost-push inflation occurs when aggregate supply decreases due to higher costs of production.'}
+                </Text>
+
+                {currentCard?.sourceContext && (
+                  <View style={styles.sourceBox}>
+                    <Feather name="file-text" size={13} color={colors.brand.primary} />
+                    <Text variant="caption" color="coralDeep" style={{ marginLeft: 4 }}>
                       Source: {currentCard.sourceContext}
                     </Text>
                   </View>
                 )}
-              </>
+              </View>
             )}
           </View>
 
@@ -125,7 +146,7 @@ export function FlashcardSessionScreen() {
               />
             )}
             <Text variant="caption" color="muted" center>
-              {isFlipped ? 'Tap anywhere to review question' : 'Tap card anywhere to flip'}
+              {isFlipped ? 'Tap anywhere to view question' : 'Tap anywhere to flip card'}
             </Text>
           </View>
         </GlassCard>
@@ -139,38 +160,57 @@ export function FlashcardSessionScreen() {
           size="lg"
           fullWidth
           onPress={() => setIsFlipped(true)}
-          style={styles.bottomBtn}
+          style={[styles.bottomBtn, shadows.coralGlow]}
         />
       ) : (
         <View style={styles.gradeButtonsRow}>
-          <Button
-            title="Again"
-            variant="glass"
-            size="md"
+          <TouchableOpacity
+            style={[styles.gradePill, styles.againPill]}
             onPress={() => handleGrade('AGAIN')}
-            style={styles.gradeBtn}
-          />
-          <Button
-            title="Hard"
-            variant="glass"
-            size="md"
+          >
+            <Text variant="label" style={{ color: palette.errorRed }}>
+              Again
+            </Text>
+            <Text variant="caption" style={{ color: palette.errorRed, fontSize: 10 }}>
+              1 day
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.gradePill, styles.hardPill]}
             onPress={() => handleGrade('HARD')}
-            style={styles.gradeBtn}
-          />
-          <Button
-            title="Good"
-            variant="primary"
-            size="md"
+          >
+            <Text variant="label" style={{ color: colors.text.secondary }}>
+              Hard
+            </Text>
+            <Text variant="caption" style={{ color: colors.text.muted, fontSize: 10 }}>
+              3 days
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.gradePill, styles.goodPill]}
             onPress={() => handleGrade('GOOD')}
-            style={styles.gradeBtn}
-          />
-          <Button
-            title="Easy"
-            variant="secondary"
-            size="md"
+          >
+            <Text variant="label" style={{ color: '#FFFFFF' }}>
+              Good
+            </Text>
+            <Text variant="caption" style={{ color: '#FFFFFF', fontSize: 10 }}>
+              7 days
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.gradePill, styles.easyPill]}
             onPress={() => handleGrade('EASY')}
-            style={styles.gradeBtn}
-          />
+          >
+            <Text variant="label" style={{ color: palette.mintDeep }}>
+              Easy
+            </Text>
+            <Text variant="caption" style={{ color: palette.mintDeep, fontSize: 10 }}>
+              14 days
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
     </Screen>
@@ -199,45 +239,82 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: spacing.base,
   },
   cardBody: {
-    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
-    paddingVertical: spacing.xl,
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  questionSection: {
+    alignItems: 'center',
+    width: '100%',
   },
   cardQuestion: {
     lineHeight: 30,
-  },
-  cardAnswer: {
-    lineHeight: 24,
+    marginBottom: spacing.base,
   },
   hintBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.brand.primarySoft,
-    padding: spacing.base,
+    backgroundColor: 'rgba(244, 127, 114, 0.1)',
     borderRadius: radius.md,
-    marginTop: spacing.xl,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.sm,
+    marginVertical: spacing.sm,
+  },
+  hintText: {
+    marginLeft: 6,
   },
   sourceBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.xl,
+    marginTop: spacing.md,
+  },
+  answerSection: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  cardAnswer: {
+    lineHeight: 26,
+    marginBottom: spacing.base,
   },
   cardFooter: {
     alignItems: 'center',
     gap: spacing.xs,
+    marginTop: spacing.base,
   },
   bottomBtn: {
     marginTop: spacing.base,
   },
   gradeButtonsRow: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: spacing.sm,
     marginTop: spacing.base,
   },
-  gradeBtn: {
+  gradePill: {
     flex: 1,
-    paddingHorizontal: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+  },
+  againPill: {
+    backgroundColor: 'rgba(186, 26, 26, 0.08)',
+    borderColor: 'rgba(186, 26, 26, 0.2)',
+  },
+  hardPill: {
+    backgroundColor: 'rgba(255, 226, 122, 0.2)',
+    borderColor: 'rgba(255, 226, 122, 0.5)',
+  },
+  goodPill: {
+    backgroundColor: colors.brand.primary,
+    borderColor: colors.brand.primary,
+  },
+  easyPill: {
+    backgroundColor: 'rgba(190, 225, 208, 0.4)',
+    borderColor: 'rgba(10, 67, 37, 0.2)',
   },
 });
