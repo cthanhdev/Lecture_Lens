@@ -174,15 +174,37 @@ Mọi phần tử có thể tương tác (Buttons, Cards, Chips) đều tích h�
 
 ---
 
-## 7. 📱 Danh Mục 27 Màn Hình Mẫu (Screen Assets Inventory)
+## 7. 📱 Danh Mục 28 Màn Hình Mẫu Chuẩn Hóa (Screen Assets Inventory)
 
-Tất cả 27 màn hình được kết xuất thành file SVG chất lượng cao nằm tại `frontend/src/assets/LectureLens App Design System/`:
+Toàn bộ 28 màn hình mẫu đã được đồng bộ hóa tên gọi và chức năng chuẩn xác 1:1 giữa hai định dạng Vector (`frontend/src/assets/LectureLens App Design System - SVG/`) và Raster (`frontend/src/assets/LectureLens App Design System - PNG/`):
 
-| Nhóm Nghiệp Vụ | Tên Tệp SVG Mẫu | Nội Dung & Chức Năng |
-| :--- | :--- | :--- |
-| **1. Khởi Động & Xác Thực** | `Kitsune Onboarding - 1. Record or Upload.svg`<br/>`Kitsune Onboarding - 2. Find What Matters.svg`<br/>`Kitsune Onboarding - 3. Remember It.svg`<br/>`Sign In.svg`<br/>`Create Account.svg`<br/>`Kitsune Plus Paywall (Mobile).svg` | Giới thiệu 3 bước giá trị cốt lõi, đăng nhập/đăng ký với form pill, màn hình nâng cấp gói học tập Kitsune Plus với huy hiệu linh vật |
-| **2. Bàn Học Chính** | `Kitsune - Home Study Hub.svg`<br/>`Kitsune - Lecture Library & Archive.svg`<br/>`Kitsune - Search & Audio Snippets.svg` | Bàn học thông minh tổng hợp tiến độ, thư viện bài giảng lưu trữ, công cụ tìm kiếm ngữ nghĩa trích xuất phân đoạn audio |
-| **3. Môn Học & Chuyên Đề** | `Kitsune - Subjects Archive.svg`<br/>`Kitsune - Subject Detail (Macroeconomics).svg` | Danh mục môn học dạng lưới bento, chi tiết môn học với danh sách bài giảng phân loại |
-| **4. Xử Lý & Chi Tiết Audio** | `Kitsune - Add Audio Bottom Sheet.svg`<br/>`Kitsune - Processing Lecture.svg`<br/>`Kitsune - Audio Detail & Summary.svg`<br/>`Kitsune - Audio Detail & Summary-1.svg`<br/>`Kitsune - Audio Detail & Live Transcript.svg`<br/>`Kitsune - Audio Detail & Highlights.svg` | Sheet ghi âm/tải lên, màn hình tiến độ AI ASR & RAG với hoạt ảnh Cáo Kitsune, bảng tóm tắt bài giảng Cornell Notes, bản ghi âm trực tiếp đồng bộ timestamp và danh sách điểm nhấn |
-| **5. Ôn Tập & Ghi Nhớ** | `Kitsune - Review & Study Hub.svg`<br/>`Kitsune Flashcard - Question (Front).svg`<br/>`Kitsune Flashcard - Answer (Back).svg`<br/>`Kitsune - Session Complete & Celebration.svg` | Trung tâm ôn luyện Spaced Repetition, thẻ lật ghi nhớ hai mặt (Front/Back) với thao tác lật mượt, màn hình chúc mừng hoàn thành phiên học |
-| **6. Hồ Sơ & Trạng Thái** | `Kitsune - Student Profile & Study Stats.svg`<br/>`Settings Screen.svg`<br/>`Home - Offline State.svg`<br/>`Library - Offline State.svg`<br/>`Html   Body.svg`<br/>`Html   Body-1.svg` | Báo cáo thời gian học, cấu hình ứng dụng, giao diện ngoại tuyến cảnh báo mất mạng thân thiện |
+| STT | Nhóm Nghiệp Vụ | Tên Tệp Chuẩn Hóa (`.svg` / `.png`) | Chức Vụ & Ý Nghĩa Thiết Kế |
+| :---: | :--- | :--- | :--- |
+| **01** | **Khởi Động** | `01 - Splash - App Launch` | Màn hình khởi động (Splash Screen), hiển thị linh vật Cáo Kitsune Pixel Art và thanh trạng thái chuẩn bị hệ thống |
+| **02** | **Onboarding** | `02 - Onboarding - Step 1 (Record or Upload)` | Giới thiệu bước 1: Thu âm bài giảng trực tiếp trong lớp học hoặc tải tệp âm thanh lên |
+| **03** | **Onboarding** | `03 - Onboarding - Step 2 (Find What Matters)` | Giới thiệu bước 2: Trợ lý AI tự động trích xuất điểm nhấn và tóm tắt trọng tâm |
+| **04** | **Onboarding** | `04 - Onboarding - Step 3 (Remember It)` | Giới thiệu bước 3: Thẻ ghi nhớ Flashcard thông minh gắn kèm đoạn âm thanh bài giảng gốc |
+| **05** | **Xác Thực** | `05 - Auth - Sign In` | Đăng nhập tài khoản sinh viên (Email trường / Mật khẩu / Đăng nhập nhanh Google, Apple) |
+| **06** | **Xác Thực** | `06 - Auth - Create Account` | Đăng ký tài khoản sinh viên mới kèm điều khoản dịch vụ |
+| **07** | **Gói Dịch Vụ** | `07 - Paywall - Kitsune Plus Subscription` | Màn hình nâng cấp gói học tập Kitsune Plus (mở khóa không giới hạn giờ ASR & RAG) |
+| **08** | **Bàn Học Chính** | `08 - Home - Study Hub Dashboard` | Bàn học thông minh (Home Study Hub): Tiếp tục nghe bài giảng, thẻ cần ôn hôm nay, chuỗi ngày streak |
+| **09** | **Trạng Thái** | `09 - Home - Offline State` | Giao diện màn hình Home khi mất kết nối mạng, hiển thị thông báo offline và bài đã tải |
+| **10** | **Thư Viện** | `10 - Library - Lecture Archive` | Kho lưu trữ bài giảng tổng hợp, hỗ trợ lọc theo môn học và mốc thời gian |
+| **11** | **Thư Viện** | `11 - Library - Empty State` | Trạng thái rỗng của thư viện khi người dùng chưa có bản thu âm nào, kèm nút gợi ý tạo bài mới |
+| **12** | **Thư Viện** | `12 - Library - Offline State` | Thư viện khi ngoại tuyến, hiển thị kho bài học đã lưu vào bộ nhớ máy (Vault) |
+| **13** | **Ghi Âm** | `13 - Audio - Add Audio Bottom Sheet` | Bảng điều khiển nạp âm thanh: Thu âm trực tiếp, tải file từ máy, dán liên kết hoặc Voice Memos |
+| **14** | **Ghi Âm** | `14 - Audio - Live Recording` | Màn hình đang thu âm bài giảng trực tiếp: Hiển thị sóng âm, thời lượng, gắn sao highlight và ghi chú timestamp |
+| **15** | **Xử Lý AI** | `15 - Audio - Processing Pipeline` | Tiến trình AI tổng hợp 5 giai đoạn (Upload -> ASR nhận dạng giọng nói -> Trích xuất Highlight -> Tóm tắt -> Sinh Flashcard) |
+| **16** | **Chi Tiết Audio** | `16 - Audio Detail - Synchronized Transcript` | Trình phát bài giảng tab Lời thoại: Bản gỡ băng tự động đồng bộ theo từng mốc thời gian `[MM:SS]` |
+| **17** | **Chi Tiết Audio** | `17 - Audio Detail - Key Highlights` | Trình phát bài giảng tab Điểm nhấn: Danh sách các phân đoạn quan trọng do AI lọc hoặc sinh viên đánh dấu |
+| **18** | **Chi Tiết Audio** | `18 - Audio Detail - Cornell Summary Overview` | Trình phát bài giảng tab Tóm tắt: Bản tóm tắt chuẩn Cornell Notes (Key ideas, Keywords, Definitions, Exam alerts) |
+| **19** | **Chi Tiết Audio** | `19 - Audio Detail - Cornell Summary Chapter View` | Bản tóm tắt Cornell mở rộng chi tiết theo chương kèm điều khiển tua nhanh 10 giây |
+| **20** | **Môn Học** | `20 - Subjects - Course Archive` | Danh mục tổng hợp tất cả môn học trong học kỳ kèm tỷ lệ hoàn thành |
+| **21** | **Môn Học** | `21 - Subjects - Course Detail (Macroeconomics)` | Trang chi tiết môn học (Kinh tế vĩ mô): Mức độ ghi nhớ, số thẻ cần ôn và danh sách bài giảng thuộc môn |
+| **22** | **Tìm Kiếm RAG** | `22 - Search - Neural RAG & Audio Snippets` | Tìm kiếm ngữ nghĩa 2-Stage Neural RAG trích xuất chính xác phân đoạn audio và câu trả lời tương ứng |
+| **23** | **Ôn Tập** | `23 - Review - Spaced Repetition Study Hub` | Trung tâm ôn luyện ghi nhớ ngắt quãng (Spaced Repetition), quản lý các bộ thẻ (Decks) và tiến độ tuần |
+| **24** | **Flashcard** | `24 - Flashcard - Question (Front)` | Mặt trước thẻ học Flashcard (Active Recall Question) kèm nút gợi ý và mốc nghe lại |
+| **25** | **Flashcard** | `25 - Flashcard - Answer (Back)` | Mặt sau thẻ học Flashcard: Lời giải thích, phát lại trích đoạn bài giảng và nút đánh giá độ nhớ |
+| **26** | **Ôn Tập** | `26 - Review - Session Complete Celebration` | Màn hình chúc mừng sau khi hoàn thành phiên ôn tập, cập nhật streak và số thẻ làm đúng |
+| **27** | **Hồ Sơ** | `27 - Profile - Student Stats & Activity` | Trang cá nhân sinh viên: Thống kê số giờ nghe giảng, thẻ đã thuộc, bản đồ nhiệt học tập (Activity Heatmap) |
+| **28** | **Cài Đặt** | `28 - Settings - App Preferences` | Cài đặt ứng dụng: Nhắc nhở học tập, tốc độ phát mặc định, ngôn ngữ ASR, quản lý bộ nhớ đệm và tài khoản |

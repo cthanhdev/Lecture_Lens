@@ -49,7 +49,7 @@ Mọi mã nguồn giao diện được sinh ra trong thư mục `frontend/` bắ
 4. **Động lực học Mochi (Mochi Tactile Press):**
    - Các phần tử tương tác (button, card) khi nhấn (`active` state) phải thu nhỏ nhẹ `scale(0.97)` với thời gian chuyển động `0.15s`.
 5. **Đối chiếu màn hình mẫu:**
-   - Luôn đối chiếu với **27 tệp màn hình mẫu SVG** tại `frontend/src/assets/LectureLens App Design System/` trước khi xây dựng bất kỳ màn hình hoặc component mới nào.
+   - Luôn đối chiếu với **28 tệp màn hình mẫu** tại `frontend/src/assets/LectureLens App Design System - SVG/` và `frontend/src/assets/LectureLens App Design System - PNG/` trước khi xây dựng bất kỳ màn hình hoặc component mới nào.
 
 ---
 

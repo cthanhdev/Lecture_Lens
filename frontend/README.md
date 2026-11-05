@@ -40,43 +40,49 @@ Dự án áp dụng duy nhất kiểu chữ hình học cao cấp **Plus Jakarta
 
 ---
 
-## 📱 Danh Mục 27 Màn Hình Mẫu (Assets Mapping)
+## 📱 Danh Mục 28 Màn Hình Mẫu (Assets Mapping)
 
-Toàn bộ 27 màn hình thiết kế chuẩn đã được xuất thành tệp vector SVG tại thư mục:  
-👉 [`src/assets/LectureLens App Design System/`](./src/assets/LectureLens%20App%20Design%20System/)
+Toàn bộ 28 màn hình thiết kế chuẩn đã được đồng bộ hóa tên gọi và chức năng tại hai thư mục tài nguyên:  
+👉 **SVG (Vector)**: [`src/assets/LectureLens App Design System - SVG/`](./src/assets/LectureLens%20App%20Design%20System%20-%20SVG/)  
+👉 **PNG (Raster)**: [`src/assets/LectureLens App Design System - PNG/`](./src/assets/LectureLens%20App%20Design%20System%20-%20PNG/)  
 
-1. **Khởi động & Xác thực (6 màn hình):**
-   - `Kitsune Onboarding - 1. Record or Upload.svg`
-   - `Kitsune Onboarding - 2. Find What Matters.svg`
-   - `Kitsune Onboarding - 3. Remember It.svg`
-   - `Sign In.svg`
-   - `Create Account.svg`
-   - `Kitsune Plus Paywall (Mobile).svg`
-2. **Bàn học & Tìm kiếm (3 màn hình):**
-   - `Kitsune - Home Study Hub.svg`
-   - `Kitsune - Lecture Library & Archive.svg`
-   - `Kitsune - Search & Audio Snippets.svg`
-3. **Môn học & Chuyên đề (2 màn hình):**
-   - `Kitsune - Subjects Archive.svg`
-   - `Kitsune - Subject Detail (Macroeconomics).svg`
-4. **Xử lý & Chi tiết Bài giảng (6 màn hình):**
-   - `Kitsune - Add Audio Bottom Sheet.svg`
-   - `Kitsune - Processing Lecture.svg`
-   - `Kitsune - Audio Detail & Summary.svg`
-   - `Kitsune - Audio Detail & Summary-1.svg`
-   - `Kitsune - Audio Detail & Live Transcript.svg`
-   - `Kitsune - Audio Detail & Highlights.svg`
-5. **Ôn tập & Ghi nhớ Active Recall (4 màn hình):**
-   - `Kitsune - Review & Study Hub.svg`
-   - `Kitsune Flashcard - Question (Front).svg`
-   - `Kitsune Flashcard - Answer (Back).svg`
-   - `Kitsune - Session Complete & Celebration.svg`
-6. **Hồ sơ & Trạng thái hệ thống (6 màn hình):**
-   - `Kitsune - Student Profile & Study Stats.svg`
-   - `Settings Screen.svg`
-   - `Home - Offline State.svg`
-   - `Library - Offline State.svg`
-   - `Html   Body.svg` & `Html   Body-1.svg`
+1. **Khởi động & Xác thực:**
+   - `01 - Splash - App Launch`
+   - `02 - Onboarding - Step 1 (Record or Upload)`
+   - `03 - Onboarding - Step 2 (Find What Matters)`
+   - `04 - Onboarding - Step 3 (Remember It)`
+   - `05 - Auth - Sign In`
+   - `06 - Auth - Create Account`
+   - `07 - Paywall - Kitsune Plus Subscription`
+2. **Bàn học & Trạng thái Home:**
+   - `08 - Home - Study Hub Dashboard`
+   - `09 - Home - Offline State`
+3. **Thư viện bài giảng:**
+   - `10 - Library - Lecture Archive`
+   - `11 - Library - Empty State`
+   - `12 - Library - Offline State`
+4. **Ghi âm & Xử lý AI:**
+   - `13 - Audio - Add Audio Bottom Sheet`
+   - `14 - Audio - Live Recording`
+   - `15 - Audio - Processing Pipeline`
+5. **Chi tiết bài giảng & Ghi chú Cornell:**
+   - `16 - Audio Detail - Synchronized Transcript`
+   - `17 - Audio Detail - Key Highlights`
+   - `18 - Audio Detail - Cornell Summary Overview`
+   - `19 - Audio Detail - Cornell Summary Chapter View`
+6. **Môn học & Chuyên đề:**
+   - `20 - Subjects - Course Archive`
+   - `21 - Subjects - Course Detail (Macroeconomics)`
+7. **Tìm kiếm ngữ nghĩa RAG:**
+   - `22 - Search - Neural RAG & Audio Snippets`
+8. **Ôn tập Spaced Repetition & Flashcards:**
+   - `23 - Review - Spaced Repetition Study Hub`
+   - `24 - Flashcard - Question (Front)`
+   - `25 - Flashcard - Answer (Back)`
+   - `26 - Review - Session Complete Celebration`
+9. **Hồ sơ sinh viên & Cài đặt:**
+   - `27 - Profile - Student Stats & Activity`
+   - `28 - Settings - App Preferences`
 
 ---
 
@@ -120,7 +126,8 @@ frontend/
 ├── public/                                      # Tài nguyên tĩnh, SVG icons
 ├── src/
 │   ├── assets/
-│   │   ├── LectureLens App Design System/       # 🌸 27 Màn hình thiết kế mẫu SVG
+│   │   ├── LectureLens App Design System - PNG/ # 🌸 28 Màn hình thiết kế mẫu PNG
+│   │   ├── LectureLens App Design System - SVG/ # 🌸 28 Màn hình thiết kế mẫu SVG
 │   │   ├── logo-LectureLens.png                 # Logo thương hiệu
 │   │   └── ...
 │   ├── components/                              # 🧱 Reusable Deep UI Modules (dự kiến)
