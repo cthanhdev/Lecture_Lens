@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kitsune Plus Paywall</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #FFF7FD;
+      color: #261333;
+      overflow: hidden;
+    }
+    .plum-text {
+      color: #261333;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 10px 25px -5px rgba(38, 19, 51, 0.05), 0 8px 10px -6px rgba(38, 19, 51, 0.03);
+      border-radius: 28px;
+    }
+    .glass-bottom {
+      background: rgba(255, 247, 253, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 -10px 30px rgba(38, 19, 51, 0.05);
+    }
+    .coral-glow {
+      box-shadow: 0 10px 24px -4px rgba(244, 127, 114, 0.45);
+    }
+    .plan-selected {
+      border: 1.5px solid #F47F72;
+      box-shadow: 0 0 0 3px rgba(244, 127, 114, 0.22), 0 12px 20px -8px rgba(38, 19, 51, 0.06);
+    }
+    .plan-unselected {
+      border: 1px solid rgba(38, 19, 51, 0.10);
+      background: rgba(255, 255, 255, 0.70);
+    }
+    /* Hide scrollbar */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="flex justify-center items-center min-h-screen bg-slate-100">
+  <!-- iPhone 390x844 Frame -->
+  <div class="relative w-[390px] h-[844px] bg-[#FFF7FD] overflow-hidden flex flex-col shadow-2xl">
+    
+    <!-- Background Decor -->
+    <div class="absolute inset-0 pointer-events-none z-0">
+      <!-- Gradient Base -->
+      <div class="absolute inset-0 bg-gradient-to-b from-[#F5C3C9]/40 via-[#FFF7FD]/60 to-[#FFF7FD]"></div>
+      
+      <!-- Top Wave Drip -->
+      <svg class="absolute top-0 left-0 w-full" viewBox="0 0 390 95" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 0H390V48C330 76 280 32 205 58C135 82 80 44 0 70V0Z" fill="#F5C3C9" fill-opacity="0.45"/>
+        <path d="M0 0H390V36C320 62 265 24 185 46C110 66 65 30 0 52V0Z" fill="#F5C3C9" fill-opacity="0.3"/>
+      </svg>
+      
+      <!-- Blurred Organic Blobs -->
+      <div class="absolute top-20 left-[-40px] w-64 h-64 rounded-full bg-[#F47F72]/25 blur-3xl"></div>
+      <div class="absolute top-72 right-[-50px] w-72 h-72 rounded-full bg-[#A9D4E8]/35 blur-3xl"></div>
+      
+      <!-- Drifting Sakura Petals (4 petals) -->
+      <!-- Petal 1 -->
+      <svg class="absolute top-28 left-8 w-5 h-6 text-[#F47F72]/50 rotate-12" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C8 6 4 11 4 15C4 19.4 7.6 22 12 22C16.4 22 20 19.4 20 15C20 11 16 6 12 2Z" />
+      </svg>
+      <!-- Petal 2 -->
+      <svg class="absolute top-44 right-10 w-4 h-5 text-[#F5C3C9]/80 -rotate-45" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C8 6 4 11 4 15C4 19.4 7.6 22 12 22C16.4 22 20 19.4 20 15C20 11 16 6 12 2Z" />
+      </svg>
+      <!-- Petal 3 -->
+      <svg class="absolute top-80 left-12 w-4 h-5 text-[#F5C3C9]/70 rotate-45" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C8 6 4 11 4 15C4 19.4 7.6 22 12 22C16.4 22 20 19.4 20 15C20 11 16 6 12 2Z" />
+      </svg>
+      <!-- Petal 4 -->
+      <svg class="absolute top-[480px] right-8 w-5 h-6 text-[#F47F72]/30 rotate-[85deg]" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C8 6 4 11 4 15C4 19.4 7.6 22 12 22C16.4 22 20 19.4 20 15C20 11 16 6 12 2Z" />
+      </svg>
+    </div>
+
+    <!-- Top Bar: iOS status & Close (X) button -->
+    <header class="relative z-20 pt-3 px-5 flex items-center justify-between">
+      <!-- 40px Glass Circular Close Button (X) -->
+      <button type="button" aria-label="Close" class="w-10 h-10 rounded-full bg-white/70 backdrop-blur-md border border-white/90 shadow-sm flex items-center justify-center text-[#261333] hover:bg-white/90 active:scale-95 transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Kitsune Plus Soft Badge -->
+      <div class="px-3.5 py-1.5 rounded-full bg-[#FFE27A]/80 backdrop-blur-sm border border-white/60 flex items-center gap-1.5 shadow-sm">
+        <svg class="w-3.5 h-3.5 text-[#261333]" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+        </svg>
+        <span class="text-xs font-bold tracking-tight text-[#261333]">Kitsune Plus</span>
+      </div>
+    </header>
+
+    <!-- Scrollable Main Content -->
+    <main class="relative z-10 flex-1 overflow-y-auto no-scrollbar px-5 pt-3 pb-6 space-y-4">
+      
+      <!-- 1. Hero Brand Logo Area -->
+      <div class="flex flex-col items-center pt-1">
+        <div class="relative">
+          <!-- 112px Logo tile -->
+          <div class="w-28 h-28 rounded-[28px] p-2 glass-card flex items-center justify-center shadow-lg border border-white/90">
+            <img src="https://lh3.googleusercontent.com/aida/AEtjO1XoUpsxP9aPA-kP06Qj3YajudE6TbYeXF_aShKtYHhYs6HXBIj2T5mMyQuNq5U0qljd2X39LtdDq7DZv0omdnO3FizN15kAX9_5mAE283cGe-Oky-o7TH7NlSlSdW83d9glqpVl7mKJ1Fe6cYg8iMrAfS337b0_I9QPiSOwElTipCAnuPZnS2NmT7LfZJVHib-HA4Nk0KXe5gRLmgBwMj8jv4e3FmuDxEPznmvfQeETPJjMulXoHKTp2Y4" alt="Kitsune Fox Pixel Logo" class="w-full h-full object-contain rounded-[20px]" />
+          </div>
+          <!-- Mochi Yellow star badge on top-right corner of tile -->
+          <div class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[#FFE27A] border-2 border-white shadow-md flex items-center justify-center text-[#261333]">
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2L14.8 8.1L21.5 8.9L16.5 13.5L17.9 20.1L12 16.8L6.1 20.1L7.5 13.5L2.5 8.9L9.2 8.1L12 2Z"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- 2. Headline & Subtitle -->
+        <div class="text-center mt-3.5 max-w-[320px]">
+          <h1 class="text-[28px] leading-[34px] font-extrabold text-[#261333] tracking-tight">
+            Never miss a word of lecture
+          </h1>
+          <p class="text-[15px] leading-snug font-medium text-[#261333]/70 mt-1.5">
+            Unlock unlimited transcription and smarter review.
+          </p>
+        </div>
+      </div>
+
+      <!-- 3. Usage Card (Level 1 Glass) -->
+      <section class="glass-card p-4 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5C3C9] text-xs font-bold text-[#261333]">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#F47F72]"></span>
+            Free plan
+          </span>
+          <span class="text-xs font-bold text-[#F47F72]">
+            1.5 hours left
+          </span>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-baseline mb-1.5">
+            <span class="text-[13px] font-semibold text-[#261333]">
+              18.5 of 20 free hours used
+            </span>
+            <span class="text-[11px] font-bold text-[#261333]/60">
+              92.5%
+            </span>
+          </div>
+          <!-- 6px progress bar (Mist Sky track, coral fill at 92%) -->
+          <div class="w-full h-1.5 bg-[#A9D4E8]/60 rounded-full overflow-hidden">
+            <div class="h-full bg-[#F47F72] rounded-full" style="width: 92.5%;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Feature Card (Level 1 Glass) with 4 rows -->
+      <section class="glass-card p-4 space-y-3">
+        <!-- Row 1 -->
+        <div class="flex items-center gap-3">
+          <div class="w-6 h-6 rounded-full bg-[#BEE1D0] flex-shrink-0 flex items-center justify-center text-[#261333] shadow-sm">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <span class="text-[14px] font-semibold text-[#261333]">
+            Unlimited transcription hours
+          </span>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="flex items-center gap-3">
+          <div class="w-6 h-6 rounded-full bg-[#BEE1D0] flex-shrink-0 flex items-center justify-center text-[#261333] shadow-sm">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <span class="text-[14px] font-semibold text-[#261333]">
+            AI summaries and likely exam questions
+          </span>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="flex items-center gap-3">
+          <div class="w-6 h-6 rounded-full bg-[#BEE1D0] flex-shrink-0 flex items-center justify-center text-[#261333] shadow-sm">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <span class="text-[14px] font-semibold text-[#261333]">
+            Offline downloads
+          </span>
+        </div>
+
+        <!-- Row 4 -->
+        <div class="flex items-center gap-3">
+          <div class="w-6 h-6 rounded-full bg-[#BEE1D0] flex-shrink-0 flex items-center justify-center text-[#261333] shadow-sm">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <span class="text-[14px] font-semibold text-[#261333]">
+            Export to PDF and Notion
+          </span>
+        </div>
+      </section>
+
+      <!-- 5. Plan Selector (Two cards side by side, 28px radius, equal width) -->
+      <section class="grid grid-cols-2 gap-3 pt-1">
+        <!-- Yearly (Selected) -->
+        <div class="relative glass-card p-3.5 pt-5 plan-selected cursor-pointer flex flex-col justify-between">
+          <!-- Overlapping Badge -->
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-[#FFE27A] px-2.5 py-0.5 rounded-full border border-white/80 shadow-sm">
+            <span class="text-[10px] font-extrabold text-[#261333] tracking-tight">Best value · Save 44%</span>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#261333] uppercase tracking-wider">Yearly</span>
+              <div class="w-4 h-4 rounded-full bg-[#F47F72] flex items-center justify-center text-white">
+                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="text-[20px] font-extrabold text-[#261333] leading-none mb-1">
+              $39.99<span class="text-xs font-semibold text-[#261333]/70">/yr</span>
+            </div>
+          </div>
+
+          <div class="text-[11px] font-semibold text-[#261333]/60 pt-2 border-t border-[#261333]/10">
+            $3.33/mo
+          </div>
+        </div>
+
+        <!-- Monthly (Unselected) -->
+        <div class="relative glass-card p-3.5 pt-5 plan-unselected cursor-pointer flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#261333]/70 uppercase tracking-wider">Monthly</span>
+              <div class="w-4 h-4 rounded-full border border-[#261333]/20"></div>
+            </div>
+            <div class="text-[20px] font-extrabold text-[#261333] leading-none mb-1">
+              $5.99<span class="text-xs font-semibold text-[#261333]/70">/mo</span>
+            </div>
+          </div>
+
+          <div class="text-[11px] font-semibold text-[#261333]/60 pt-2 border-t border-[#261333]/10">
+            Billed monthly
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Spacer to ensure content scrolls safely above pinned footer -->
+      <div class="h-2"></div>
+    </main>
+
+    <!-- Pinned Bottom Area (Level 2 glass, 24px blur, above home indicator) -->
+    <footer class="relative z-30 glass-bottom px-5 pt-3.5 pb-6 space-y-2.5 flex-shrink-0">
+      <!-- Full-width 56px Coral Primary Pill Button -->
+      <button type="button" class="w-full h-14 rounded-full bg-[#F47F72] text-white text-[16px] font-bold tracking-wide flex items-center justify-center gap-2 coral-glow active:scale-[0.98] transition-transform">
+        <span>Start 7-day free trial</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+
+      <!-- Trial & Pricing terms -->
+      <p class="text-center text-[11px] leading-tight font-medium text-[#261333]/60 px-2">
+        7 days free, then $39.99/year. Cancel anytime in Settings.
+      </p>
+
+      <!-- Footer links row -->
+      <div class="flex items-center justify-center gap-5 pt-0.5">
+        <a href="#" class="text-[11px] font-semibold text-[#261333]/70 hover:text-[#261333] transition-colors">Restore purchases</a>
+        <span class="w-1 h-1 rounded-full bg-[#261333]/20"></span>
+        <a href="#" class="text-[11px] font-semibold text-[#261333]/70 hover:text-[#261333] transition-colors">Terms</a>
+        <span class="w-1 h-1 rounded-full bg-[#261333]/20"></span>
+        <a href="#" class="text-[11px] font-semibold text-[#261333]/70 hover:text-[#261333] transition-colors">Privacy</a>
+      </div>
+
+      <!-- iOS Home Indicator -->
+      <div class="w-32 h-1 bg-[#261333]/20 rounded-full mx-auto mt-2"></div>
+    </footer>
+
+  </div>
+</body>
+</html>

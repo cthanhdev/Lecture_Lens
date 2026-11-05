@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "FE",
-    "slug": "FE",
+    "name": "LectureLens",
+    "slug": "lecturelens",
+    "scheme": "lecturelens",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,7 +12,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFF7FC",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -20,6 +21,16 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Cho phép LectureLens sử dụng microphone để ghi âm bài giảng."
+        }
+      ],
+      "expo-secure-store"
+    ]
   }
 }
