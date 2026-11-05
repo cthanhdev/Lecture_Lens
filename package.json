@@ -4,17 +4,11 @@
   "private": true,
   "description": "LectureLens - AI Lecture Summarization & Flashcard App",
   "scripts": {
-    "start": "npm --prefix FE start",
-    "fe": "npm --prefix FE start",
-    "fe:start": "npm --prefix FE start",
-    "fe:android": "npm --prefix FE run android",
-    "fe:ios": "npm --prefix FE run ios",
-    "fe:web": "npm --prefix FE run web",
-    "fe:test": "npm --prefix FE test",
-    "fe:lint": "npm --prefix FE run lint",
-    "test": "npm --prefix FE test",
-    "typecheck": "npm --prefix FE run typecheck",
-    "lint": "npm --prefix FE run lint",
+    "start": "npm --prefix frontend run dev",
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint",
+    "preview": "npm --prefix frontend run preview",
     "understand:scan": "node tools/Understand-Anything/understand-anything-plugin/skills/understand/scan-project.mjs .",
     "understand:dashboard": "node ~/.understand-anything-plugin/packages/dashboard/serve.mjs"
   }
