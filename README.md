@@ -19,7 +19,7 @@
 
 ---
 
-[Tổng Quan](#-tổng-quan-overview) • [Tính Năng Cốt Lõi](#-tính-năng-cốt-lõi-core-features) • [Ngôn Ngữ Thiết Kế](#-ngôn-ngữ-thiết-kế-pastel-stationery) • [Kiến Trúc Hệ Thống](#-kiến-trúc-hệ-thống-architecture) • [Cấu Trúc Dự Án](#-cấu-trúc-dự-án-project-structure) • [Bắt Đầu Nhanh](#-bắt-đầu-nhanh-quickstart) • [Kỹ Năng & Quản Trị Kỹ Thuật](#-kỹ-năng--quản-trị-kỹ-thuật-engineering-skills--agents) • [Lộ Trình](#-lộ-trình-phát-triển-roadmap)
+[Tổng Quan](#-tổng-quan-overview) • [Tính Năng Cốt Lõi](#-tính-năng-cốt-lõi-core-features) • [Ngôn Ngữ Thiết Kế](#-ngôn-ngữ-thiết-kế-kitsune-soft) • [Kiến Trúc Hệ Thống](#-kiến-trúc-hệ-thống-architecture) • [Cấu Trúc Dự Án](#-cấu-trúc-dự-án-project-structure) • [Bắt Đầu Nhanh](#-bắt-đầu-nhanh-quickstart) • [Kỹ Năng & Quản Trị Kỹ Thuật](#-kỹ-năng--quản-trị-kỹ-thuật-engineering-skills--agents) • [Lộ Trình](#-lộ-trình-phát-triển-roadmap)
 
 </div>
 
@@ -54,7 +54,7 @@ Trong môi trường giảng đường đại học và các khóa học chuyên
    • Dense Search (HNSW)       • Ghi chép Cornell Notes
    • BGE-Reranker-v2-m3        • Flashcards ghi nhớ tích cực
    • Ollama Gemma 4 E4B        • Trắc nghiệm Quiz tương tác
-   • Trích dẫn mốc thời gian   • Trợ lý Cú Mèo 3D (Owl Companion)
+   • Trích dẫn mốc thời gian   • Trợ lý Cáo Kitsune 3D (Kitsune Fox)
 ```
 
 ### 1. 🎙️ Nhận Dạng Tiếng Nói Tiếng Việt Chuyên Biệt (Vietnamese ASR)
@@ -67,8 +67,8 @@ Trong môi trường giảng đường đại học và các khóa học chuyên
 - **Giai đoạn 2 (Precision Reranking):** Cross-Encoder **BGE-Reranker-v2-m3** chấm điểm tương quan sâu giữa câu hỏi và từng phân đoạn để chọn lọc Top 3–5 đoạn có độ phù hợp cao nhất.
 - **Suy luận có cơ sở (Grounded Generation):** Mô hình ngôn ngữ lớn **Gemma 4 E4B** (Ollama) tổng hợp câu trả lời dựa trên ngữ cảnh được cung cấp, luôn kèm trích dẫn mốc thời gian gốc (`[MM:SS]`), loại bỏ hiện tượng ảo giác (hallucination).
 
-### 3. 🦉 Trợ Lý Cú Mèo 3D (Owl Companion)
-- Linh vật AI đồng hành cùng sinh viên: tương tác trên nền tảng 3D tương tác (React Three Fiber & Three.js), giải thích các khái niệm trừu tượng, gợi ý câu hỏi ôn tập, khích lệ tiến độ học tập.
+### 3. 🦊 Trợ Lý Cáo Kitsune 3D (Kitsune Fox Companion)
+- Linh vật AI đồng hành cùng sinh viên: Cáo Kitsune Pixel Art thông minh tương tác trên nền tảng 3D (React Three Fiber & Three.js), giải thích các khái niệm trừu tượng, gợi ý câu hỏi ôn tập, khích lệ tiến độ học tập và đồng hành suốt phiên học.
 
 ### 4. 🗂️ Bộ Công Cụ Ôn Tập Thông Minh (Flashcards & Quizzes)
 - **Cornell Notes:** Cấu trúc ghi chú bài giảng thành 3 khu vực: Tóm tắt tổng quan (Summary), Thuật ngữ/Gợi ý (Cues), và Nội dung chi tiết (Notes).
@@ -81,19 +81,22 @@ Trong môi trường giảng đường đại học và các khóa học chuyên
 
 ---
 
-## 🎨 Ngôn Ngữ Thiết Kế: Pastel Stationery
+## 🎨 Ngôn Ngữ Thiết Kế: Kitsune Soft
 
-Giao diện LectureLens được xây dựng dựa trên hệ thống thiết kế **Pastel Stationery Study Companion** — mô phỏng không gian bàn học thân thuộc của sinh viên với giấy can, bút dạ quang, băng dính washi và thẻ sticky note:
+Giao diện LectureLens được xây dựng dựa trên hệ sinh thái thiết kế **Kitsune Soft** (*"kawaii-calm" Japanese soft-minimalism*) — lấy cảm hứng từ không gian bàn học thư thái của sinh viên Nhật Bản với chất liệu giấy Washi, bề mặt kính sữa Miruku Glass, thẻ Bento bo góc Squircle và chuyển động nảy xúc giác Mochi:
 
-| Yếu tố | Token Thiết Kế | Giá Trị Hex | Mục Đích Sử Dụng |
+| Yếu tố | Token Thiết Kế | Giá Trị Hex / RGBA | Mục Đích Sử Dụng |
 | :--- | :--- | :---: | :--- |
-| **Canvas Nền** | `bg-stationery-canvas` | `#FFFAF5` | Giấy mỹ thuật ngà ấm áp, giảm thiểu mỏi mắt khi đọc lâu |
-| **Bề Mặt Card** | `bg-stationery-surface` | `#FFFFFF` | Nền thẻ bài học bo góc mềm mại (`rounded-2xl`) |
-| **Tím Chủ Đạo** | `primary-lavender` | `#6D5FD0` | Màu thương hiệu nhận diện, nút tương tác, trạng thái active |
-| **Hồng Sakura** | `accent-sakura` | `#F875AA` | Điểm nhấn trợ lý Cú Mèo, thẻ phân loại chủ đề |
-| **Xanh Bạc Hà** | `accent-mint` | `#10B981` | Mốc thời gian (Timestamps), trạng thái hoàn thành |
-| **Vàng Ghi Chú** | `accent-sticky` | `#FFF1C9` | Khối tóm tắt bài học, đoạn ghi chú quan trọng |
-| **Đường Kẻ Vở** | `border-stationery-ruled` | `#F0EAE1` | Đường phân cách tinh tế giữa các phân đoạn |
+| **Canvas Nền** | `washi-cream` | `#FFF7FD` | Giấy Washi ngà ấm áp, chống mỏi mắt tuyệt đối khi học lâu |
+| **Kính Mờ Sữa** | `surface-miruku` | `rgba(255, 255, 255, 0.76)` | Nền thẻ Bento bo góc Squircle 28px (`backdrop-blur: 16px`) |
+| **San Hô Kitsune** | `kitsune-coral` | `#F47F72` | Màu thương hiệu nhận diện (Primary), nút CTA, viền focus |
+| **Hồng Sakura** | `sakura-pink` | `#F5C3C9` | Điểm nhấn cánh hoa anh đào, thẻ phân loại môn học |
+| **Xanh Sương Lam** | `mist-sky` | `#A9D4E8` | Thanh tiến độ học tập, thông báo giải thích cân bằng |
+| **Vàng Mochi** | `mochi-yellow` | `#FFE27A` | Khối tóm tắt Cornell, đánh dấu sao, huy hiệu thành tích |
+| **Xanh Matcha** | `matcha-mint` | `#BEE1D0` | Mốc thời gian timestamp `[MM:SS]`, trạng thái hoàn thành |
+| **Mực Mận Chín** | `plum-ink` | `#261333` | Chữ tiêu đề & nội dung (WCAG AAA), nét outline icon 1.75px |
+
+> 👉 **Xem chi tiết đặc tả thiết kế:** [**Tài Liệu Thiết Kế Kitsune Soft (docs/design-system.md)**](./docs/design-system.md)
 
 ---
 
@@ -104,7 +107,7 @@ Toàn bộ hệ thống tuân thủ mô hình phân lớp rõ ràng giữa ứng
 ```mermaid
 flowchart TB
     subgraph ClientLayer ["🌐 Lớp Ứng Dụng Web (Client Application - `frontend/`)"]
-        WEB["⚡ LectureLens Web Portal<br/>(React 19 / Vite 8 / Tailwind CSS v4)<br/>• Pastel Stationery Design System<br/>• Interactive 3D Canvas (Three.js / R3F / Drei)<br/>• Capsule Audio Player & Cornell Notes"]
+        WEB["⚡ LectureLens Web Portal<br/>(React 19 / Vite 8 / Tailwind CSS v4)<br/>• Kitsune Soft Design System<br/>• Interactive 3D Canvas (Three.js / R3F / Drei)<br/>• Capsule Audio Player & Cornell Notes"]
     end
 
     subgraph PublicGateway ["🛡️ Cổng Dịch Vụ Công Khai (Public Gateway)"]
@@ -168,7 +171,7 @@ lecture_lens/
 ├── frontend/                      # 🌐 FRONTEND (React 19 / Vite 8 / Tailwind CSS v4 / Three.js)
 │   ├── public/                    # Tài nguyên tĩnh, favicon, SVG icons
 │   ├── src/                       # Mã nguồn ứng dụng
-│   │   ├── assets/                # Hình ảnh, biểu tượng linh vật Cú Mèo
+│   │   ├── assets/                # Hình ảnh, 27 SVG màn hình mẫu Kitsune Soft
 │   │   ├── App.tsx                # Thành phần gốc & Canvas 3D tương tác
 │   │   ├── index.css              # Entrypoint cấu hình Tailwind CSS v4
 │   │   └── main.tsx               # Khởi chạy React DOM
@@ -197,6 +200,7 @@ lecture_lens/
 │   └── README.md                  # 📘 Đặc tả kỹ thuật Backend & AI Service chi tiết
 │
 ├── docs/                          # 📚 Tài liệu kỹ thuật dự án
+│   ├── design-system.md           # 🌸 Đặc tả chi tiết hệ thống thiết kế Kitsune Soft
 │   ├── adr/                       # Architecture Decision Records (ADR 0001 Privacy-First)
 │   │   ├── 0001-privacy-first-local-ai-architecture.md
 │   │   └── README.md
@@ -307,7 +311,7 @@ Dự án tích hợp hai hệ sinh thái công cụ kỹ thuật tiêu chuẩn c
 
 - [x] **Giai đoạn 1: Nền Tảng Dự Án & Ngôn Ngữ Thiết Kế**
   - [x] Thiết lập nền tảng Web Frontend hiện đại (React 19 / Vite 8 / Tailwind CSS v4 / Three.js).
-  - [x] Định hình hệ thống thiết kế Pastel Stationery Study Companion & bảng màu tokens.
+  - [x] Định hình hệ thống thiết kế Kitsune Soft, linh vật Cáo Kitsune Pixel Art & 27 màn hình mẫu SVG.
   - [x] Thiết lập oxlint siêu tốc và TypeScript cấu hình chặt chẽ.
   - [x] Chuẩn hóa Ubiquitous Language trong `GLOSSARY.md` và `AGENTS.md` (ADR 0001).
 - [x] **Giai đoạn 2: Trọng Số Mô Hình & Hạ Tầng 2-Stage RAG**
@@ -315,11 +319,11 @@ Dự án tích hợp hai hệ sinh thái công cụ kỹ thuật tiêu chuẩn c
   - [x] Thiết kế cơ sở dữ liệu phân vùng `app` và `rag` với chỉ mục HNSW trên PostgreSQL pgvector.
   - [x] Đặc tả quy chuẩn pipeline Ingest và Query kèm Guardrails trích dẫn timestamp `[MM:SS]`.
 - [ ] **Giai đoạn 3: Hoàn Thiện Các Màn Hình Học Tập Trên Web (In Progress)**
-  - [ ] Màn hình thư viện bài giảng & quản lý môn học.
+  - [ ] Màn hình thư viện bài giảng & quản lý môn học (`Kitsune - Home Study Hub`).
   - [ ] Trình phát bài giảng Capsule Audio Player đồng bộ timestamps `[MM:SS]`.
-  - [ ] Ghi chú thông minh Cornell Notes tương tác trực tiếp.
-  - [ ] Bộ lật thẻ ghi nhớ Flashcards (Active Recall) và trắc nghiệm Quizzes.
-  - [ ] Trợ lý Cú Mèo 3D tương tác trực tiếp trong phòng học.
+  - [ ] Ghi chú thông minh Cornell Notes tương tác trực tiếp (`Kitsune - Audio Detail & Summary`).
+  - [ ] Bộ lật thẻ ghi nhớ Flashcards (Active Recall) và trắc nghiệm Quizzes (`Kitsune Flashcard Front/Back`).
+  - [ ] Trợ lý Cáo Kitsune 3D tương tác trực tiếp trong phòng học.
 - [ ] **Giai đoạn 4: Đóng Gói Vi Dịch Vụ & Kết Nối Toàn Trực**
   - [ ] Hoàn thiện FastAPI AI Engine (`backend/services/ai`).
   - [ ] Hoàn thiện Spring Boot Gateway Service (`backend/services/gateway`).
@@ -338,6 +342,6 @@ Dự án được phân phối dưới giấy phép **Apache-2.0 License**. Xem 
 ---
 
 <div align="center">
-  <sub>Được phát triển với tâm huyết bởi <b>LectureLens Engineering Team</b> 🦉🎓</sub><br/>
+  <sub>Được phát triển với tâm huyết bởi <b>LectureLens Engineering Team</b> 🦊🎓</sub><br/>
   <sub><i>"Lắng nghe bài giảng, thấu hiểu tri thức."</i></sub>
 </div>

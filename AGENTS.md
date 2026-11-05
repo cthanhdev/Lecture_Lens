@@ -13,6 +13,9 @@ Tài liệu này là **Hiến Chương Kỹ Thuật (Constitution)** bắt buộ
 ### Frontend Web (`frontend/`)
 - **Runtime & Bundler**: Node.js 20+, [Vite 8](https://vitejs.dev/)
 - **Framework**: [React 19](https://react.dev/) + [TypeScript 5.8+](https://www.typescriptlang.org/) (Strict Mode)
+- **Design System**: **Kitsune Soft** ("kawaii-calm" Japanese soft-minimalism), chi tiết tại [`docs/design-system.md`](./docs/design-system.md)
+- **Linh Vật**: **Cáo Kitsune Pixel Art (Kitsune Fox Companion)**
+- **Kiểu Chữ**: **Plus Jakarta Sans** (Toàn bộ các cấp bậc hiển thị)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (`@tailwindcss/vite`) + [Framer Motion](https://www.framer.com/motion/)
 - **3D Graphics & Canvas**: [Three.js](https://threejs.org/) + [@react-three/fiber](https://r3f.docs.pmnd.rs/) + [@react-three/drei](https://github.com/pmndrs/drei)
 - **Linter**: [oxlint](https://oxc.rs/) (Siêu tốc độ, thay thế ESLint truyền thống)
@@ -29,20 +32,41 @@ Tài liệu này là **Hiến Chương Kỹ Thuật (Constitution)** bắt buộ
 
 ---
 
-## 2. 🛡️ Quy Tắc Bất Biến & An Ninh (Invariants & Security)
+## 2. 🌸 Quy Chuẩn Thiết Kế Bắt Buộc (UI/UX Design Invariants)
+
+Mọi mã nguồn giao diện được sinh ra trong thư mục `frontend/` bắt buộc phải tuân thủ nghiêm ngặt hệ thống thiết kế **Kitsune Soft**:
+
+1. **Bảng màu bất biến (Color Invariants):**
+   - **Canvas Nền**: Luôn là Giấy Washi ấm `#FFF7FD` (`washi-cream`), tuyệt đối không dùng nền trắng tinh `#FFFFFF` làm nền chính của trang.
+   - **Màu Nhận Diện (Primary)**: San hô Kitsune `#F47F72` (`kitsune-coral`) cho nút CTA, viền focus, trạng thái kích hoạt.
+   - **Màu Mực (Text Ink)**: Mực mận chín `#261333` (`plum-ink`) đạt chuẩn tương phản cao cấp WCAG AAA, tuyệt đối không dùng màu đen `#000000` thô ráp.
+   - **Màu Bổ Trợ**: Sakura Pink `#F5C3C9`, Mist Sky `#A9D4E8`, Mochi Yellow `#FFE27A`, Matcha Mint `#BEE1D0`.
+2. **Hình dạng & Bo góc (Shapes & Radii):**
+   - **Điều khiển tương tác**: Nút bấm, trường nhập liệu, chip lọc, badge phân loại luôn dùng hình viên thuốc tuyệt đối (**Pill Shape** - `9999px` / `rounded-full`).
+   - **Thẻ nội dung Bento**: Bo góc Squircle bầu bĩnh từ **`24px` đến `32px`** (`rounded-2xl` đến `rounded-3xl`).
+3. **Bề mặt kính mờ (Miruku Glass):**
+   - Thẻ card sử dụng nền kính sữa trong suốt `rgba(255, 255, 255, 0.76)` kết hợp `backdrop-blur: 16px` và bóng đổ mận chín ấm `rgba(38, 19, 51, 0.06)`.
+4. **Động lực học Mochi (Mochi Tactile Press):**
+   - Các phần tử tương tác (button, card) khi nhấn (`active` state) phải thu nhỏ nhẹ `scale(0.97)` với thời gian chuyển động `0.15s`.
+5. **Đối chiếu màn hình mẫu:**
+   - Luôn đối chiếu với **27 tệp màn hình mẫu SVG** tại `frontend/src/assets/LectureLens App Design System/` trước khi xây dựng bất kỳ màn hình hoặc component mới nào.
+
+---
+
+## 3. 🛡️ Quy Tắc Kỹ Thuật & An Ninh (Invariants & Security)
 
 1. **Privacy-First & Zero Cloud Leakage (ADR 0001):**
    - Tuyệt đối không tích hợp các API đám mây bên thứ ba (OpenAI, Anthropic, Google Cloud Speech, AWS Transcribe, Pinecone,...) cho các tác vụ xử lý bài giảng.
    - Toàn bộ pipeline ASR, Embeddings, Reranking và LLM phải chạy 100% cục bộ trên hạ tầng on-premise.
 2. **Tuân Thủ Ngôn Ngữ Miền (Ubiquitous Language):**
    - Luôn đọc và đối chiếu thuật ngữ với [GLOSSARY.md](./GLOSSARY.md).
-   - Dùng đúng `LectureLens` (không dùng `SmartLecture`, `LectureApp`), dùng đúng `Capsule Audio Player`, `Cornell Notes`, `2-Stage Neural RAG`.
+   - Dùng đúng `LectureLens` (không dùng `SmartLecture`, `LectureApp`), dùng đúng `Kitsune Soft`, `Kitsune Fox Companion`, `Capsule Audio Player`, `Cornell Notes`, `2-Stage Neural RAG`.
 3. **Bảo Tồn Ranh Giới (Seams):**
    - Client (`frontend/`) không bao giờ truy vấn trực tiếp cơ sở dữ liệu hoặc AI model weights. Mọi luồng đi qua Gateway hoặc Backend API.
 
 ---
 
-## 3. 🛠️ Quy Trình Kỹ Thuật (Engineering Skills Integration)
+## 4. 🛠️ Quy Trình Kỹ Thuật (Engineering Skills Integration)
 
 Dự án tích hợp sâu hai hệ thống kỹ năng tại `.agents/skills/`:
 
@@ -60,7 +84,7 @@ Dự án tích hợp sâu hai hệ thống kỹ năng tại `.agents/skills/`:
 
 ---
 
-## 4. 🚀 Lệnh Thao Tác Chuẩn Của Repository
+## 5. 🚀 Lệnh Thao Tác Chuẩn Của Repository
 
 Thực thi trực tiếp từ thư mục gốc thông qua npm scripts:
 
@@ -72,7 +96,7 @@ npm run dev
 npm run build
 npm run typecheck
 
-# Kiểm tra chuẩn linter mã nguồn
+# Kiểm tra chuẩn linter mã nguồn siêu tốc
 npm run lint
 
 # Xem trước bản build Production

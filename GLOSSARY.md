@@ -35,20 +35,43 @@ Mô hình ngôn ngữ lớn cục bộ chạy qua Ollama, chịu trách nhiệm 
 
 ---
 
-## 2. 🎨 Trải Nghiệm Học Tập & Bảng Màu Thiết Kế (Study Experience & Design Tokens)
+## 2. 🌸 Hệ Thống Thiết Kế Kitsune Soft & Trải Nghiệm Học Tập (Kitsune Soft Design System)
 
-**Pastel Stationery Design System**:
-Hệ thống thiết kế giao diện mô phỏng không gian bàn học thân thuộc của sinh viên với giấy mỹ thuật, bút dạ quang, băng dính washi và thẻ sticky note:
-- `bg-stationery-canvas`: Giấy mỹ thuật ngà ấm (`#FFFAF5`), chống mỏi mắt khi học lâu.
-- `bg-stationery-surface`: Thẻ card bo góc trắng ngà (`#FFFFFF`).
-- `primary-lavender`: Tím lavender nhận diện thương hiệu (`#6D5FD0`).
-- `accent-sakura`: Hồng sakura điểm nhấn trợ lý và chủ đề (`#F875AA`).
-- `accent-mint`: Xanh bạc hà biểu thị mốc thời gian và trạng thái hoàn thành (`#10B981`).
-- `accent-sticky`: Vàng pastel ghi chú tóm tắt (`#FFF1C9`).
-- `border-stationery-ruled`: Đường kẻ vở phân cách trang nhã (`#F0EAE1`).
+**Kitsune Soft**:
+Ngôn ngữ thiết kế chính thức của LectureLens, lấy cảm hứng từ phong cách tối giản thanh bình của Nhật Bản (*kawaii-calm*), kết hợp chất liệu giấy thủ công Washi ấm áp, kính mờ sữa Miruku Glass, khối Bento Squircle và động lực học đàn hồi Mochi.
 
-**Owl Companion (Trợ Lý Cú Mèo)**:
-Linh vật và người bạn đồng hành AI học tập trên LectureLens: xuất hiện trong giao diện 3D và các khung trò chuyện, hỗ trợ giải thích khái niệm phức tạp, gợi ý câu hỏi ôn tập và khích lệ tiến độ.
+**Kitsune Fox (Cáo Kitsune / Kitsune Companion)**:
+Linh vật và người bạn đồng hành AI thông minh chính thức của LectureLens. Được thể hiện bằng phong cách **Pixel Art Nhật Bản**, đeo chuông cổ vàng (*suzu*), điểm xuyết cánh hoa anh đào (*sakura*), cổng trời (*torii*) và vầng thái dương đỏ rạng rỡ. Đại diện cho trí tuệ lanh lợi, tính kiên trì và sự đồng hành ấm áp trong học tập.
+
+**Hệ Thống Token Màu Sắc Kitsune Soft**:
+- `washi-cream` (`#FFF7FD`): Giấy Washi ngà ấm, chống mỏi mắt khi học lâu, đóng vai trò nền canvas toàn ứng dụng.
+- `kitsune-coral` (`#F47F72`): San hô Kitsune rực rỡ, màu nhận diện chính (Primary) cho nút CTA, viền focus và trạng thái kích hoạt.
+- `sakura-pink` (`#F5C3C9`): Hồng cánh hoa anh đào (Secondary), dùng cho thẻ phân loại môn học và điểm nhấn linh vật.
+- `mist-sky` (`#A9D4E8`): Xanh sương lam (Tertiary), dùng cho thanh tiến độ học tập và thẻ thông tin bình ổn.
+- `mochi-yellow` (`#FFE27A`): Vàng mochi (Accent), dùng cho đánh dấu sao, khối tóm tắt bài học và huy hiệu thành tích.
+- `matcha-mint` (`#BEE1D0`): Xanh trà matcha (Accent), biểu thị trạng thái hoàn thành và mốc thời gian `[MM:SS]`.
+- `plum-ink` (`#261333`): Mực mận chín cao cấp (Neutral Ink), dùng cho toàn bộ tiêu đề, nội dung và nét icon outline (đạt chuẩn WCAG AAA).
+
+**Miruku Glass (Kính Mờ Sữa)**:
+Bề mặt thẻ card bán trong suốt `rgba(255, 255, 255, 0.76)` kết hợp với hiệu ứng làm mờ hậu cảnh `16px blur` và viền sáng siêu mỏng `1px solid rgba(255, 255, 255, 0.85)`.
+
+**Plum Ambient Shadows**:
+Hệ thống bóng đổ ấm màu mận chín `rgba(38, 19, 51, 0.06)`, thay thế hoàn toàn cho bóng xám lạnh truyền thống, tạo cảm giác bề mặt nổi mềm mại trên nền giấy Washi.
+
+**Squircle (Hình Khối Bầu Bĩnh)**:
+Đường cong toán học bo tròn liên tục từ **`24px` đến `32px`** dùng cho toàn bộ thẻ nội dung Bento.
+
+**Pill Shape (Hình Viên Thuốc)**:
+Đường cong bo tròn tuyệt đối **`9999px`** dùng cho mọi điều khiển tương tác (nút bấm, ô nhập liệu, chip lọc, badge).
+
+**Mochi Tactile Press**:
+Hiệu ứng tương tác xúc giác nảy mềm dẻo: khi bấm vào phần tử, kích thước co nhẹ `scale(0.97)` trong `0.15s` cùng độ bóng sụt giảm, mang lại phản hồi trực quan đàn hồi như bánh mochi tươi.
+
+**Duotone Soft-Blob Iconography**:
+Hệ thống biểu tượng đồ họa kết hợp giữa nét vẽ outline sắc sảo **1.75px** bằng mực mận chín (`#261333`) đặt trên tấm nền đốm màu pastel hữu cơ mềm mại lệch góc 3px.
+
+**Home Study Hub**:
+Bàn học điện tử thông minh, trung tâm điều phối toàn bộ bài giảng, tiến độ ghi nhớ và lối tắt ghi âm.
 
 **Cornell Notes**:
 Phương pháp ghi chép bài giảng cấu trúc khoa học gồm 3 khu vực:
@@ -56,14 +79,14 @@ Phương pháp ghi chép bài giảng cấu trúc khoa học gồm 3 khu vực:
 2. *Cues (Từ khóa & Gợi ý)*: Các thuật ngữ chính, câu hỏi trọng tâm.
 3. *Notes (Nội dung chi tiết)*: Ghi chú diễn giải bài giảng kèm mốc thời gian `[MM:SS]`.
 
-**Flashcard**:
-Thẻ học ghi nhớ chủ động (Active Recall) được tạo tự động từ bài giảng với 2 mặt (Mặt trước: Thuật ngữ/Khái niệm; Mặt sau: Định nghĩa/Ví dụ), hỗ trợ ôn tập theo thuật toán lặp lại ngắt quãng (Spaced Repetition).
-
-**Quiz**:
-Bài tập trắc nghiệm 4 lựa chọn (Single-Choice Question) tạo tự động với đáp án chính xác và phần giải thích đối chiếu trực tiếp từ mốc thời gian gốc của bài giảng.
+**Kitsune Flashcard**:
+Thẻ học ghi nhớ chủ động (Active Recall) 2 mặt: Mặt trước (*Question Front*) và Mặt sau (*Answer Back*), hỗ trợ chuyển động lật 3D và thuật toán lặp lại ngắt quãng (Spaced Repetition).
 
 **Capsule Audio Player**:
-Trình phát bài giảng dạng con nhộng ghim cố định ở đáy màn hình, hỗ trợ phát âm thanh liên tục không gián đoạn, đa tốc độ (0.75x đến 2.0x) và đồng bộ nhảy đến mốc thời gian `[MM:SS]` khi người dùng bấm vào ghi chú.
+Trình phát bài giảng dạng con nhộng ghim cố định đáy màn hình, hỗ trợ phát liên tục không gián đoạn, đa tốc độ (0.75x đến 2.0x) và đồng bộ nhảy đến mốc thời gian `[MM:SS]` khi người dùng bấm vào transcript.
+
+**Floating Island Tab Bar**:
+Thanh điều hướng capsule lơ lửng cách đáy màn hình 16px với nền kính sữa Miruku Glass và con trỏ trượt san hô mềm.
 
 ---
 
