@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle, TouchableOpacity } from 'react-native';
 import { colors, radius, shadows, spacing } from '../../core/theme';
 
 export interface GlassCardProps {
   children: React.ReactNode;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   variant?: 'frosted' | 'solid' | 'subtle';
   padding?: keyof typeof spacing;
   radiusSize?: keyof typeof radius;
@@ -58,8 +58,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border.subtle,
   },
   subtle: {
-    backgroundColor: colors.bg.container,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
     borderWidth: 1,
-    borderColor: colors.border.subtle,
+    borderColor: 'rgba(244, 127, 114, 0.12)',
   },
 });
