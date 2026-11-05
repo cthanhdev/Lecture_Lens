@@ -1,32 +1,68 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { colors, palette, spacing } from '../../core/theme';
-import { Screen, AppHeader } from '../../shared/components';
-import { Text, GlassCard, Button, Chip, ProgressBar, IconButton, TimestampPill } from '../../shared/ui';
+import {
+  Screen,
+  AppHeader,
+  WaveformVisualizer,
+  LectureCard,
+  OfflineBanner,
+} from '../../shared/components';
+import {
+  Text,
+  GlassCard,
+  Button,
+  Chip,
+  IconButton,
+  TimestampPill,
+} from '../../shared/ui';
 import { lectureRepo, studyRepo } from '../../core/data';
 import { Lecture, StudyStats, Highlight } from '../../core/domain/types';
 
 export function HomeScreen() {
   const navigation = useNavigation<any>();
   const [continueLecture, setContinueLecture] = useState<Lecture | null>(null);
+  const [allLectures, setAllLectures] = useState<Lecture[]>([]);
   const [stats, setStats] = useState<StudyStats | null>(null);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const [playbackSec, setPlaybackSec] = useState<number>(1798); // ~29:58
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [showOfflineBanner, setShowOfflineBanner] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadData() {
-      const [lec, st, hls] = await Promise.all([
+      const [lec, list, st, hls] = await Promise.all([
         lectureRepo.getContinueListening(),
+        lectureRepo.getLectures(),
         studyRepo.getStudyStats(),
         lectureRepo.getHighlights(),
       ]);
       setContinueLecture(lec);
+      setAllLectures(list);
       setStats(st);
       setHighlights(hls);
+      if (lec?.currentPlaybackSec) {
+        setPlaybackSec(lec.currentPlaybackSec);
+      }
     }
     loadData();
   }, []);
+
+  const totalSec = continueLecture?.durationSec || 2900;
+  const progressRatio = totalSec > 0 ? playbackSec / totalSec : 0.62;
+
+  const handleSeek = (ratio: number) => {
+    const targetSec = Math.floor(ratio * totalSec);
+    setPlaybackSec(targetSec);
+  };
+
+  const formatTime = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
 
   return (
     <Screen
@@ -34,6 +70,13 @@ export function HomeScreen() {
       hasBottomBar
       header={<AppHeader variant="tab" subtitle="Kitsune Soft" title="Study Hub" />}
     >
+      {showOfflineBanner && (
+        <OfflineBanner
+          onDismiss={() => setShowOfflineBanner(false)}
+          onRetry={() => setShowOfflineBanner(false)}
+        />
+      )}
+
       {/* Search Bar Tap Trigger */}
       <GlassCard
         variant="subtle"
@@ -59,14 +102,17 @@ export function HomeScreen() {
           onPress={() =>
             navigation.navigate('LectureDetail', {
               lectureId: continueLecture.id,
-              atSec: continueLecture.currentPlaybackSec,
+              atSec: playbackSec,
             })
           }
         >
           <View style={styles.cardHeader}>
-            <Text variant="label" color="coralDeep">
-              ● CONTINUE LISTENING
-            </Text>
+            <View style={styles.statusIndicatorRow}>
+              <View style={styles.livePulseDot} />
+              <Text variant="label" color="coralDeep">
+                CONTINUE LISTENING
+              </Text>
+            </View>
             <Chip
               label={continueLecture.subjectName}
               subjectKey={continueLecture.subjectKey}
@@ -80,23 +126,42 @@ export function HomeScreen() {
             {continueLecture.chapterTitle}
           </Text>
 
-          <ProgressBar progress={0.62} style={styles.progress} />
+          {/* Interactive Waveform Visualizer */}
+          <View style={styles.waveformBox}>
+            <WaveformVisualizer
+              progress={progressRatio}
+              barCount={34}
+              height={38}
+              activeColor={colors.brand.primary}
+              inactiveColor={colors.brand.primarySoft}
+              onSeek={handleSeek}
+            />
+          </View>
 
           <View style={styles.cardFooter}>
-            <Text variant="caption" color="muted">
-              29:58 / 48:20 (1.25x)
-            </Text>
-            <IconButton
-              icon={<Feather name="play" size={18} color="#FFFFFF" />}
-              variant="coral"
-              size={42}
-              onPress={() =>
-                navigation.navigate('LectureDetail', {
-                  lectureId: continueLecture.id,
-                  atSec: continueLecture.currentPlaybackSec,
-                })
-              }
-            />
+            <View>
+              <Text variant="caption" color="muted">
+                {formatTime(playbackSec)} / {formatTime(totalSec)} (1.25x)
+              </Text>
+              <Text variant="label" color="secondary" style={styles.progressPercentText}>
+                {Math.round(progressRatio * 100)}% completed
+              </Text>
+            </View>
+
+            <View style={styles.playerButtonsRow}>
+              <IconButton
+                icon={
+                  <Feather
+                    name={isPlaying ? 'pause' : 'play'}
+                    size={20}
+                    color="#FFFFFF"
+                  />
+                }
+                variant="coral"
+                size={46}
+                onPress={() => setIsPlaying(!isPlaying)}
+              />
+            </View>
           </View>
         </GlassCard>
       )}
@@ -151,7 +216,10 @@ export function HomeScreen() {
                   idx < 5 ? styles.streakDotDone : styles.streakDotPending,
                 ]}
               >
-                <Text variant="caption" style={{ fontSize: 9 }}>
+                <Text
+                  variant="caption"
+                  style={{ fontSize: 9, color: idx < 5 ? '#FFFFFF' : colors.text.muted }}
+                >
                   {day}
                 </Text>
               </View>
@@ -160,8 +228,39 @@ export function HomeScreen() {
         </GlassCard>
       </View>
 
-      {/* Recent Highlights Section */}
+      {/* Recently Added Section with Horizontal Carousel */}
       <View style={styles.sectionHeaderRow}>
+        <Text variant="h3">Recently added</Text>
+        <Button
+          title="See all"
+          variant="ghost"
+          size="sm"
+          onPress={() => navigation.navigate('LibraryTab')}
+        />
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.horizontalScrollList}
+      >
+        {allLectures.map((lec) => (
+          <LectureCard
+            key={lec.id}
+            lecture={lec}
+            variant="horizontal"
+            onPress={() =>
+              navigation.navigate('LectureDetail', {
+                lectureId: lec.id,
+                atSec: lec.currentPlaybackSec || 0,
+              })
+            }
+          />
+        ))}
+      </ScrollView>
+
+      {/* Recent Highlights Section */}
+      <View style={[styles.sectionHeaderRow, { marginTop: spacing.lg }]}>
         <Text variant="h3">Recent highlights</Text>
         <Button
           title="See all"
@@ -225,45 +324,71 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  statusIndicatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  livePulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.brand.primary,
+  },
   heroTitle: {
     marginTop: spacing.sm,
   },
   heroChapter: {
     marginTop: 2,
-    marginBottom: spacing.base,
-  },
-  progress: {
     marginBottom: spacing.md,
+  },
+  waveformBox: {
+    marginVertical: spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 12,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  progressPercentText: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  playerButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   bentoRow: {
     flexDirection: 'row',
     gap: spacing.base,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.base,
   },
   bentoHalf: {
     flex: 1,
     justifyContent: 'space-between',
+    minHeight: 140,
   },
   bentoHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: spacing.xs,
   },
   bentoSubtitle: {
-    marginTop: 2,
     marginBottom: spacing.sm,
   },
   bentoBtn: {
-    marginTop: spacing.xs,
+    alignSelf: 'flex-start',
   },
   streakDots: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 4,
     marginTop: spacing.sm,
   },
   streakDot: {
@@ -274,24 +399,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   streakDotDone: {
-    backgroundColor: colors.brand.primarySoft,
+    backgroundColor: palette.mochiGold,
   },
   streakDotPending: {
-    backgroundColor: colors.bg.container,
+    backgroundColor: 'rgba(38, 19, 51, 0.08)',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: spacing.base,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  horizontalScrollList: {
+    paddingRight: spacing.base,
+    paddingBottom: spacing.xs,
   },
   highlightCard: {
     marginBottom: spacing.base,
   },
   quoteText: {
-    lineHeight: 20,
-    marginBottom: spacing.sm,
+    fontStyle: 'italic',
+    lineHeight: 22,
+    marginBottom: spacing.base,
   },
   highlightFooter: {
     flexDirection: 'row',

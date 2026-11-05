@@ -3,8 +3,14 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing } from '../../core/theme';
-import { Screen, AppHeader } from '../../shared/components';
-import { Text, GlassCard, Chip, StatusBadge, Button } from '../../shared/ui';
+import {
+  Screen,
+  AppHeader,
+  LectureCard,
+  EmptyState,
+  OfflineBanner,
+} from '../../shared/components';
+import { Text, Chip, SegmentedControl } from '../../shared/ui';
 import { lectureRepo, subjectRepo } from '../../core/data';
 import { Lecture, Subject } from '../../core/domain/types';
 
@@ -16,6 +22,8 @@ export function LibraryScreen() {
     route.params?.subjectId
   );
   const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [activeTab, setActiveTab] = useState<'all' | 'in_progress' | 'ready'>('all');
+  const [showOfflineBanner, setShowOfflineBanner] = useState<boolean>(false);
 
   useEffect(() => {
     async function init() {
@@ -33,12 +41,46 @@ export function LibraryScreen() {
     fetchLectures();
   }, [selectedSubjectId]);
 
+  // Filter lectures based on segmented control
+  const filteredLectures = lectures.filter((lec) => {
+    if (activeTab === 'ready') return lec.status === 'READY';
+    if (activeTab === 'in_progress') return (lec.currentPlaybackSec || 0) > 0;
+    return true;
+  });
+
+  // Group lectures into "Today" vs "Previous"
+  const todayLectures = filteredLectures.filter(
+    (l) => l.dateFormatted.toLowerCase().includes('today') || l.id === 'lec-inflation'
+  );
+  const olderLectures = filteredLectures.filter(
+    (l) => !todayLectures.some((t) => t.id === l.id)
+  );
+
   return (
     <Screen
       scrollable
       hasBottomBar
       header={<AppHeader variant="tab" subtitle="Archive" title="Library" />}
     >
+      {showOfflineBanner && (
+        <OfflineBanner
+          onDismiss={() => setShowOfflineBanner(false)}
+          onRetry={() => setShowOfflineBanner(false)}
+        />
+      )}
+
+      {/* Segmented Control for fast filtering */}
+      <SegmentedControl<'all' | 'in_progress' | 'ready'>
+        options={[
+          { key: 'all', label: 'All' },
+          { key: 'in_progress', label: 'In Progress' },
+          { key: 'ready', label: 'Ready' },
+        ]}
+        selectedKey={activeTab}
+        onSelect={setActiveTab}
+        style={styles.segmentedControl}
+      />
+
       {/* Category Filter Chips */}
       <ScrollView
         horizontal
@@ -46,7 +88,7 @@ export function LibraryScreen() {
         contentContainerStyle={styles.filterScroll}
       >
         <Chip
-          label="All"
+          label="All Subjects"
           count={lectures.length}
           selected={!selectedSubjectId}
           onPress={() => setSelectedSubjectId(undefined)}
@@ -66,76 +108,84 @@ export function LibraryScreen() {
       </ScrollView>
 
       {/* Lectures List or Empty State */}
-      {lectures.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <View style={styles.mascotIconBox}>
-            <Feather name="folder" size={48} color={colors.brand.primary} />
-          </View>
-          <Text variant="h2" center style={styles.emptyTitle}>
-            No recordings yet
-          </Text>
-          <Text variant="body" color="secondary" center style={styles.emptyDesc}>
-            Record your first lecture or upload an audio file to get started.
-          </Text>
-          <Button
-            title="Record your first lecture"
-            variant="primary"
-            size="md"
-            onPress={() => navigation.navigate('AddAudioSheet')}
-            icon={<Feather name="mic" size={16} color="#FFFFFF" />}
-            style={styles.emptyBtn}
-          />
-        </View>
+      {filteredLectures.length === 0 ? (
+        <EmptyState
+          emoji="🦊"
+          title="No recordings found"
+          description={
+            selectedSubjectId
+              ? "You haven't recorded any lectures for this course yet."
+              : 'Record your first lecture or upload audio to start listening.'
+          }
+          actionTitle="Record a Lecture"
+          actionIcon={<Feather name="mic" size={16} color="#FFFFFF" />}
+          onAction={() => navigation.navigate('AddAudioSheet')}
+          secondaryActionTitle={selectedSubjectId ? 'Show all subjects' : undefined}
+          onSecondaryAction={
+            selectedSubjectId ? () => setSelectedSubjectId(undefined) : undefined
+          }
+        />
       ) : (
         <View style={styles.listContainer}>
-          <Text variant="meta" color="muted" style={styles.sectionTitle}>
-            RECORDINGS ({lectures.length})
-          </Text>
-          {lectures.map((lec) => (
-            <GlassCard
-              key={lec.id}
-              style={styles.lectureCard}
-              padding="base"
-              onPress={() =>
-                navigation.navigate('LectureDetail', {
-                  lectureId: lec.id,
-                  atSec: lec.currentPlaybackSec || 0,
-                })
-              }
-            >
-              <View style={styles.cardTop}>
-                <Chip label={lec.subjectName} subjectKey={lec.subjectKey} />
-                <StatusBadge
-                  status={
-                    lec.status === 'READY'
-                      ? 'READY'
-                      : lec.status === 'FAILED'
-                      ? 'FAILED'
-                      : 'TRANSCRIBING'
+          {/* Today Group */}
+          {todayLectures.length > 0 && (
+            <View style={styles.groupSection}>
+              <View style={styles.groupHeaderRow}>
+                <Feather name="calendar" size={12} color={colors.text.muted} />
+                <Text variant="meta" color="muted" style={styles.sectionTitle}>
+                  TODAY ({todayLectures.length})
+                </Text>
+              </View>
+              {todayLectures.map((lec) => (
+                <LectureCard
+                  key={lec.id}
+                  lecture={lec}
+                  onPress={() =>
+                    navigation.navigate('LectureDetail', {
+                      lectureId: lec.id,
+                      atSec: lec.currentPlaybackSec || 0,
+                    })
                   }
-                  label={
-                    lec.status === 'PROCESSING_STT'
-                      ? `Transcribing ${(lec.progress ? lec.progress * 100 : 45).toFixed(0)}%`
-                      : undefined
+                  onPlayPress={() =>
+                    navigation.navigate('LectureDetail', {
+                      lectureId: lec.id,
+                      atSec: lec.currentPlaybackSec || 0,
+                    })
                   }
                 />
-              </View>
+              ))}
+            </View>
+          )}
 
-              <Text variant="title" style={styles.cardTitle}>
-                {lec.title}
-              </Text>
-
-              <View style={styles.cardBottom}>
-                <View style={styles.metaRow}>
-                  <Feather name="clock" size={13} color={colors.text.muted} />
-                  <Text variant="caption" color="muted" style={styles.metaText}>
-                    {Math.floor(lec.durationSec / 60)} min · {lec.dateFormatted}
-                  </Text>
-                </View>
-                <Feather name="chevron-right" size={18} color={colors.text.muted} />
+          {/* Older / Last Week Group */}
+          {olderLectures.length > 0 && (
+            <View style={styles.groupSection}>
+              <View style={styles.groupHeaderRow}>
+                <Feather name="clock" size={12} color={colors.text.muted} />
+                <Text variant="meta" color="muted" style={styles.sectionTitle}>
+                  LAST WEEK & OLDER ({olderLectures.length})
+                </Text>
               </View>
-            </GlassCard>
-          ))}
+              {olderLectures.map((lec) => (
+                <LectureCard
+                  key={lec.id}
+                  lecture={lec}
+                  onPress={() =>
+                    navigation.navigate('LectureDetail', {
+                      lectureId: lec.id,
+                      atSec: lec.currentPlaybackSec || 0,
+                    })
+                  }
+                  onPlayPress={() =>
+                    navigation.navigate('LectureDetail', {
+                      lectureId: lec.id,
+                      atSec: lec.currentPlaybackSec || 0,
+                    })
+                  }
+                />
+              ))}
+            </View>
+          )}
         </View>
       )}
     </Screen>
@@ -143,63 +193,28 @@ export function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
+  segmentedControl: {
+    marginVertical: spacing.sm,
+  },
   filterScroll: {
-    paddingVertical: spacing.md,
     gap: spacing.sm,
-  },
-  listContainer: {
-    marginTop: spacing.sm,
-  },
-  sectionTitle: {
-    marginBottom: spacing.base,
-    letterSpacing: 0.5,
-  },
-  lectureCard: {
-    marginBottom: spacing.base,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    paddingVertical: spacing.sm,
     marginBottom: spacing.sm,
   },
-  cardTitle: {
+  listContainer: {
+    paddingBottom: spacing.xl,
+  },
+  groupSection: {
     marginBottom: spacing.md,
   },
-  cardBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  metaRow: {
+  groupHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
   },
-  metaText: {
-    marginLeft: spacing.xs,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: spacing.huge,
-    paddingHorizontal: spacing.xl,
-  },
-  mascotIconBox: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: colors.brand.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xl,
-  },
-  emptyTitle: {
-    marginBottom: spacing.xs,
-  },
-  emptyDesc: {
-    lineHeight: 22,
-    marginBottom: spacing.xl,
-  },
-  emptyBtn: {
-    width: '100%',
+  sectionTitle: {
+    letterSpacing: 0.8,
   },
 });
