@@ -5,19 +5,21 @@
 ### Nền Tảng Học Tập Thông Minh & Trợ Lý Bài Giảng AI Tiếng Việt
 **Chuyển đổi bài giảng thành sổ tay điện tử thông minh — Kiến trúc On-Premise 2-Stage Neural RAG bảo mật tuyệt đối.**
 
-[![Expo](https://img.shields.io/badge/Expo-SDK%2058-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
-[![React Native](https://img.shields.io/badge/React%20Native-0.88-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
+[![React](https://img.shields.io/badge/React-19.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-v4.3-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Three.js](https://img.shields.io/badge/Three.js-R3F%20%7C%20Drei-black?style=for-the-badge&logo=three.js&logoColor=white)](https://threejs.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL%2016-pgvector-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 [![Ollama](https://img.shields.io/badge/Ollama-Gemma%204%20E4B-black?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.ai/)
-[![Tests](https://img.shields.io/badge/Tests-Passing-10B981?style=for-the-badge&logo=jest&logoColor=white)](https://jestjs.io/)
+[![oxlint](https://img.shields.io/badge/oxlint-Fast%20Linter-orange?style=for-the-badge)](https://oxc.rs/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge)](./LICENSE)
 
 ---
 
-[Tổng Quan](#-tổng-quan-overview) • [Tính Năng Cốt Lõi](#-tính-năng-cốt-lõi-core-features) • [Ngôn Ngữ Thiết Kế](#-ngôn-ngữ-thiết-kế-pastel-stationery) • [Kiến Trúc Hệ Thống](#-kiến-trúc-hệ-thống-architecture) • [Cấu Trúc Dự Án](#-cấu-trúc-dự-án-project-structure) • [Bắt Đầu Nhanh](#-bắt-đầu-nhanh-quickstart) • [Kiểm Thử & QA](#-kiểm-thử--đảm-bảo-chất-lượng-qa) • [Kỹ Năng & Công Cụ Kỹ Thuật](#-kỹ-năng--công-cụ-kỹ-thuật-agents--skills) • [Lộ Trình](#-lộ-trình-phát-triển-roadmap)
+[Tổng Quan](#-tổng-quan-overview) • [Tính Năng Cốt Lõi](#-tính-năng-cốt-lõi-core-features) • [Ngôn Ngữ Thiết Kế](#-ngôn-ngữ-thiết-kế-pastel-stationery) • [Kiến Trúc Hệ Thống](#-kiến-trúc-hệ-thống-architecture) • [Cấu Trúc Dự Án](#-cấu-trúc-dự-án-project-structure) • [Bắt Đầu Nhanh](#-bắt-đầu-nhanh-quickstart) • [Kỹ Năng & Quản Trị Kỹ Thuật](#-kỹ-năng--quản-trị-kỹ-thuật-engineering-skills--agents) • [Lộ Trình](#-lộ-trình-phát-triển-roadmap)
 
 </div>
 
@@ -30,7 +32,7 @@ Trong môi trường giảng đường đại học và các khóa học chuyên
 **LectureLens** được xây dựng như một **bàn học điện tử thông minh**, tự động chuyển đổi âm thanh bài giảng thành văn bản tiếng Việt chính xác, cấu trúc hóa thành các ghi chú theo định dạng Cornell Notes, hỗ trợ truy vấn ngữ nghĩa hai giai đoạn (2-Stage Neural RAG) kèm trích dẫn mốc thời gian (`[MM:SS]`), đồng thời tự động tạo bộ công cụ ôn tập cá nhân (Flashcards, Quizzes).
 
 > [!IMPORTANT]
-> **Triết lý Cốt lõi — Privacy-First & On-Premise AI (ADR 0001):**
+> **Triết lý Cốt lõi — Privacy-First & On-Premise AI ([ADR 0001](./docs/adr/0001-privacy-first-local-ai-architecture.md)):**
 > Toàn bộ quy trình nhận dạng tiếng nói (PhoWhisper), trích xuất đặc trưng vector (BGE-M3), tái định vị (BGE-Reranker-v2-m3) và suy luận mô hình ngôn ngữ lớn (Gemma 4 E4B qua Ollama) được thực thi hoàn toàn cục bộ trên máy chủ của trường hoặc máy trạm nội bộ. Cam kết **Zero Cloud Leakage**: tuyệt đối không truyền âm thanh hay tài liệu bài giảng ra bất kỳ dịch vụ đám mây bên thứ ba nào.
 
 ---
@@ -52,7 +54,7 @@ Trong môi trường giảng đường đại học và các khóa học chuyên
    • Dense Search (HNSW)       • Ghi chép Cornell Notes
    • BGE-Reranker-v2-m3        • Flashcards ghi nhớ tích cực
    • Ollama Gemma 4 E4B        • Trắc nghiệm Quiz tương tác
-   • Trích dẫn mốc thời gian   • Trợ lý Cú Mèo (Owl Companion)
+   • Trích dẫn mốc thời gian   • Trợ lý Cú Mèo 3D (Owl Companion)
 ```
 
 ### 1. 🎙️ Nhận Dạng Tiếng Nói Tiếng Việt Chuyên Biệt (Vietnamese ASR)
@@ -65,8 +67,8 @@ Trong môi trường giảng đường đại học và các khóa học chuyên
 - **Giai đoạn 2 (Precision Reranking):** Cross-Encoder **BGE-Reranker-v2-m3** chấm điểm tương quan sâu giữa câu hỏi và từng phân đoạn để chọn lọc Top 3–5 đoạn có độ phù hợp cao nhất.
 - **Suy luận có cơ sở (Grounded Generation):** Mô hình ngôn ngữ lớn **Gemma 4 E4B** (Ollama) tổng hợp câu trả lời dựa trên ngữ cảnh được cung cấp, luôn kèm trích dẫn mốc thời gian gốc (`[MM:SS]`), loại bỏ hiện tượng ảo giác (hallucination).
 
-### 3. 🦉 Trợ Lý Cú Mèo (Owl Companion)
-- Linh vật AI đồng hành cùng sinh viên: giải thích các khái niệm trừu tượng, gợi ý câu hỏi ôn tập, khích lệ tiến độ và hỗ trợ giải đáp thắc mắc trực tiếp trong giao diện bài giảng.
+### 3. 🦉 Trợ Lý Cú Mèo 3D (Owl Companion)
+- Linh vật AI đồng hành cùng sinh viên: tương tác trên nền tảng 3D tương tác (React Three Fiber & Three.js), giải thích các khái niệm trừu tượng, gợi ý câu hỏi ôn tập, khích lệ tiến độ học tập.
 
 ### 4. 🗂️ Bộ Công Cụ Ôn Tập Thông Minh (Flashcards & Quizzes)
 - **Cornell Notes:** Cấu trúc ghi chú bài giảng thành 3 khu vực: Tóm tắt tổng quan (Summary), Thuật ngữ/Gợi ý (Cues), và Nội dung chi tiết (Notes).
@@ -97,12 +99,12 @@ Giao diện LectureLens được xây dựng dựa trên hệ thống thiết k�
 
 ## 🏗️ Kiến Trúc Hệ Thống (Architecture)
 
-Toàn bộ hệ thống tuân thủ mô hình phân lớp rõ ràng giữa ứng dụng di động khách (Client) và hạ tầng vi dịch vụ backend an toàn:
+Toàn bộ hệ thống tuân thủ mô hình phân lớp rõ ràng giữa ứng dụng khách (Web Client) và hạ tầng vi dịch vụ backend an toàn:
 
 ```mermaid
 flowchart TB
-    subgraph ClientLayer ["📱 Lớp Ứng Dụng Khách (Client Application)"]
-        MOBILE["📱 LectureLens Mobile App<br/>(React Native 0.88 / Expo SDK 58)<br/>• Pastel Stationery Design System<br/>• Capsule Audio Player<br/>• React Navigation v7 Native Stack"]
+    subgraph ClientLayer ["🌐 Lớp Ứng Dụng Web (Client Application - `frontend/`)"]
+        WEB["⚡ LectureLens Web Portal<br/>(React 19 / Vite 8 / Tailwind CSS v4)<br/>• Pastel Stationery Design System<br/>• Interactive 3D Canvas (Three.js / R3F / Drei)<br/>• Capsule Audio Player & Cornell Notes"]
     end
 
     subgraph PublicGateway ["🛡️ Cổng Dịch Vụ Công Khai (Public Gateway)"]
@@ -110,7 +112,7 @@ flowchart TB
     end
 
     subgraph PrivateSubnet ["🔒 Mạng Nội Bộ Docker (Isolated Docker Subnet: rag-internal-network)"]
-        subgraph AIService ["⚡ FastAPI AI Service (Container: ai)"]
+        subgraph AIService ["⚡ FastAPI AI Service (Port 8000)"]
             direction TB
             STT["🎙️ PhoWhisper-base<br/>(Vietnamese ASR)"]
             CHUNK["📑 Recursive Chunking<br/>(512 tokens / 64 overlap)"]
@@ -130,14 +132,14 @@ flowchart TB
         end
     end
 
-    MOBILE -->|REST API / Bearer JWT| SPRING
+    WEB -->|REST API / Bearer JWT| SPRING
     SPRING -->|Internal Secret: X-Internal-Secret| AIService
     AIService -->|Lưu & Đọc Chunks / Vectors| SCHEMA_RAG
     SPRING -->|Quản lý Thực Thể & Jobs| SCHEMA_APP
     AIService -->|Gửi Prompt Ngữ Cảnh & Reranked Context| GEMMA
     GEMMA -->|Sinh Câu Trả Lời Kèm Dẫn Nguồn| AIService
     AIService -->|Trả Kết Quả Tổng Hợp| SPRING
-    SPRING -->|Phản Hồi Thời Gian Thực| MOBILE
+    SPRING -->|Phản Hồi Thời Gian Thực| WEB
 
     classDef client fill:#E8E5FA,stroke:#6D5FD0,stroke-width:2px,color:#2D264B;
     classDef gateway fill:#E0F2FE,stroke:#0284C7,stroke-width:2px,color:#0C4A6E;
@@ -145,7 +147,7 @@ flowchart TB
     classDef db fill:#DCFCE7,stroke:#16A34A,stroke-width:2px,color:#14532D;
     classDef llm fill:#FCE7F3,stroke:#DB2777,stroke-width:2px,color:#831843;
 
-    class MOBILE client;
+    class WEB client;
     class SPRING gateway;
     class AIService,STT,CHUNK,EMB,RERANK ai;
     class DB,SCHEMA_APP,SCHEMA_RAG db;
@@ -159,12 +161,43 @@ flowchart TB
 ```
 lecture_lens/
 ├── package.json                   # Root orchestrator: điều phối scripts chạy toàn dự án
-├── AGENTS.md                      # Nguyên tắc kiến trúc & hướng dẫn trợ lý AI
+├── AGENTS.md                      # Hiến chương kỹ thuật & nguyên tắc kiến trúc cho AI agents
 ├── GLOSSARY.md                    # Từ điển ngôn ngữ miền Ubiquitous Language chuẩn
-├── README.md                      # Tài liệu tổng quan dự án (File này)
+├── README.md                      # Tài liệu tổng quan dự án (Tệp này)
+│
+├── frontend/                      # 🌐 FRONTEND (React 19 / Vite 8 / Tailwind CSS v4 / Three.js)
+│   ├── public/                    # Tài nguyên tĩnh, favicon, SVG icons
+│   ├── src/                       # Mã nguồn ứng dụng
+│   │   ├── assets/                # Hình ảnh, biểu tượng linh vật Cú Mèo
+│   │   ├── App.tsx                # Thành phần gốc & Canvas 3D tương tác
+│   │   ├── index.css              # Entrypoint cấu hình Tailwind CSS v4
+│   │   └── main.tsx               # Khởi chạy React DOM
+│   ├── .oxlintrc.json             # Cấu hình linter siêu tốc oxlint
+│   ├── index.html                 # Template HTML chính
+│   ├── package.json               # Dependencies & scripts Frontend
+│   ├── tsconfig.json              # Cấu hình TypeScript Strict Mode
+│   ├── vite.config.ts             # Cấu hình Vite & plugins
+│   └── README.md                  # 📘 Đặc tả kỹ thuật Frontend chi tiết
+│
+├── backend/                       # ⚙️ BACKEND & AI ENGINE (On-Premise 2-Stage Neural RAG)
+│   ├── db/                        # 🐘 PostgreSQL 16 + pgvector Multi-Schema
+│   │   ├── init/                  # 5 Script khởi tạo cơ sở dữ liệu (01 -> 05)
+│   │   ├── postgresql.conf        # Cấu hình tối ưu HNSW & RAM
+│   │   ├── rag_schema_complete.sql# Toàn bộ schema hợp nhất
+│   │   ├── verify_rag_db.py       # Script kiểm tra kết nối & chỉ mục HNSW
+│   │   └── README.md              # Đặc tả database & schema RAG
+│   ├── models/                    # 🧠 Bộ nhớ cache trọng số AI tải cục bộ (~21.5 GB)
+│   │   ├── bge-m3/                # Dense Embeddings 1024-d
+│   │   ├── bge-reranker-v2-m3/    # Cross-Encoder Reranker
+│   │   ├── gemma-4-e4b/           # Contextual LLM Gemma 4
+│   │   └── phowhisper-base/       # ASR Tiếng Việt
+│   ├── download_models.py         # Kịch bản tải mô hình từ Hugging Face
+│   ├── .env.example               # Mẫu biến môi trường bảo mật
+│   ├── smartlecture_ai_architecture.png # Sơ đồ kiến trúc hạ tầng
+│   └── README.md                  # 📘 Đặc tả kỹ thuật Backend & AI Service chi tiết
 │
 ├── docs/                          # 📚 Tài liệu kỹ thuật dự án
-│   ├── adr/                       # Architecture Decision Records
+│   ├── adr/                       # Architecture Decision Records (ADR 0001 Privacy-First)
 │   │   ├── 0001-privacy-first-local-ai-architecture.md
 │   │   └── README.md
 │   └── agents/                    # Hướng dẫn quy trình domain, triage & issues
@@ -172,38 +205,14 @@ lecture_lens/
 │       ├── issue-tracker.md
 │       └── triage-labels.md
 │
-├── FE/                            # 📱 FRONTEND (React Native 0.88 / Expo SDK 58)
-│   ├── assets/                    # Biểu tượng tĩnh & hình ảnh linh vật Cú Mèo
-│   ├── __tests__/                 # Kiểm thử tự động (Jest + jest-expo)
-│   │   ├── App.test.tsx
-│   │   └── sanity.test.ts
-│   ├── App.tsx                    # Thành phần gốc khởi chạy ứng dụng
-│   ├── app.json                   # Cấu hình dự án Expo
-│   ├── eslint.config.js           # Cấu hình kiểm tra chuẩn mã nguồn
-│   ├── package.json               # Dependencies ứng dụng di động
-│   └── tsconfig.json              # Cấu hình TypeScript Strict Mode
-│
-├── BE/                            # ⚙️ BACKEND (Microservices RAG Tiếng Việt)
-│   ├── models/                    # Bộ nhớ cache trọng số AI tải cục bộ (PhoWhisper, BGE, Gemma)
-│   │   ├── bge-m3/
-│   │   ├── bge-reranker-v2-m3/
-│   │   ├── gemma-4-e4b/
-│   │   └── phowhisper-base/
-│   ├── download_models.py         # Kịch bản tải mô hình từ Hugging Face
-│   ├── .env.example               # Mẫu biến môi trường bảo mật
-│   ├── .gitignore                 # Loại trừ các file trọng số nhị phân lớn (>100MB)
-│   ├── smartlecture_ai_architecture.png # Sơ đồ kiến trúc hạ tầng
-│   └── README.md                  # 📘 Đặc tả kỹ thuật Backend & AI Service chi tiết
-│
-├── stitch_lecturelens_app_design_system/ # 🎨 Thiết kế giao diện & Screens mẫu (Stitch)
-│   ├── pastel_stationery_study_companion/
-│   ├── th_vi_n_b_i_gi_ng/
-│   ├── chi_ti_t_b_i_gi_ng_b_n_ghi/
-│   └── ...
-│
 └── tools/                         # 🛠️ Hệ thống Kỹ năng & Công cụ Kỹ thuật
     ├── mattpocock-skills/         # Kỹ năng kỹ thuật Matt Pocock (TDD, Codebase Design, Domain)
-    └── Understand-Anything/       # Công cụ phân tích mã nguồn & Knowledge Graph
+    ├── Understand-Anything/       # Công cụ phân tích mã nguồn & Knowledge Graph
+    └── stitch/                    # Công cụ sinh UI từ Google Stitch
+        ├── prompts/               # Kịch bản prompt thiết kế
+        ├── generate_all_prompts.py
+        ├── parse_task.py
+        └── stitch_generate.py
 ```
 
 ---
@@ -214,39 +223,39 @@ lecture_lens/
 - **Node.js**: Phiên bản `v20.x` hoặc `v22.x` (LTS)
 - **Python**: Phiên bản `3.10+` với `pip`
 - **Docker & Docker Compose**: v2.20+ (khi triển khai hạ tầng Backend)
-- **Ứng dụng kiểm thử di động**: [Expo Go](https://expo.dev/go) trên thiết bị thật hoặc máy ảo Android Emulator / iOS Simulator.
 
 ---
 
-### Khởi Chạy Frontend (Mobile App)
+### Khởi Chạy Frontend (Web Application)
 
 Thao tác trực tiếp từ thư mục gốc thông qua npm scripts:
 
 ```bash
 # 1. Cài đặt dependencies cho Frontend
-npm install --prefix FE
+npm install --prefix frontend
 
-# 2. Khởi chạy máy chủ phát triển Expo Dev Server
-npm run fe
+# 2. Khởi chạy máy chủ phát triển Vite Dev Server (localhost:5173)
+npm run dev
 
-# 3. Kiểm tra tĩnh kiểu dữ liệu TypeScript
+# 3. Kiểm tra tĩnh kiểu dữ liệu TypeScript & đóng gói
+npm run build
 npm run typecheck
 
-# 4. Chạy bộ kiểm thử tự động
-npm test
-```
+# 4. Kiểm tra chuẩn mã nguồn với oxlint
+npm run lint
 
-> [!TIP]
-> Quét mã QR hiển thị trên Terminal bằng camera điện thoại (đối với iOS) hoặc thông qua ứng dụng **Expo Go** (đối với Android) để trải nghiệm ứng dụng ngay lập tức.
+# 5. Xem trước bản build Production
+npm run preview
+```
 
 ---
 
 ### Khởi Chạy Backend & AI Engine
 
-Toàn bộ dịch vụ backend được cấu hình vận hành độc lập:
+Hạ tầng Backend vận hành độc lập, bảo mật nội bộ:
 
 ```bash
-cd BE
+cd backend
 
 # 1. Tạo file cấu hình môi trường
 cp .env.example .env
@@ -255,59 +264,40 @@ cp .env.example .env
 pip install huggingface_hub
 python download_models.py
 
-# 3. Khởi chạy cụm dịch vụ qua Docker Compose
-docker compose up -d --build
+# 3. Xác minh kết nối & cấu trúc cơ sở dữ liệu vector
+python db/verify_rag_db.py
 ```
 
-Sau khi hoàn tất khởi chạy:
+Sau khi hoàn tất khởi chạy cụm Docker:
 - **Spring Boot Gateway**: `http://localhost:8080` (Cổng Ingress công khai)
 - **FastAPI AI Service**: `http://ai:8000` (Nội bộ Docker qua `X-Internal-Secret`)
 - **PostgreSQL 16 + pgvector**: `db:5432` (Nội bộ Docker, phân vùng `app` và `rag`)
 - **Ollama LLM Engine**: `http://llm:11434` (Nội bộ Docker phục vụ Gemma 4 E4B)
 
-> 👉 **Xem chi tiết đặc tả hạ tầng:** [**Tài Liệu Kỹ Thuật Backend (BE/README.md)**](./BE/README.md)
+> 👉 **Xem chi tiết đặc tả hạ tầng:** [**Tài Liệu Kỹ Thuật Backend (backend/README.md)**](./backend/README.md)
 
 ---
 
-## 🧪 Kiểm Thử & Đảm Bảo Chất Lượng (QA)
-
-Quy trình kiểm thử được tự động hóa nghiêm ngặt:
-
-```bash
-# Chạy bộ kiểm thử tự động
-npm test
-
-# Kết quả kiểm thử tiêu chuẩn:
-# PASS  __tests__/App.test.tsx
-# PASS  __tests__/sanity.test.ts
-# Test Suites: 2 passed, 2 total
-# Tests:       2 passed, 2 total
-```
-
-- **TypeScript Strict Checking:** `npm run typecheck` đảm bảo 100% mã nguồn không phát sinh lỗi kiểu dữ liệu.
-- **Expo Linter:** `npm run lint` tuân thủ các quy tắc của `eslint-config-expo`.
-
----
-
-## 🛠️ Kỹ Năng & Công Cụ Kỹ Thuật (Agents & Skills)
+## 🛠️ Kỹ Năng & Quản Trị Kỹ Thuật (Engineering Skills & Agents)
 
 Dự án tích hợp hai hệ sinh thái công cụ kỹ thuật tiêu chuẩn cao tại `.agents/skills/` và `tools/`:
 
 ### 1. Matt Pocock Engineering Skills (`tools/mattpocock-skills`)
-- **Domain Modeling & Ubiquitous Language:** Luôn đối chiếu thuật ngữ qua [GLOSSARY.md](./GLOSSARY.md) và [docs/agents/domain.md](./docs/agents/domain.md). Tránh tuyệt đối các từ ngữ không chuẩn hóa (ví dụ: dùng đúng `LectureLens`, không dùng `SmartLecture` hay `LectureApp`).
+- **Domain Modeling & Ubiquitous Language:** Luôn đối chiếu thuật ngữ qua [GLOSSARY.md](./GLOSSARY.md) và [docs/agents/domain.md](./docs/agents/domain.md). Tránh tuyệt đối các từ ngữ không chuẩn hóa (dùng đúng `LectureLens`, không dùng `SmartLecture` hay `LectureApp`).
 - **Codebase Design (Deep Modules & Seams):**
   - Xây dựng các mô-đun sâu (**Deep Modules**): Giao diện nhỏ gọn, ẩn giấu khối lượng tính toán phức tạp bên trong (ví dụ: 2-Stage Neural RAG Engine nhận câu hỏi, ẩn toàn bộ ma trận vector và cross-encoder).
-  - Xác định ranh giới thay đổi (**Seams**): Tách biệt rõ ràng ranh giới giữa Ingress Gateway và AI Engine bằng header xác thực nội bộ.
-- **TDD (Test-Driven Development):** Xây dựng lát cắt dọc (**Vertical Slices**) và kiểm thử bề mặt giao diện trước khi triển khai chi tiết.
+  - Xác định ranh giới thay đổi (**Seams**): Tách biệt rõ ràng ranh giới giữa Client, Ingress Gateway và AI Engine.
+- **TDD (Test-Driven Development):** Xây dựng lát cắt dọc (**Vertical Slices**) và kiểm thử qua giao diện Seam trước khi triển khai chi tiết.
+- **Agent Constitution ([AGENTS.md](./AGENTS.md)):** Hướng dẫn các AI agent tuân thủ nghiêm ngặt tech stack và quy chuẩn kỹ thuật.
 
 ### 2. Understand Anything (`tools/Understand-Anything`)
 - **Phân tích cấu trúc mã nguồn:**
   ```bash
   # Quét và cập nhật manifest cấu trúc dự án
-  node tools/Understand-Anything/understand-anything-plugin/skills/understand/scan-project.mjs . .ua/manifest.json --exclude "node_modules/**,.venv/**,models/**,stitch_lecturelens_app_design_system/**,tools/**"
+  npm run understand:scan
   
-  # Trích xuất ngữ cảnh miền nghiệp vụ
-  python tools/Understand-Anything/understand-anything-plugin/skills/understand-domain/extract-domain-context.py .
+  # Khởi chạy dashboard phân tích kiến trúc trực quan
+  npm run understand:dashboard
   ```
 - **Bản đồ tri thức tương tác (Interactive Knowledge Graph):** Trực quan hóa các luồng xử lý dữ liệu và mối liên kết thành phần.
 
@@ -316,23 +306,28 @@ Dự án tích hợp hai hệ sinh thái công cụ kỹ thuật tiêu chuẩn c
 ## 🗺️ Lộ Trình Phát Triển (Roadmap)
 
 - [x] **Giai đoạn 1: Nền Tảng Dự Án & Ngôn Ngữ Thiết Kế**
-  - [x] Thiết lập cấu trúc Monorepo FE (Expo SDK 58 / React Native 0.88) và BE.
+  - [x] Thiết lập nền tảng Web Frontend hiện đại (React 19 / Vite 8 / Tailwind CSS v4 / Three.js).
   - [x] Định hình hệ thống thiết kế Pastel Stationery Study Companion & bảng màu tokens.
-  - [x] Thiết lập bộ kiểm thử tự động, ESLint và TypeScript cấu hình chặt chẽ.
-  - [x] Chuẩn hóa Ubiquitous Language trong `GLOSSARY.md` và ADR 0001.
+  - [x] Thiết lập oxlint siêu tốc và TypeScript cấu hình chặt chẽ.
+  - [x] Chuẩn hóa Ubiquitous Language trong `GLOSSARY.md` và `AGENTS.md` (ADR 0001).
 - [x] **Giai đoạn 2: Trọng Số Mô Hình & Hạ Tầng 2-Stage RAG**
-  - [x] Tải và chuẩn bị bộ 4 mô hình AI cục bộ (`phowhisper-base`, `bge-m3`, `bge-reranker-v2-m3`, `gemma-4-e4b`).
+  - [x] Tải và chuẩn bị bộ 4 mô hình AI cục bộ (`phowhisper-base`, `bge-m3`, `bge-reranker-v2-m3`, `gemma-4-e4b` ~21.5 GB).
   - [x] Thiết kế cơ sở dữ liệu phân vùng `app` và `rag` với chỉ mục HNSW trên PostgreSQL pgvector.
   - [x] Đặc tả quy chuẩn pipeline Ingest và Query kèm Guardrails trích dẫn timestamp `[MM:SS]`.
-- [ ] **Giai đoạn 3: Hoàn Thiện Các Màn Hình Ứng Dụng Khách (In Progress)**
-  - [ ] Triển khai React Navigation v7 (RootStack + MainTabNavigator).
-  - [ ] Hiện thực giao diện thư viện bài giảng, màn hình nghe Capsule Audio Player.
-  - [ ] Tích hợp giao diện trò chuyện Trợ lý Cú Mèo và ghi chú Cornell Notes.
-  - [ ] Hiện thực bộ lật thẻ ghi nhớ Flashcards và câu hỏi trắc nghiệm Quizzes.
-- [ ] **Giai đoạn 4: Nâng Cao & Tối Ưu Hóa Trải Nghiệm**
+- [ ] **Giai đoạn 3: Hoàn Thiện Các Màn Hình Học Tập Trên Web (In Progress)**
+  - [ ] Màn hình thư viện bài giảng & quản lý môn học.
+  - [ ] Trình phát bài giảng Capsule Audio Player đồng bộ timestamps `[MM:SS]`.
+  - [ ] Ghi chú thông minh Cornell Notes tương tác trực tiếp.
+  - [ ] Bộ lật thẻ ghi nhớ Flashcards (Active Recall) và trắc nghiệm Quizzes.
+  - [ ] Trợ lý Cú Mèo 3D tương tác trực tiếp trong phòng học.
+- [ ] **Giai đoạn 4: Đóng Gói Vi Dịch Vụ & Kết Nối Toàn Trực**
+  - [ ] Hoàn thiện FastAPI AI Engine (`backend/services/ai`).
+  - [ ] Hoàn thiện Spring Boot Gateway Service (`backend/services/gateway`).
+  - [ ] Khởi chạy toàn diện thông qua Docker Compose nội bộ.
+- [ ] **Giai đoạn 5: Nâng Cao & Tối Ưu Hóa Trải Nghiệm**
   - [ ] Diarization: Tự động phân tách giọng giảng viên và sinh viên tương tác.
   - [ ] Spaced Repetition (Thuật toán SM-2) cho hệ thống Flashcard.
-  - [ ] Nghiên cứu mô hình ngôn ngữ siêu nhỏ chạy trực tiếp On-Device khi không có kết nối mạng.
+  - [ ] Tối ưu hóa lượng tử hóa INT4/INT8 cho mô hình trên phần cứng phổ thông.
 
 ---
 

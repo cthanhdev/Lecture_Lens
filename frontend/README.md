@@ -1,32 +1,65 @@
-# React + TypeScript + Vite
+# 🌐 LectureLens Frontend — Modern Web Study Portal
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Giao diện Web hiện đại của **LectureLens**, được xây dựng trên nền tảng **React 19**, **Vite 8**, **Tailwind CSS v4** và **Three.js / React Three Fiber** theo ngôn ngữ thiết kế **Pastel Stationery Study Companion**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Công Nghệ Cốt Lõi (Tech Stack)
 
-## React Compiler
+- **Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) (Strict Mode)
+- **Công Cụ Build**: [Vite 8](https://vitejs.dev/) với Hot Module Replacement (HMR) tức thì
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (`@tailwindcss/vite`) + [Framer Motion](https://www.framer.com/motion/)
+- **Đồ Họa 3D**: [Three.js](https://threejs.org/) + [@react-three/fiber](https://r3f.docs.pmnd.rs/) + [@react-three/drei](https://github.com/pmndrs/drei)
+- **Kiểm Tra Mã Nguồn**: [oxlint](https://oxc.rs/) (Linter thế hệ mới dựa trên Rust)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## 🎨 Ngôn Ngữ Thiết Kế: Pastel Stationery
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+Mô phỏng không gian bàn học thân thuộc của sinh viên với bảng màu Pastel Stationery:
+- `bg-stationery-canvas`: Giấy mỹ thuật ngà ấm (`#FFFAF5`)
+- `primary-lavender`: Tím lavender nhận diện thương hiệu (`#6D5FD0`)
+- `accent-sakura`: Hồng sakura trợ lý Cú Mèo (`#F875AA`)
+- `accent-mint`: Xanh bạc hà biểu thị mốc thời gian (`#10B981`)
+- `accent-sticky`: Vàng ghi chú Cornell (`#FFF1C9`)
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+---
+
+## 📦 Lệnh Thao Tác (Scripts)
+
+Thao tác trực tiếp từ thư mục `frontend/` (hoặc qua root `npm run <cmd>`):
+
+```bash
+# Khởi chạy máy chủ phát triển (Vite Dev Server tại localhost:5173)
+npm run dev
+
+# Kiểm tra kiểu dữ liệu TypeScript & đóng gói Production
+npm run build
+
+# Kiểm tra quy chuẩn mã nguồn siêu tốc với oxlint
+npm run lint
+
+# Xem trước bản đóng gói Production
+npm run preview
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+---
+
+## 📂 Cấu Trúc Thư Mục Frontend
+
+```
+frontend/
+├── public/                 # Static assets, SVG icons, favicon
+├── src/
+│   ├── assets/             # Hình ảnh tĩnh, minh họa
+│   ├── App.tsx             # Root Component & Interactive 3D Canvas
+│   ├── index.css           # Cấu hình Tailwind CSS v4 (@import "tailwindcss")
+│   └── main.tsx            # Điểm khởi chạy React DOM
+├── .oxlintrc.json          # Cấu hình oxlint
+├── index.html              # HTML template
+├── package.json            # Dependencies & scripts
+├── tsconfig.app.json       # TypeScript config cho App code
+├── tsconfig.node.json      # TypeScript config cho Vite config
+├── tsconfig.json           # Solution tsconfig
+└── vite.config.ts          # Vite configuration
+```
