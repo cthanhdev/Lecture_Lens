@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   useFonts,
   PlusJakartaSans_400Regular,
@@ -9,7 +11,8 @@ import {
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { colors } from './src/core/theme';
-import { GalleryScreen } from './src/features/dev/GalleryScreen';
+import { AuthProvider } from './src/core/auth';
+import { RootNavigator } from './src/navigation';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -29,10 +32,14 @@ export default function App() {
   }
 
   return (
-    <>
-      <GalleryScreen />
-      <StatusBar style="dark" />
-    </>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <NavigationContainer>
+          <RootNavigator />
+          <StatusBar style="dark" />
+        </NavigationContainer>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 
