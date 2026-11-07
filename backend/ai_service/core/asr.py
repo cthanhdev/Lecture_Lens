@@ -1,6 +1,6 @@
 """
-AsrEngine Deep Module: Vietnamese Speech-to-Text inference with PhoWhisper-base.
-Handles 30-second window batching, VRAM cache recycling, and monotonic timestamp alignment [MM:SS].
+AsrEngine Deep Module: Vietnamese Speech-to-Text inference with PhoWhisper.
+Handles natural silence VAD chunking, GPU acceleration, vocabulary prompting, and monotonic timestamp alignment [MM:SS].
 """
 from collections.abc import Callable
 import logging
@@ -9,8 +9,15 @@ from pathlib import Path
 from typing import Protocol
 import wave
 from ai_service.core.schemas import TranscriptSegment
+from ai_service.core.vad_chunker import VadChunkerProtocol, AudioWindow
 
 logger = logging.getLogger("ai_service.asr")
+
+DEFAULT_IT_PROMPT = (
+    "Bài giảng Đại học, Công nghệ thông tin, Quản trị mạng, Windows Server 2016, "
+    "Active Directory, Users, Groups, Domain Controller, Password, OU, "
+    "Member Of, Properties, Administrator, Log on, DNS, DHCP, Permissions."
+)
 
 
 def format_timestamp_label(seconds: float) -> str:
@@ -43,14 +50,28 @@ class AsrEngineProtocol(Protocol):
 class PhoWhisperEngine:
     """
     Production Adapter: Performs offline Vietnamese speech recognition using local PhoWhisper weights.
+    Supports VAD natural pause chunking, vocabulary prompting, and anti-hallucination decoding.
     Recycles GPU VRAM between audio window batches to prevent Out-Of-Memory exceptions.
     """
 
-    def __init__(self, model_path: Path, device: str = "cuda"):
+    def __init__(
+        self,
+        model_path: Path,
+        device: str = "cuda",
+        vad_chunker: VadChunkerProtocol | None = None,
+        prompt: str | None = DEFAULT_IT_PROMPT,
+        no_repeat_ngram_size: int = 3,
+        repetition_penalty: float = 1.25,
+    ):
         self.model_path = Path(model_path).resolve()
         self.device = device
+        self.vad_chunker = vad_chunker
+        self.prompt = prompt
+        self.no_repeat_ngram_size = no_repeat_ngram_size
+        self.repetition_penalty = repetition_penalty
         self._model = None
         self._processor = None
+        self._prompt_ids = None
 
     def _ensure_loaded(self):
         if self._model is not None and self._processor is not None:
@@ -74,6 +95,15 @@ class PhoWhisperEngine:
             low_cpu_mem_usage=True
         ).to(actual_device)
         self.device = actual_device
+
+        if self.prompt and hasattr(self._processor, "get_prompt_ids"):
+            try:
+                raw_ids = self._processor.get_prompt_ids(self.prompt)
+                self._prompt_ids = torch.from_numpy(raw_ids).to(self.device)
+            except Exception as e:
+                logger.warning("Could not encode prompt_ids: %s", e)
+                self._prompt_ids = None
+
         logger.info("PhoWhisper successfully loaded into VRAM/RAM.")
 
     def transcribe(
@@ -82,6 +112,7 @@ class PhoWhisperEngine:
         on_progress: Callable[[int], None] | None = None
     ) -> list[TranscriptSegment]:
         import torch
+        import numpy as np
 
         self._ensure_loaded()
         wav_path = Path(wav_path).resolve()
@@ -95,33 +126,44 @@ class PhoWhisperEngine:
             audio_bytes = wf.readframes(num_frames)
 
         # Convert raw PCM 16-bit to float tensor (-1.0 to 1.0)
-        import numpy as np
         audio_array = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
-
         total_samples = len(audio_array)
         total_seconds = total_samples / sample_rate
-        chunk_seconds = 30
-        chunk_samples = chunk_seconds * sample_rate
+
+        # Slice into speech windows: use VAD chunker if provided, else fallback to 30s slices
+        if self.vad_chunker is not None:
+            windows = self.vad_chunker.split_into_speech_windows(audio_array, sample_rate=sample_rate)
+        else:
+            chunk_seconds = 30
+            chunk_samples = chunk_seconds * sample_rate
+            num_chunks = max(1, math.ceil(total_samples / chunk_samples))
+            windows = []
+            for i in range(num_chunks):
+                s_idx = i * chunk_samples
+                e_idx = min(total_samples, s_idx + chunk_samples)
+                windows.append(
+                    AudioWindow(
+                        chunk_index=i,
+                        start_seconds=round(s_idx / sample_rate, 3),
+                        end_seconds=round(e_idx / sample_rate, 3),
+                        data=audio_array[s_idx:e_idx]
+                    )
+                )
 
         segments: list[TranscriptSegment] = []
-        num_chunks = max(1, math.ceil(total_samples / chunk_samples))
+        num_windows = len(windows)
 
         logger.info(
-            "Transcribing %s (Duration: %.1fs, Chunks: %d)...",
-            wav_path.name, total_seconds, num_chunks
+            "Transcribing %s (Duration: %.1fs, Windows: %d)...",
+            wav_path.name, total_seconds, num_windows
         )
 
-        curr_time = 0.0
         segment_id = 0
 
-        for i in range(num_chunks):
-            start_sample = i * chunk_samples
-            end_sample = min(total_samples, start_sample + chunk_samples)
-            chunk_data = audio_array[start_sample:end_sample]
-
-            chunk_duration = len(chunk_data) / sample_rate
-            chunk_start_sec = i * chunk_seconds
-            chunk_end_sec = min(total_seconds, chunk_start_sec + chunk_duration)
+        for i, win in enumerate(windows):
+            chunk_data = win.data
+            if len(chunk_data) < int(0.2 * sample_rate):
+                continue
 
             # Process with PhoWhisper
             inputs = self._processor(
@@ -134,11 +176,19 @@ class PhoWhisperEngine:
                 dtype=torch.float16 if self.device == "cuda" else torch.float32
             )
 
+            gen_kwargs = {
+                "language": "vi",
+                "task": "transcribe",
+                "no_repeat_ngram_size": self.no_repeat_ngram_size,
+                "repetition_penalty": self.repetition_penalty,
+            }
+            if self._prompt_ids is not None:
+                gen_kwargs["prompt_ids"] = self._prompt_ids
+
             with torch.no_grad():
                 generated_ids = self._model.generate(
                     input_features,
-                    language="vi",
-                    task="transcribe"
+                    **gen_kwargs
                 )
 
             transcription = self._processor.batch_decode(
@@ -149,9 +199,9 @@ class PhoWhisperEngine:
             if transcription:
                 seg = TranscriptSegment(
                     id=segment_id,
-                    start_time_seconds=round(chunk_start_sec, 2),
-                    end_time_seconds=round(chunk_end_sec, 2),
-                    timestamp_label=format_timestamp_label(chunk_start_sec),
+                    start_time_seconds=round(win.start_seconds, 2),
+                    end_time_seconds=round(win.end_seconds, 2),
+                    timestamp_label=format_timestamp_label(win.start_seconds),
                     text=transcription
                 )
                 segments.append(seg)
@@ -163,7 +213,7 @@ class PhoWhisperEngine:
 
             # Report progress
             if on_progress:
-                pct = int(((i + 1) / num_chunks) * 100)
+                pct = int(((i + 1) / num_windows) * 100)
                 on_progress(min(100, pct))
 
         logger.info("Transcribed %d segments successfully.", len(segments))

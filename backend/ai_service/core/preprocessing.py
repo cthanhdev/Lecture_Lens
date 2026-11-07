@@ -1,5 +1,5 @@
 """
-AudioPreprocessor Deep Module: Audio conversion, downmixing and normalization to 16kHz Mono PCM.
+AudioPreprocessor Deep Module: Audio conversion, downmixing, DSP denoising, and normalization to 16kHz Mono PCM.
 """
 import logging
 import os
@@ -32,7 +32,7 @@ class AudioCorruptedError(PreprocessingError):
 
 class AudioPreprocessorProtocol(Protocol):
     """
-    Seam for Audio preprocessing and normalization.
+    Seam for Audio preprocessing, denoising, and normalization.
     """
     def process(self, source_audio: Path, output_wav: Path) -> AudioMetadata: ...
 
@@ -72,10 +72,16 @@ class FFmpegAudioPreprocessor:
     """
     Production Adapter: Executes FFmpeg subprocess to convert any input format
     into 16kHz Mono 16-bit PCM WAV as required by PhoWhisper.
+    Applies professional DSP filter graph:
+    - Highpass 80Hz: Removes rumble/HVAC low-frequency hum
+    - Lowpass 7500Hz: Cuts high-frequency whistle/hiss
+    - afftdn: FFT-based background room/fan noise reduction
+    - loudnorm: EBU R128 speech loudness dynamic normalization
     """
 
-    def __init__(self, ffmpeg_bin: str | None = None):
+    def __init__(self, ffmpeg_bin: str | None = None, enable_dsp_filters: bool = True):
         self.ffmpeg_bin = resolve_ffmpeg_binary(ffmpeg_bin or "ffmpeg")
+        self.enable_dsp_filters = enable_dsp_filters
 
     def process(self, source_audio: Path, output_wav: Path) -> AudioMetadata:
         source_audio = Path(source_audio).resolve()
@@ -90,12 +96,20 @@ class FFmpegAudioPreprocessor:
             self.ffmpeg_bin,
             "-y",
             "-i", str(source_audio),
-            "-vn",
+            "-vn"
+        ]
+
+        if self.enable_dsp_filters:
+            dsp_filter_chain = "highpass=f=80,lowpass=f=7500,afftdn=nf=-25:tn=1,loudnorm=I=-16:TP=-1.5:LRA=11"
+            cmd.extend(["-af", dsp_filter_chain])
+            logger.info("Applying DSP Denoise + Loudness Normalization filter graph...")
+
+        cmd.extend([
             "-acodec", "pcm_s16le",
             "-ar", "16000",
             "-ac", "1",
             str(output_wav)
-        ]
+        ])
 
         logger.info("Executing FFmpeg normalization with binary '%s'", self.ffmpeg_bin)
         try:

@@ -1,10 +1,17 @@
 """
 Tests for AsrEngine Deep Module.
-Verifies timestamp formatting [MM:SS], monotonicity invariants, and FakeAsrEngine simulation.
+Verifies timestamp formatting [MM:SS], monotonicity invariants, FakeAsrEngine simulation,
+and PhoWhisperEngine initialization contracts.
 """
 from pathlib import Path
 import pytest
-from ai_service.core.asr import FakeAsrEngine, format_timestamp_label
+from ai_service.core.asr import (
+    DEFAULT_IT_PROMPT,
+    FakeAsrEngine,
+    PhoWhisperEngine,
+    format_timestamp_label,
+)
+from ai_service.core.vad_chunker import EnergyVadChunker
 
 
 def test_format_timestamp_label():
@@ -43,3 +50,28 @@ def test_fake_asr_engine_monotonicity_and_contract(tmp_path: Path):
         if i > 0:
             prev_seg = segments[i - 1]
             assert seg.start_time_seconds >= prev_seg.end_time_seconds
+
+
+def test_phowhisper_engine_configuration():
+    vad = EnergyVadChunker()
+    engine = PhoWhisperEngine(
+        model_path=Path("backend/models/phowhisper-medium"),
+        device="cpu",
+        vad_chunker=vad,
+        prompt="Custom prompt keywords",
+        no_repeat_ngram_size=4,
+        repetition_penalty=1.3
+    )
+
+    assert engine.device == "cpu"
+    assert engine.vad_chunker is vad
+    assert engine.prompt == "Custom prompt keywords"
+    assert engine.no_repeat_ngram_size == 4
+    assert engine.repetition_penalty == 1.3
+    assert "Windows Server" in DEFAULT_IT_PROMPT
+
+
+def test_phowhisper_engine_transcribe_missing_file_raises():
+    engine = PhoWhisperEngine(model_path=Path("backend/models/phowhisper-base"), device="cpu")
+    with pytest.raises(FileNotFoundError):
+        engine.transcribe(Path("non_existent_file.wav"))

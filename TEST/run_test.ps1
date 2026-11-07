@@ -1,6 +1,10 @@
 # LectureLens Audio Ingest Lab - PowerShell Runner
 $ErrorActionPreference = "Stop"
 
+# Set UTF-8 Console Encoding
+$env:PYTHONIOENCODING = "utf-8"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 # Navigate to project root
 $ProjectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $ProjectRoot

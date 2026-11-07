@@ -67,7 +67,7 @@
           <h1 class="text-2xl font-extrabold text-plum-ink tracking-tight">LectureLens</h1>
           <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-kitsune-coral text-white shadow-xs">TEST LAB</span>
         </div>
-        <p class="text-xs text-plum-muted font-medium">Audio Ingest Pipeline & Transcript Verification Studio</p>
+        <p class="text-xs text-plum-muted font-medium">Audio Ingest Pipeline & Transcript Verification Studio (PhoWhisper-Medium + VAD)</p>
       </div>
     </div>
     
@@ -77,7 +77,10 @@
         <span>🎬 FFmpeg:</span> <span id="ffmpegStatus" class="font-bold text-emerald-600">Đang quét...</span>
       </div>
       <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>🎙️ AI Model:</span> <span id="aiStatus" class="font-bold text-emerald-600">Đang quét...</span>
+        <span>⚡ Thiết Bị:</span> <span id="aiDeviceStatus" class="font-bold text-emerald-600">Đang quét...</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
+        <span>🎙️ Model:</span> <span id="aiModelStatus" class="font-bold text-emerald-600">PhoWhisper-medium</span>
       </div>
     </div>
   </header>
@@ -97,12 +100,60 @@
 
         <!-- Mode Toggle -->
         <div class="flex items-center p-1 bg-white/60 rounded-full border border-sakura-pink/60 text-xs font-medium">
-          <button id="modeMockBtn" class="px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press" onclick="setMode('mock')">
-            ⚡ Fast Mock (&lt;1s)
-          </button>
           <button id="modeRealBtn" class="px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press" onclick="setMode('real')">
             🎙️ PhoWhisper ASR Thật
           </button>
+          <button id="modeMockBtn" class="px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press" onclick="setMode('mock')">
+            ⚡ Fast Mock (&lt;1s)
+          </button>
+        </div>
+      </div>
+
+      <!-- Advanced Pipeline Settings Card -->
+      <div class="p-4 rounded-2xl bg-white/60 border border-sakura-pink/40 mb-6 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-plum-ink flex items-center gap-1.5">
+            <span>⚙️</span> Cấu Hình Bộ Lọc & Model ASR
+          </span>
+          <span class="text-[11px] text-plum-muted">Đã bật khử nhiễu & cắt VAD chống lặp từ</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+          <!-- Model Selection -->
+          <div class="p-3 rounded-xl bg-white/80 border border-sakura-pink/40">
+            <label class="block text-xs font-bold text-plum-ink mb-1">Mô Hình ASR</label>
+            <select id="modelSelect" class="w-full text-xs font-semibold p-2 rounded-lg border border-sakura-pink/60 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral">
+              <option value="medium" selected>PhoWhisper-Medium (769M - Độ chuẩn cao)</option>
+              <option value="base">PhoWhisper-Base (74M - Bản nhẹ)</option>
+            </select>
+          </div>
+
+          <!-- DSP Denoise Toggle -->
+          <div class="p-3 rounded-xl bg-white/80 border border-sakura-pink/40 flex items-center gap-2">
+            <input type="checkbox" id="dspToggle" checked class="w-4 h-4 accent-kitsune-coral cursor-pointer">
+            <div>
+              <label for="dspToggle" class="text-xs font-bold text-plum-ink cursor-pointer block">Khử Nhiễu DSP (afftdn + loudnorm)</label>
+              <span class="text-[10px] text-plum-muted">Cắt ù quạt 80Hz, rít 7.5kHz & khử ồn phòng</span>
+            </div>
+          </div>
+
+          <!-- VAD Silence Cut Toggle -->
+          <div class="p-3 rounded-xl bg-white/80 border border-sakura-pink/40 flex items-center gap-2">
+            <input type="checkbox" id="vadToggle" checked class="w-4 h-4 accent-kitsune-coral cursor-pointer">
+            <div>
+              <label for="vadToggle" class="text-xs font-bold text-plum-ink cursor-pointer block">Cắt Khoảng Nghỉ Tự Nhiên (VAD)</label>
+              <span class="text-[10px] text-plum-muted">Dò khoảng lặng &gt;350ms, không cắt đôi câu</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Vocabulary Prompting -->
+        <div class="pt-2">
+          <label class="block text-xs font-bold text-plum-ink mb-1 flex items-center justify-between">
+            <span>📚 Gợi Ý Từ Điển Ngữ Cảnh (Vocabulary Prompting - Chống dịch sai từ tiếng Anh):</span>
+            <button onclick="resetPrompt()" class="text-[10px] text-kitsune-coral hover:underline">Khôi phục mặc định CNTT</button>
+          </label>
+          <input type="text" id="promptInput" class="w-full text-xs font-mono p-2.5 rounded-xl border border-sakura-pink/60 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral" value="Bài giảng Đại học, Công nghệ thông tin, Quản trị mạng, Windows Server 2016, Active Directory, Users, Groups, Domain Controller, Password, OU, Member Of, Properties, Administrator, Log on, DNS, DHCP, Permissions.">
         </div>
       </div>
 
@@ -161,15 +212,15 @@
         </div>
         <div id="step-normalize" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
           <div class="font-bold flex items-center gap-1.5 text-plum-ink">
-            <span class="step-icon">⚪</span> 2. Chuẩn hóa
+            <span class="step-icon">⚪</span> 2. Khử Nhiễu DSP
           </div>
-          <span class="text-[11px]">16kHz Mono WAV</span>
+          <span class="text-[11px]">16kHz Mono Clean WAV</span>
         </div>
         <div id="step-asr" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
           <div class="font-bold flex items-center gap-1.5 text-plum-ink">
             <span class="step-icon">⚪</span> 3. PhoWhisper
           </div>
-          <span class="text-[11px]">Nhận dạng tiếng Việt</span>
+          <span class="text-[11px]">VAD + Gợi ý từ vựng</span>
         </div>
         <div id="step-artifact" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
           <div class="font-bold flex items-center gap-1.5 text-plum-ink">
@@ -298,7 +349,7 @@
 
   <!-- JS Logic -->
   <script>
-    let currentMode = 'real'; // Default to real model as user expects
+    let currentMode = 'real';
     let selectedFile = null;
     let currentJobId = null;
     let currentLectureId = null;
@@ -317,6 +368,16 @@
     const audioPlayer = document.getElementById('audioPlayer');
     const errorCard = document.getElementById('errorCard');
     const errorMessageText = document.getElementById('errorMessageText');
+    const promptInput = document.getElementById('promptInput');
+    const modelSelect = document.getElementById('modelSelect');
+    const dspToggle = document.getElementById('dspToggle');
+    const vadToggle = document.getElementById('vadToggle');
+
+    let defaultPromptText = "Bài giảng Đại học, Công nghệ thông tin, Quản trị mạng, Windows Server 2016, Active Directory, Users, Groups, Domain Controller, Password, OU, Member Of, Properties, Administrator, Log on, DNS, DHCP, Permissions.";
+
+    function resetPrompt() {
+      promptInput.value = defaultPromptText;
+    }
 
     async function loadDiagnostics() {
       try {
@@ -325,7 +386,8 @@
         const diag = await res.json();
         
         const ffmpegEl = document.getElementById('ffmpegStatus');
-        const aiEl = document.getElementById('aiStatus');
+        const deviceEl = document.getElementById('aiDeviceStatus');
+        const modelEl = document.getElementById('aiModelStatus');
 
         if (diag.ffmpeg.available) {
           ffmpegEl.innerHTML = diag.ffmpeg.is_bundled ? "✅ Tự Động (imageio)" : "✅ System PATH";
@@ -335,15 +397,31 @@
           ffmpegEl.className = "font-bold text-rose-500";
         }
 
-        if (diag.ai_runtime.torch_installed && diag.models.phowhisper_exists) {
-          aiEl.innerHTML = `✅ ${diag.ai_runtime.device.toUpperCase()} (${diag.ai_runtime.device_name})`;
-          aiEl.className = "font-bold text-emerald-600";
-        } else if (!diag.ai_runtime.torch_installed) {
-          aiEl.innerHTML = "⚠️ Đang cài PyTorch...";
-          aiEl.className = "font-bold text-amber-500";
+        if (diag.ai_runtime.torch_installed) {
+          if (diag.ai_runtime.cuda_available) {
+            deviceEl.innerHTML = `✅ GPU (${diag.ai_runtime.device_name} - ${diag.ai_runtime.vram_mb}MB)`;
+            deviceEl.className = "font-bold text-emerald-600";
+          } else {
+            deviceEl.innerHTML = `✅ CPU (${diag.ai_runtime.device_name})`;
+            deviceEl.className = "font-bold text-sky-600";
+          }
         } else {
-          aiEl.innerHTML = "⚠️ Thiếu Weights";
-          aiEl.className = "font-bold text-amber-500";
+          deviceEl.innerHTML = "⚠️ Chưa cài Torch";
+          deviceEl.className = "font-bold text-amber-500";
+        }
+
+        if (diag.models.medium_exists) {
+          modelEl.innerHTML = "✅ PhoWhisper-Medium (Sẵn sàng)";
+          modelEl.className = "font-bold text-emerald-600";
+          modelSelect.value = "medium";
+        } else if (diag.models.base_exists) {
+          modelEl.innerHTML = "⚠️ PhoWhisper-Base";
+          modelEl.className = "font-bold text-amber-500";
+          modelSelect.value = "base";
+        }
+
+        if (diag.default_prompt) {
+          defaultPromptText = diag.default_prompt;
         }
       } catch (err) {
         console.error("Diagnostics load error", err);
@@ -415,7 +493,6 @@
         // 1. Upload file
         const formData = new FormData();
         formData.append("file", selectedFile);
-        formData.append("mode", currentMode);
 
         const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
         if (!uploadRes.ok) throw new Error("Upload thất bại");
@@ -425,9 +502,15 @@
         currentLectureId = uploadData.lectureId;
         markStepDone('step-staged');
 
-        // 2. Trigger pipeline
-        updateProgress(15, "Bắt đầu quy trình chuẩn hóa âm thanh...");
-        const procRes = await fetch(`/api/process/${currentJobId}?mode=${currentMode}`, { method: 'POST' });
+        // 2. Trigger pipeline with query params
+        updateProgress(15, "Khử nhiễu & chuẩn hóa âm thanh...");
+        const selectedModel = modelSelect.value;
+        const enableDsp = dspToggle.checked;
+        const enableVad = vadToggle.checked;
+        const promptText = encodeURIComponent(promptInput.value);
+
+        const procUrl = `/api/process/${currentJobId}?mode=${currentMode}&model=${selectedModel}&dsp=${enableDsp}&vad=${enableVad}&prompt=${promptText}`;
+        const procRes = await fetch(procUrl, { method: 'POST' });
         if (!procRes.ok) throw new Error("Kích hoạt pipeline thất bại");
 
         // 3. Poll for progress
