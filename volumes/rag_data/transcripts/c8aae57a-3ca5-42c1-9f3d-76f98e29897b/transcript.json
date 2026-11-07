@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "job_id": "c8aae57a-3ca5-42c1-9f3d-76f98e29897b",
+  "lecture_id": "c5549ee4-59de-4d4b-94c1-ba47103a9042",
+  "generated": {
+    "model": "phowhisper-base",
+    "language": "vi",
+    "device": "cpu",
+    "created_at": "2026-11-07T08:22:56.737970+00:00",
+    "processing_seconds": 0.03
+  },
+  "audio": {
+    "duration_seconds": 12.0,
+    "sample_rate_hz": 16000
+  },
+  "full_text": "Chào mừng các em sinh viên đến với môn Giải Tích Mạng và Không Gian Vector. Trong bài học này, chúng ta định nghĩa ma trận trực giao và chuẩn Euclidean. Hệ vector trực chuẩn đóng vai trò nền tảng trong các giải thuật RAG và Embedding đa chiều. Bài tập về nhà: chứng minh ma trận xoay hai chiều là một toán tử bảo toàn khoảng cách.",
+  "segments": [
+    {
+      "id": 0,
+      "start_time_seconds": 0.0,
+      "end_time_seconds": 6.5,
+      "timestamp_label": "00:00",
+      "text": "Chào mừng các em sinh viên đến với môn Giải Tích Mạng và Không Gian Vector."
+    },
+    {
+      "id": 1,
+      "start_time_seconds": 6.5,
+      "end_time_seconds": 13.0,
+      "timestamp_label": "00:06",
+      "text": "Trong bài học này, chúng ta định nghĩa ma trận trực giao và chuẩn Euclidean."
+    },
+    {
+      "id": 2,
+      "start_time_seconds": 13.0,
+      "end_time_seconds": 19.5,
+      "timestamp_label": "00:13",
+      "text": "Hệ vector trực chuẩn đóng vai trò nền tảng trong các giải thuật RAG và Embedding đa chiều."
+    },
+    {
+      "id": 3,
+      "start_time_seconds": 19.5,
+      "end_time_seconds": 26.0,
+      "timestamp_label": "00:19",
+      "text": "Bài tập về nhà: chứng minh ma trận xoay hai chiều là một toán tử bảo toàn khoảng cách."
+    }
+  ]
+}

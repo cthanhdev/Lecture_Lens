@@ -1,0 +1,43 @@
+# =========================================================================
+# LectureLens Model Runner & Test Studio Dockerfile
+# Provides PhoWhisper ASR + FFmpeg + FastAPI Test UI
+# =========================================================================
+FROM python:3.10-slim
+
+# Install system dependencies & FFmpeg for audio transcoding
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libsndfile1 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install PyTorch & ASR dependencies
+# Note: Installs standard PyTorch (supports CPU and CUDA if NVIDIA runtime is available)
+RUN pip install --no-cache-dir \
+    fastapi>=0.111.0 \
+    uvicorn[standard]>=0.30.0 \
+    pydantic>=2.7.0 \
+    pydantic-settings>=2.3.0 \
+    httpx>=0.27.0 \
+    python-multipart>=0.0.9 \
+    soundfile>=0.12.1 \
+    numpy>=1.24.0 \
+    torch \
+    transformers>=4.40.0
+
+# Copy backend AI module into Python environment
+COPY backend/ai_service/ /app/backend/ai_service/
+
+# Copy TEST suite files
+COPY TEST/server.py /app/server.py
+COPY TEST/templates/ /app/templates/
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/backend:/app \
+    PORT=8090
+
+EXPOSE 8090
+
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8090"]

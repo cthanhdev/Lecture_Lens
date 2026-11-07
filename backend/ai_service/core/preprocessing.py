@@ -2,6 +2,7 @@
 AudioPreprocessor Deep Module: Audio conversion, downmixing and normalization to 16kHz Mono PCM.
 """
 import logging
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -36,14 +37,45 @@ class AudioPreprocessorProtocol(Protocol):
     def process(self, source_audio: Path, output_wav: Path) -> AudioMetadata: ...
 
 
+def resolve_ffmpeg_binary(preferred_bin: str = "ffmpeg") -> str:
+    """
+    Smart resolver for FFmpeg binary:
+    1. Checks FFMPEG_BINARY environment variable
+    2. Checks preferred binary path or system PATH via shutil.which
+    3. Automatically falls back to imageio_ffmpeg bundled static binary (zero-setup on Windows)
+    """
+    env_bin = os.getenv("FFMPEG_BINARY")
+    if env_bin and Path(env_bin).exists():
+        return env_bin
+
+    which_path = shutil.which(preferred_bin)
+    if which_path:
+        return which_path
+
+    if Path(preferred_bin).is_file():
+        return str(Path(preferred_bin).resolve())
+
+    # Fallback to bundled imageio-ffmpeg static executable
+    try:
+        import imageio_ffmpeg
+        bundled_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        if bundled_exe and Path(bundled_exe).exists():
+            logger.info("Auto-detected bundled imageio-ffmpeg executable: %s", bundled_exe)
+            return bundled_exe
+    except Exception:
+        pass
+
+    return preferred_bin
+
+
 class FFmpegAudioPreprocessor:
     """
     Production Adapter: Executes FFmpeg subprocess to convert any input format
     into 16kHz Mono 16-bit PCM WAV as required by PhoWhisper.
     """
 
-    def __init__(self, ffmpeg_bin: str = "ffmpeg"):
-        self.ffmpeg_bin = ffmpeg_bin
+    def __init__(self, ffmpeg_bin: str | None = None):
+        self.ffmpeg_bin = resolve_ffmpeg_binary(ffmpeg_bin or "ffmpeg")
 
     def process(self, source_audio: Path, output_wav: Path) -> AudioMetadata:
         source_audio = Path(source_audio).resolve()
@@ -65,7 +97,7 @@ class FFmpegAudioPreprocessor:
             str(output_wav)
         ]
 
-        logger.info("Executing FFmpeg normalization: %s", " ".join(cmd))
+        logger.info("Executing FFmpeg normalization with binary '%s'", self.ffmpeg_bin)
         try:
             result = subprocess.run(
                 cmd,
@@ -75,7 +107,7 @@ class FFmpegAudioPreprocessor:
             )
         except FileNotFoundError:
             raise PreprocessingError(
-                f"FFmpeg binary '{self.ffmpeg_bin}' not found in system PATH. Please install FFmpeg."
+                f"FFmpeg binary '{self.ffmpeg_bin}' could not be executed. Please ensure FFmpeg is installed or imageio-ffmpeg is available."
             )
 
         if result.returncode != 0:

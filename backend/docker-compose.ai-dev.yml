@@ -33,7 +33,7 @@ services:
       STORAGE_ROOT: /volumes/rag_data
       INTERNAL_API_SECRET_KEY: lecture_lens_internal_secret_token_xyz987
       SPRING_BASE_URL: http://spring:8080
-      DEVICE: cpu
+      DEVICE: gpu
       MODEL_PATH_PHOWHISPER: /models/phowhisper-base
     ports:
       - "8000:8000"
