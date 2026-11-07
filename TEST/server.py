@@ -5,11 +5,13 @@ Located inside TEST/ folder - completely isolated and safe to delete anytime.
 """
 import asyncio
 import logging
+import os
 from pathlib import Path
 import sys
 import uuid
-from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile, Query
 from fastapi.responses import FileResponse, HTMLResponse
+from pydantic import BaseModel
 
 # Add backend directory to sys.path to leverage our deep modules
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -17,13 +19,14 @@ BACKEND_DIR = PROJECT_ROOT / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from ai_service.core.asr import FakeAsrEngine, PhoWhisperEngine
+from ai_service.core.asr import DEFAULT_IT_PROMPT, FakeAsrEngine, PhoWhisperEngine
 from ai_service.core.audio_store import LocalVolumeAudioStore
 from ai_service.core.preprocessing import (
     FakeAudioPreprocessor,
     FFmpegAudioPreprocessor,
     resolve_ffmpeg_binary,
 )
+from ai_service.core.vad_chunker import EnergyVadChunker
 from ai_service.pipeline.ingest_pipeline import IngestPipelineCoordinator
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -54,18 +57,22 @@ async def get_system_diagnostics():
 
     torch_installed = False
     cuda_available = False
-    device_name = "CPU"
+    device_name = f"Intel 12th Gen ({os.cpu_count()} vCPUs)"
+    vram_mb = 0
     try:
         import torch
         torch_installed = True
         cuda_available = torch.cuda.is_available()
         if cuda_available:
             device_name = torch.cuda.get_device_name(0)
+            vram_mb = int(torch.cuda.get_device_properties(0).total_memory / (1024 * 1024))
     except ImportError:
         pass
 
-    model_path = PROJECT_ROOT / "backend" / "models" / "phowhisper-base"
-    model_exists = (model_path / "pytorch_model.bin").exists() or (model_path / "model.safetensors").exists()
+    medium_path = PROJECT_ROOT / "backend" / "models" / "phowhisper-medium"
+    base_path = PROJECT_ROOT / "backend" / "models" / "phowhisper-base"
+    medium_exists = (medium_path / "pytorch_model.bin").exists() or (medium_path / "model.safetensors").exists()
+    base_exists = (base_path / "pytorch_model.bin").exists() or (base_path / "model.safetensors").exists()
 
     return {
         "ffmpeg": {
@@ -77,12 +84,17 @@ async def get_system_diagnostics():
             "torch_installed": torch_installed,
             "cuda_available": cuda_available,
             "device": "cuda" if cuda_available else "cpu",
-            "device_name": device_name
+            "device_name": device_name,
+            "vram_mb": vram_mb
         },
         "models": {
-            "phowhisper_exists": model_exists,
-            "path": str(model_path)
-        }
+            "medium_exists": medium_exists,
+            "base_exists": base_exists,
+            "active_default": "PhoWhisper-medium" if medium_exists else "PhoWhisper-base",
+            "medium_path": str(medium_path),
+            "base_path": str(base_path)
+        },
+        "default_prompt": DEFAULT_IT_PROMPT
     }
 
 
@@ -146,15 +158,38 @@ class StateTrackingJobReporter:
         return True
 
 
-async def run_pipeline_task(job_id: uuid.UUID, lecture_id: uuid.UUID, ext: str, mode: str):
+class PipelineRunConfig(BaseModel):
+    mode: str = "real"
+    model: str = "medium"
+    dsp: bool = True
+    vad: bool = True
+    prompt: str | None = None
+
+
+async def run_pipeline_task(
+    job_id: uuid.UUID,
+    lecture_id: uuid.UUID,
+    ext: str,
+    cfg: PipelineRunConfig
+):
     job_id_str = str(job_id)
     reporter = StateTrackingJobReporter(job_id_str)
 
-    if mode == "real":
-        logger.info("Initializing REAL PhoWhisper Engine for job %s...", job_id)
-        preprocessor = FFmpegAudioPreprocessor()
-        model_path = PROJECT_ROOT / "backend" / "models" / "phowhisper-base"
-        
+    if cfg.mode == "real":
+        logger.info(
+            "Initializing REAL PhoWhisper Engine for job %s (model=%s, dsp=%s, vad=%s)...",
+            job_id, cfg.model, cfg.dsp, cfg.vad
+        )
+        preprocessor = FFmpegAudioPreprocessor(enable_dsp_filters=cfg.dsp)
+
+        if cfg.model == "base":
+            model_path = PROJECT_ROOT / "backend" / "models" / "phowhisper-base"
+        else:
+            model_path = PROJECT_ROOT / "backend" / "models" / "phowhisper-medium"
+            if not model_path.exists():
+                logger.warning("PhoWhisper-medium not found. Falling back to phowhisper-base.")
+                model_path = PROJECT_ROOT / "backend" / "models" / "phowhisper-base"
+
         device = "cpu"
         try:
             import torch
@@ -163,7 +198,15 @@ async def run_pipeline_task(job_id: uuid.UUID, lecture_id: uuid.UUID, ext: str, 
         except ImportError:
             pass
 
-        asr_engine = PhoWhisperEngine(model_path=model_path, device=device)
+        vad_chunker = EnergyVadChunker() if cfg.vad else None
+        prompt_text = cfg.prompt if cfg.prompt is not None else DEFAULT_IT_PROMPT
+
+        asr_engine = PhoWhisperEngine(
+            model_path=model_path,
+            device=device,
+            vad_chunker=vad_chunker,
+            prompt=prompt_text
+        )
     else:
         logger.info("Initializing FAST MOCK Engine for job %s...", job_id)
         preprocessor = FakeAudioPreprocessor(synthetic_duration_seconds=12.0)
@@ -185,7 +228,15 @@ async def run_pipeline_task(job_id: uuid.UUID, lecture_id: uuid.UUID, ext: str, 
 
 
 @app.post("/api/process/{job_id}")
-async def process_audio(job_id: uuid.UUID, background_tasks: BackgroundTasks, mode: str = "mock"):
+async def process_audio(
+    job_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    mode: str = Query("real"),
+    model: str = Query("medium"),
+    dsp: bool = Query(True),
+    vad: bool = Query(True),
+    prompt: str | None = Query(None)
+):
     job_id_str = str(job_id)
     if job_id_str not in job_state_tracker:
         raise HTTPException(status_code=404, detail="Job not found in tracker.")
@@ -194,8 +245,16 @@ async def process_audio(job_id: uuid.UUID, background_tasks: BackgroundTasks, mo
     lecture_id = uuid.UUID(info["lectureId"])
     ext = info["extension"]
 
-    background_tasks.add_task(run_pipeline_task, job_id, lecture_id, ext, mode)
-    return {"status": "ACCEPTED", "message": f"Pipeline started in mode={mode}"}
+    cfg = PipelineRunConfig(
+        mode=mode,
+        model=model,
+        dsp=dsp,
+        vad=vad,
+        prompt=prompt
+    )
+
+    background_tasks.add_task(run_pipeline_task, job_id, lecture_id, ext, cfg)
+    return {"status": "ACCEPTED", "message": f"Pipeline started with model={model}, dsp={dsp}, vad={vad}"}
 
 
 @app.get("/api/status/{job_id}")

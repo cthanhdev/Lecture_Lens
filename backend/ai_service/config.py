@@ -40,8 +40,8 @@ class Settings(BaseSettings):
         description="Inference device: cuda or cpu"
     )
     MODEL_PATH_PHOWHISPER: Path = Field(
-        default=Path("./backend/models/phowhisper-base"),
-        description="Local directory containing PhoWhisper model weights"
+        default=Path("./backend/models/phowhisper-medium"),
+        description="Local directory containing PhoWhisper model weights (medium or base)"
     )
 
     # Audio Ingest constraints

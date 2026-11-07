@@ -4,7 +4,7 @@
 # =========================================================================
 FROM python:3.10-slim
 
-# Install system dependencies & FFmpeg for audio transcoding
+# Install system dependencies & FFmpeg with audio codecs
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
@@ -14,7 +14,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Install PyTorch & ASR dependencies
-# Note: Installs standard PyTorch (supports CPU and CUDA if NVIDIA runtime is available)
 RUN pip install --no-cache-dir \
     fastapi>=0.111.0 \
     uvicorn[standard]>=0.30.0 \
@@ -24,20 +23,20 @@ RUN pip install --no-cache-dir \
     python-multipart>=0.0.9 \
     soundfile>=0.12.1 \
     numpy>=1.24.0 \
+    imageio-ffmpeg \
     torch \
     transformers>=4.40.0
 
-# Copy backend AI module into Python environment
-COPY backend/ai_service/ /app/backend/ai_service/
-
-# Copy TEST suite files
-COPY TEST/server.py /app/server.py
-COPY TEST/templates/ /app/templates/
+# Copy application code preserving repository structure
+COPY backend/ /app/backend/
+COPY TEST/ /app/TEST/
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/backend:/app \
     PORT=8090
 
+WORKDIR /app/TEST
+
 EXPOSE 8090
 
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8090"]
+CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8090"]
