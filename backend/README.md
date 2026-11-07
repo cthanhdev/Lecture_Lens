@@ -338,7 +338,7 @@ CREATE TABLE app.jobs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     lecture_id UUID NOT NULL REFERENCES app.lectures(id) ON DELETE CASCADE,
     status VARCHAR(50) NOT NULL DEFAULT 'QUEUED' 
-        CHECK (status IN ('QUEUED', 'PROCESSING_STT', 'CHUNKING', 'EMBEDDING', 'READY', 'FAILED')),
+        CHECK (status IN ('QUEUED', 'PROCESSING_STT', 'STT_COMPLETED', 'CHUNKING', 'EMBEDDING', 'READY', 'FAILED')),
     progress_percentage INT DEFAULT 0,
     error_message TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

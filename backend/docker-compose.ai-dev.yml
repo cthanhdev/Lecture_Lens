@@ -1,0 +1,54 @@
+services:
+  # =========================================================================
+  # 🐘 PostgreSQL 16 + pgvector Database
+  # =========================================================================
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: lecturelens-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lecturelens_db
+      POSTGRES_USER: ll_admin
+      POSTGRES_PASSWORD: ll_secure_password_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./db/rag_schema_complete.sql:/docker-entrypoint-initdb.d/01_rag_schema.sql:ro
+      - ./db/init/06_app_jobs_status_migration.sql:/docker-entrypoint-initdb.d/06_app_jobs_status_migration.sql:ro
+      - dev-db-data:/var/lib/postgresql/data
+    networks:
+      - rag-internal-network
+
+  # =========================================================================
+  # ⚡ FastAPI AI Service (PhoWhisper ASR & Ingest Pipeline)
+  # =========================================================================
+  ai:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai
+    container_name: lecturelens-dev-ai
+    restart: unless-stopped
+    environment:
+      STORAGE_ROOT: /volumes/rag_data
+      INTERNAL_API_SECRET_KEY: lecture_lens_internal_secret_token_xyz987
+      SPRING_BASE_URL: http://spring:8080
+      DEVICE: cpu
+      MODEL_PATH_PHOWHISPER: /models/phowhisper-base
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./volumes/rag_data:/volumes/rag_data
+      - ./models:/models:ro
+    depends_on:
+      - db
+    networks:
+      - rag-internal-network
+
+networks:
+  rag-internal-network:
+    name: rag-internal-network
+    driver: bridge
+
+volumes:
+  dev-db-data:

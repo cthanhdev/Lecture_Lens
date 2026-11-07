@@ -123,3 +123,22 @@ Lợi ích người bảo trì nhận được từ module sâu: thay đổi, s�
 
 **The Deletion Test**:
 Phép thử xóa module: Nếu xóa module mà sự phức tạp biến mất hoàn toàn thì đó là module nông (pass-through). Nếu sự phức tạp tái xuất hiện rải rác trên N nơi gọi, module đó đang làm rất tốt vai trò của mình.
+
+
+---
+
+## 4. 🎙️ Quy Trình Thu Nạp Bài Giảng & Tạo Bản Ghi (Audio Ingest & Transcription)
+
+**Audio Ingest Pipeline**:
+Quy trình nền tự động chuyển đổi file âm thanh bài giảng thô từ thư mục dùng chung (Shared Volume) thành bản ghi lời thoại cấu trúc chuẩn hóa, bao gồm kiểm tra tính toàn vẹn (Checksum SHA-256), chuẩn hóa tần số lấy mẫu 16kHz Mono PCM, nhận dạng giọng nói tiếng Việt bằng PhoWhisper và xuất bản tệp `transcript.json`.
+
+**AudioStore**:
+Module quản lý dữ liệu lưu trữ tập trung cho các tài nguyên âm thanh bài giảng. Chịu trách nhiệm định danh $O(1)$ thông qua `jobId`, đăng ký và xác minh checksum, quản lý manifest theo từng tác vụ và lưu trữ tệp transcript nguyên tử.
+
+**Transcript Artifact (`transcript.json`)**:
+Hợp đồng dữ liệu cấu trúc đầu ra của Giai đoạn 1 (ASR) và là đầu vào bất biến cho Giai đoạn 2 (BGE-M3 Chunking & Embedding). Chứa toàn bộ nội dung văn bản (`full_text`) cùng danh sách các phân đoạn lời thoại (`segments`) có mốc thời gian bắt đầu, kết thúc liên tục và nhãn hiển thị `[MM:SS]`.
+
+**Job State Machine (Máy Trạng Thái Tác Vụ)**:
+Chu kỳ chuyển đổi trạng thái của một phiên xử lý bài giảng từ lúc tiếp nhận đến khi sẵn sàng tra cứu:
+`QUEUED` $\rightarrow$ `PROCESSING_STT` $\rightarrow$ `STT_COMPLETED` $\rightarrow$ `CHUNKING` $\rightarrow$ `EMBEDDING` $\rightarrow$ `READY` (hoặc `FAILED` nếu phát sinh sự cố).
+*Lưu ý*: `STT_COMPLETED` là điểm phân tách ranh giới kỹ thuật giữa Giai đoạn 1 (ASR) và Giai đoạn 2 (Vectorization).
