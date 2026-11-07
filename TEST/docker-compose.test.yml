@@ -1,0 +1,49 @@
+services:
+  # =========================================================================
+  # 🎙️ PhoWhisper AI Model Runner & Web Test Studio
+  # =========================================================================
+  test-ai-model:
+    build:
+      context: ..
+      dockerfile: TEST/Dockerfile.model
+    container_name: lecturelens-test-ai-model
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      STORAGE_ROOT: /app/volumes/rag_data
+      MODEL_PATH_PHOWHISPER: /app/backend/models/phowhisper-base
+      DEVICE: cpu
+    volumes:
+      - ../volumes/rag_data:/app/volumes/rag_data
+      - ../backend/models:/app/backend/models:ro
+    networks:
+      - test-network
+
+  # =========================================================================
+  # 🐘 PostgreSQL 16 + pgvector Test Database
+  # =========================================================================
+  test-db:
+    image: pgvector/pgvector:pg16
+    container_name: lecturelens-test-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lecturelens_db
+      POSTGRES_USER: ll_admin
+      POSTGRES_PASSWORD: ll_secure_password_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - ../backend/db/rag_schema_complete.sql:/docker-entrypoint-initdb.d/01_rag_schema.sql:ro
+      - ../backend/db/init/06_app_jobs_status_migration.sql:/docker-entrypoint-initdb.d/06_app_jobs_status_migration.sql:ro
+      - test-db-data:/var/lib/postgresql/data
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    name: test-network
+    driver: bridge
+
+volumes:
+  test-db-data:

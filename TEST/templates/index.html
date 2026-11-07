@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LectureLens - Audio Ingest & Transcript Lab</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Plus Jakarta Sans Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            'washi-cream': '#FFF7FD',
+            'kitsune-coral': '#F47F72',
+            'kitsune-hover': '#E26D60',
+            'plum-ink': '#261333',
+            'plum-muted': '#5C4A6B',
+            'sakura-pink': '#F5C3C9',
+            'mist-sky': '#A9D4E8',
+            'mochi-yellow': '#FFE27A',
+            'matcha-mint': '#BEE1D0',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #FFF7FD;
+      color: #261333;
+    }
+    .miruku-glass {
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 8px 32px rgba(38, 19, 51, 0.05);
+    }
+    .mochi-press {
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .mochi-press:active {
+      transform: scale(0.97);
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans p-4 md:p-8">
+
+  <!-- Header -->
+  <header class="max-w-5xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4 pb-6 border-b border-sakura-pink/40">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-2xl bg-kitsune-coral/15 flex items-center justify-center text-2xl shadow-sm border border-kitsune-coral/30">
+        🦊
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-2xl font-extrabold text-plum-ink tracking-tight">LectureLens</h1>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-kitsune-coral text-white shadow-xs">TEST LAB</span>
+        </div>
+        <p class="text-xs text-plum-muted font-medium">Audio Ingest Pipeline & Transcript Verification Studio</p>
+      </div>
+    </div>
+    
+    <!-- System Diagnostics Bar -->
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
+        <span>🎬 FFmpeg:</span> <span id="ffmpegStatus" class="font-bold text-emerald-600">Đang quét...</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
+        <span>🎙️ AI Model:</span> <span id="aiStatus" class="font-bold text-emerald-600">Đang quét...</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto space-y-8">
+
+    <!-- Step 1: Upload Box & Options -->
+    <section class="miruku-glass rounded-3xl p-6 md:p-8">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-lg font-bold text-plum-ink flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-kitsune-coral text-white text-xs font-bold flex items-center justify-center">1</span>
+            Tải Lên File Âm Thanh Bài Giảng
+          </h2>
+          <p class="text-xs text-plum-muted mt-0.5">Hỗ trợ các định dạng: .mp3, .wav, .m4a, .aac, .flac</p>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="flex items-center p-1 bg-white/60 rounded-full border border-sakura-pink/60 text-xs font-medium">
+          <button id="modeMockBtn" class="px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press" onclick="setMode('mock')">
+            ⚡ Fast Mock (&lt;1s)
+          </button>
+          <button id="modeRealBtn" class="px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press" onclick="setMode('real')">
+            🎙️ PhoWhisper ASR Thật
+          </button>
+        </div>
+      </div>
+
+      <!-- Dropzone -->
+      <div id="dropzone" class="border-2 border-dashed border-sakura-pink hover:border-kitsune-coral transition-colors rounded-2xl p-8 text-center cursor-pointer bg-white/40 group">
+        <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac" class="hidden">
+        <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-sakura-pink/20 text-kitsune-coral flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+          🎵
+        </div>
+        <p class="text-sm font-semibold text-plum-ink" id="fileNameDisplay">Kéo thả tệp âm thanh vào đây hoặc <span class="text-kitsune-coral underline">chọn từ máy tính</span></p>
+        <p class="text-xs text-plum-muted mt-1" id="fileSizeDisplay">Dung lượng tối đa đề xuất: 500MB</p>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-sakura-pink/30">
+        <button id="sampleAudioBtn" class="px-4 py-2 rounded-full bg-white hover:bg-sakura-pink/20 border border-sakura-pink/60 text-xs font-semibold text-plum-ink mochi-press flex items-center gap-1.5 shadow-xs">
+          <span>🎯</span> Dùng File Âm Thanh Mẫu (sample_lecture_vi.wav)
+        </button>
+
+        <button id="startProcessBtn" disabled class="px-6 py-2.5 rounded-full bg-kitsune-coral hover:bg-kitsune-hover text-white text-xs font-bold mochi-press shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+          <span>🚀</span> Bắt Đầu Ingest & Chuyển Thành Text
+        </button>
+      </div>
+    </section>
+
+    <!-- Step 2: Live Pipeline Tracker -->
+    <section id="trackerSection" class="miruku-glass rounded-3xl p-6 md:p-8 hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-plum-ink flex items-center gap-2">
+          <span class="w-7 h-7 rounded-full bg-mist-sky text-plum-ink text-xs font-bold flex items-center justify-center">2</span>
+          Tiến Độ Xử Lý Thời Gian Thực
+        </h2>
+        <span id="percentBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-mist-sky text-plum-ink">0%</span>
+      </div>
+
+      <!-- Error Card (if pipeline fails) -->
+      <div id="errorCard" class="hidden p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs mb-4">
+        <div class="font-bold flex items-center gap-1.5 text-sm text-rose-700 mb-1">
+          <span>⚠️</span> Pipeline Gặp Sự Cố
+        </div>
+        <p id="errorMessageText" class="font-mono text-[11px] leading-relaxed break-words"></p>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="w-full bg-white/70 h-3.5 rounded-full overflow-hidden p-0.5 border border-sakura-pink/40 mb-6">
+        <div id="progressBar" class="bg-gradient-to-r from-kitsune-coral to-sakura-pink h-full rounded-full transition-all duration-300 w-0"></div>
+      </div>
+
+      <!-- Step items -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3" id="stepList">
+        <div id="step-staged" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
+          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
+            <span class="step-icon">⚪</span> 1. Tiếp nhận
+          </div>
+          <span class="text-[11px]">Ghi vào incoming</span>
+        </div>
+        <div id="step-normalize" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
+          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
+            <span class="step-icon">⚪</span> 2. Chuẩn hóa
+          </div>
+          <span class="text-[11px]">16kHz Mono WAV</span>
+        </div>
+        <div id="step-asr" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
+          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
+            <span class="step-icon">⚪</span> 3. PhoWhisper
+          </div>
+          <span class="text-[11px]">Nhận dạng tiếng Việt</span>
+        </div>
+        <div id="step-artifact" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
+          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
+            <span class="step-icon">⚪</span> 4. Lưu Artifact
+          </div>
+          <span class="text-[11px]">transcript.json</span>
+        </div>
+        <div id="step-db" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
+          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
+            <span class="step-icon">⚪</span> 5. Database
+          </div>
+          <span class="text-[11px]">Cập nhật app.jobs</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: Artifacts & DB Viewer -->
+    <section id="resultSection" class="miruku-glass rounded-3xl p-6 md:p-8 hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-lg font-bold text-plum-ink flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-matcha-mint text-plum-ink text-xs font-bold flex items-center justify-center">3</span>
+            Kết Quả Bản Ghi & Kiểm Tra Database
+          </h2>
+          <p class="text-xs text-plum-muted mt-0.5">Kiểm tra transcript sinh ra, mốc thời gian và dữ liệu lưu trữ</p>
+        </div>
+
+        <!-- Audio Player Capsule -->
+        <div class="flex items-center gap-2 bg-white/80 px-4 py-2 rounded-full border border-sakura-pink/60 shadow-xs">
+          <audio id="audioPlayer" controls class="h-8 max-w-[260px]"></audio>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex items-center gap-2 border-b border-sakura-pink/40 pb-3 mb-6 overflow-x-auto text-xs font-semibold">
+        <button class="tab-btn px-4 py-2 rounded-full bg-kitsune-coral text-white shadow-xs mochi-press" onclick="switchTab('tab-transcript')">
+          📜 Lời Thoại Phân Đoạn (Segments)
+        </button>
+        <button class="tab-btn px-4 py-2 rounded-full bg-white/70 text-plum-muted hover:text-plum-ink mochi-press" onclick="switchTab('tab-json')">
+          📄 File transcript.json
+        </button>
+        <button class="tab-btn px-4 py-2 rounded-full bg-white/70 text-plum-muted hover:text-plum-ink mochi-press" onclick="switchTab('tab-manifest')">
+          🏷️ File manifest.json
+        </button>
+        <button class="tab-btn px-4 py-2 rounded-full bg-white/70 text-plum-muted hover:text-plum-ink mochi-press" onclick="switchTab('tab-db')">
+          🐘 Dữ Liệu Lưu Vào DB (app.jobs & rag)
+        </button>
+      </div>
+
+      <!-- Tab Content 1: Spoken Segments -->
+      <div id="tab-transcript" class="tab-pane space-y-3">
+        <div id="segmentsContainer" class="space-y-2.5 max-h-[420px] overflow-y-auto pr-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Tab Content 2: Raw transcript.json -->
+      <div id="tab-json" class="tab-pane hidden">
+        <div class="flex items-center justify-end gap-2 mb-2">
+          <button onclick="copyContent('transcriptJsonCode')" class="px-3 py-1 rounded-full bg-white border border-sakura-pink text-xs font-medium text-plum-ink hover:bg-sakura-pink/20 mochi-press">
+            📋 Sao chép JSON
+          </button>
+          <a id="downloadTranscriptLink" download="transcript.json" class="px-3 py-1 rounded-full bg-kitsune-coral text-white text-xs font-medium hover:bg-kitsune-hover mochi-press">
+            ⬇️ Tải file về
+          </a>
+        </div>
+        <pre class="bg-plum-ink text-emerald-300 font-mono text-xs p-4 rounded-2xl overflow-x-auto max-h-[420px]"><code id="transcriptJsonCode"></code></pre>
+      </div>
+
+      <!-- Tab Content 3: Raw manifest.json -->
+      <div id="tab-manifest" class="tab-pane hidden">
+        <div class="flex items-center justify-end gap-2 mb-2">
+          <button onclick="copyContent('manifestJsonCode')" class="px-3 py-1 rounded-full bg-white border border-sakura-pink text-xs font-medium text-plum-ink hover:bg-sakura-pink/20 mochi-press">
+            📋 Sao chép JSON
+          </button>
+        </div>
+        <pre class="bg-plum-ink text-amber-200 font-mono text-xs p-4 rounded-2xl overflow-x-auto max-h-[420px]"><code id="manifestJsonCode"></code></pre>
+      </div>
+
+      <!-- Tab Content 4: Database Simulation & Query -->
+      <div id="tab-db" class="tab-pane hidden space-y-4">
+        <div class="p-4 rounded-2xl bg-white/70 border border-sakura-pink/40">
+          <h3 class="text-xs font-bold text-plum-ink uppercase tracking-wider mb-2">1. Trạng thái bản ghi tại bảng <code>app.jobs</code></h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-sakura-pink/30 text-plum-ink">
+                <tr>
+                  <th class="p-2 rounded-l-lg">job_id</th>
+                  <th class="p-2">lecture_id</th>
+                  <th class="p-2">status</th>
+                  <th class="p-2">progress</th>
+                  <th class="p-2 rounded-r-lg">updated_at</th>
+                </tr>
+              </thead>
+              <tbody id="dbJobsTableBody" class="divide-y divide-sakura-pink/20">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-white/70 border border-sakura-pink/40">
+          <h3 class="text-xs font-bold text-plum-ink uppercase tracking-wider mb-2">2. Cấu trúc sẽ được ghi vào <code>rag.lecture_chunks</code> (Giai đoạn 2 BGE-M3)</h3>
+          <p class="text-xs text-plum-muted mb-2 font-sans">Dữ liệu từ <code>transcript.json</code> sẽ được chia đoạn đệ quy (Recursive Chunking) và lưu trữ kèm vector 1024-d:</p>
+          <div class="overflow-x-auto max-h-[220px]">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-mist-sky/30 text-plum-ink">
+                <tr>
+                  <th class="p-2 rounded-l-lg">chunk_idx</th>
+                  <th class="p-2">start_time</th>
+                  <th class="p-2">end_time</th>
+                  <th class="p-2">label [MM:SS]</th>
+                  <th class="p-2 rounded-r-lg">content_preview</th>
+                </tr>
+              </thead>
+              <tbody id="dbChunksTableBody" class="divide-y divide-sakura-pink/20">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- JS Logic -->
+  <script>
+    let currentMode = 'real'; // Default to real model as user expects
+    let selectedFile = null;
+    let currentJobId = null;
+    let currentLectureId = null;
+    let pollInterval = null;
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const fileSizeDisplay = document.getElementById('fileSizeDisplay');
+    const startProcessBtn = document.getElementById('startProcessBtn');
+    const sampleAudioBtn = document.getElementById('sampleAudioBtn');
+    const trackerSection = document.getElementById('trackerSection');
+    const resultSection = document.getElementById('resultSection');
+    const progressBar = document.getElementById('progressBar');
+    const percentBadge = document.getElementById('percentBadge');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const errorCard = document.getElementById('errorCard');
+    const errorMessageText = document.getElementById('errorMessageText');
+
+    async function loadDiagnostics() {
+      try {
+        const res = await fetch('/api/system-diagnostics');
+        if (!res.ok) return;
+        const diag = await res.json();
+        
+        const ffmpegEl = document.getElementById('ffmpegStatus');
+        const aiEl = document.getElementById('aiStatus');
+
+        if (diag.ffmpeg.available) {
+          ffmpegEl.innerHTML = diag.ffmpeg.is_bundled ? "✅ Tự Động (imageio)" : "✅ System PATH";
+          ffmpegEl.className = "font-bold text-emerald-600";
+        } else {
+          ffmpegEl.innerHTML = "❌ Thiếu Binary";
+          ffmpegEl.className = "font-bold text-rose-500";
+        }
+
+        if (diag.ai_runtime.torch_installed && diag.models.phowhisper_exists) {
+          aiEl.innerHTML = `✅ ${diag.ai_runtime.device.toUpperCase()} (${diag.ai_runtime.device_name})`;
+          aiEl.className = "font-bold text-emerald-600";
+        } else if (!diag.ai_runtime.torch_installed) {
+          aiEl.innerHTML = "⚠️ Đang cài PyTorch...";
+          aiEl.className = "font-bold text-amber-500";
+        } else {
+          aiEl.innerHTML = "⚠️ Thiếu Weights";
+          aiEl.className = "font-bold text-amber-500";
+        }
+      } catch (err) {
+        console.error("Diagnostics load error", err);
+      }
+    }
+    window.addEventListener('DOMContentLoaded', loadDiagnostics);
+
+    function setMode(mode) {
+      currentMode = mode;
+      const mockBtn = document.getElementById('modeMockBtn');
+      const realBtn = document.getElementById('modeRealBtn');
+      if (mode === 'mock') {
+        mockBtn.className = "px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press";
+        realBtn.className = "px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press";
+      } else {
+        realBtn.className = "px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press";
+        mockBtn.className = "px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press";
+      }
+    }
+
+    // Drag and Drop
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-kitsune-coral'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-kitsune-coral'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('border-kitsune-coral');
+      if (e.dataTransfer.files.length) handleFileSelected(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFileSelected(e.target.files[0]);
+    });
+
+    function handleFileSelected(file) {
+      selectedFile = file;
+      fileNameDisplay.textContent = `🎵 ${file.name}`;
+      fileSizeDisplay.textContent = `Dung lượng: ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+      startProcessBtn.disabled = false;
+    }
+
+    // Sample audio loader
+    sampleAudioBtn.addEventListener('click', async () => {
+      try {
+        sampleAudioBtn.textContent = "⏳ Đang nạp file mẫu...";
+        const resp = await fetch('/api/sample-audio');
+        if (!resp.ok) throw new Error("Không thể tải file mẫu");
+        const blob = await resp.blob();
+        const file = new File([blob], "sample_lecture_vi.wav", { type: "audio/wav" });
+        handleFileSelected(file);
+      } catch (err) {
+        alert("Lỗi tải file mẫu: " + err.message);
+      } finally {
+        sampleAudioBtn.innerHTML = `<span>🎯</span> Dùng File Âm Thanh Mẫu (sample_lecture_vi.wav)`;
+      }
+    });
+
+    // Start Process
+    startProcessBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      startProcessBtn.disabled = true;
+      trackerSection.classList.remove('hidden');
+      resultSection.classList.add('hidden');
+      errorCard.classList.add('hidden');
+      resetSteps();
+      updateProgress(5, "Đang tải tệp lên server...");
+
+      try {
+        // 1. Upload file
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("mode", currentMode);
+
+        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+        if (!uploadRes.ok) throw new Error("Upload thất bại");
+        const uploadData = await uploadRes.json();
+        
+        currentJobId = uploadData.jobId;
+        currentLectureId = uploadData.lectureId;
+        markStepDone('step-staged');
+
+        // 2. Trigger pipeline
+        updateProgress(15, "Bắt đầu quy trình chuẩn hóa âm thanh...");
+        const procRes = await fetch(`/api/process/${currentJobId}?mode=${currentMode}`, { method: 'POST' });
+        if (!procRes.ok) throw new Error("Kích hoạt pipeline thất bại");
+
+        // 3. Poll for progress
+        startPolling(currentJobId);
+
+      } catch (err) {
+        showError("Lỗi khởi tạo: " + err.message);
+        startProcessBtn.disabled = false;
+      }
+    });
+
+    function startPolling(jobId) {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/status/${jobId}`);
+          if (!res.ok) return;
+          const data = await res.json();
+
+          updateProgress(data.progress, data.message);
+
+          if (data.progress >= 15) markStepDone('step-normalize');
+          if (data.progress >= 25 && data.progress < 90) markStepActive('step-asr');
+          if (data.progress >= 90) { markStepDone('step-asr'); markStepDone('step-artifact'); }
+          if (data.progress >= 100 || data.status === 'STT_COMPLETED') {
+            markStepDone('step-db');
+            clearInterval(pollInterval);
+            fetchFinalResults(jobId);
+          } else if (data.status === 'FAILED') {
+            clearInterval(pollInterval);
+            showError(data.errorMessage || "Pipeline xử lý gặp sự cố.");
+            startProcessBtn.disabled = false;
+          }
+        } catch (e) {
+          console.error("Polling error", e);
+        }
+      }, 500);
+    }
+
+    function showError(msg) {
+      errorCard.classList.remove('hidden');
+      errorMessageText.textContent = msg;
+    }
+
+    async function fetchFinalResults(jobId) {
+      try {
+        const res = await fetch(`/api/result/${jobId}`);
+        const result = await res.json();
+
+        // Setup audio player
+        audioPlayer.src = `/api/audio/${jobId}`;
+
+        // Populate Tab 1: Segments
+        const container = document.getElementById('segmentsContainer');
+        container.innerHTML = '';
+        if (result.transcript && result.transcript.segments) {
+          result.transcript.segments.forEach(seg => {
+            const div = document.createElement('div');
+            div.className = "p-3 rounded-2xl bg-white/75 hover:bg-white border border-sakura-pink/50 transition-colors flex items-start gap-3 shadow-2xs";
+            div.innerHTML = `
+              <button onclick="seekAudio(${seg.start_time_seconds})" class="px-2.5 py-1 rounded-full bg-matcha-mint/60 hover:bg-matcha-mint text-plum-ink font-mono text-xs font-bold mochi-press flex-shrink-0">
+                ${seg.timestamp_label}
+              </button>
+              <p class="text-xs text-plum-ink leading-relaxed pt-0.5">${seg.text}</p>
+            `;
+            container.appendChild(div);
+          });
+        }
+
+        // Populate Tab 2: Raw transcript.json
+        const jsonCode = document.getElementById('transcriptJsonCode');
+        const jsonStr = JSON.stringify(result.transcript, null, 2);
+        jsonCode.textContent = jsonStr;
+        const dlLink = document.getElementById('downloadTranscriptLink');
+        dlLink.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonStr);
+
+        // Populate Tab 3: Raw manifest.json
+        document.getElementById('manifestJsonCode').textContent = JSON.stringify(result.manifest, null, 2);
+
+        // Populate Tab 4: DB
+        const tbodyJobs = document.getElementById('dbJobsTableBody');
+        tbodyJobs.innerHTML = `
+          <tr>
+            <td class="p-2 text-kitsune-coral font-bold">${result.manifest.job_id.substring(0, 13)}...</td>
+            <td class="p-2 text-plum-muted">${result.manifest.lecture_id.substring(0, 13)}...</td>
+            <td class="p-2"><span class="px-2 py-0.5 rounded-full bg-matcha-mint text-plum-ink font-semibold">STT_COMPLETED</span></td>
+            <td class="p-2 font-bold text-emerald-600">100%</td>
+            <td class="p-2 text-plum-muted">${new Date().toLocaleTimeString()}</td>
+          </tr>
+        `;
+
+        const tbodyChunks = document.getElementById('dbChunksTableBody');
+        tbodyChunks.innerHTML = '';
+        if (result.transcript && result.transcript.segments) {
+          result.transcript.segments.forEach((seg, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="p-2 text-plum-muted">${i}</td>
+              <td class="p-2">${seg.start_time_seconds}s</td>
+              <td class="p-2">${seg.end_time_seconds}s</td>
+              <td class="p-2 font-bold text-kitsune-coral">${seg.timestamp_label}</td>
+              <td class="p-2 text-plum-ink truncate max-w-[280px]">${seg.text}</td>
+            `;
+            tbodyChunks.appendChild(tr);
+          });
+        }
+
+        resultSection.classList.remove('hidden');
+        startProcessBtn.disabled = false;
+
+      } catch (err) {
+        console.error("Fetch result error", err);
+      }
+    }
+
+    function seekAudio(sec) {
+      audioPlayer.currentTime = sec;
+      audioPlayer.play();
+    }
+
+    function updateProgress(percent, msg) {
+      progressBar.style.width = `${percent}%`;
+      percentBadge.textContent = `${percent}%`;
+    }
+
+    function markStepDone(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.className = "p-3 rounded-2xl bg-matcha-mint/30 border border-matcha-mint text-xs text-plum-ink flex flex-col gap-1";
+      el.querySelector('.step-icon').textContent = "✅";
+    }
+
+    function markStepActive(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.className = "p-3 rounded-2xl bg-kitsune-coral/15 border border-kitsune-coral text-xs text-plum-ink flex flex-col gap-1 animate-pulse";
+      el.querySelector('.step-icon').textContent = "⚡";
+    }
+
+    function resetSteps() {
+      const steps = ['step-staged', 'step-normalize', 'step-asr', 'step-artifact', 'step-db'];
+      steps.forEach(s => {
+        const el = document.getElementById(s);
+        if (el) {
+          el.className = "p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1";
+          el.querySelector('.step-icon').textContent = "⚪";
+        }
+      });
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.className = "tab-btn px-4 py-2 rounded-full bg-white/70 text-plum-muted hover:text-plum-ink mochi-press";
+      });
+      event.target.className = "tab-btn px-4 py-2 rounded-full bg-kitsune-coral text-white shadow-xs mochi-press";
+    }
+
+    function copyContent(elemId) {
+      const text = document.getElementById(elemId).textContent;
+      navigator.clipboard.writeText(text);
+      alert("Đã sao chép nội dung vào bộ nhớ tạm!");
+    }
+  </script>
+</body>
+</html>
