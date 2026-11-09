@@ -1,20 +1,27 @@
 import { motion } from 'framer-motion'
-import { Home, BookOpen, Plus, Folder, Sparkles, User } from 'lucide-react'
+import {
+  HomeIcon,
+  LibraryIcon,
+  PlusIcon,
+  SubjectsIcon,
+  ReviewIcon,
+  ProfileIcon,
+} from '../components/ui/icons/index.tsx'
 import { useAppNavigation } from '../router/useAppNavigation.ts'
 import type { TabRoute } from '../router/types.ts'
 
 interface TabItem {
   route: TabRoute
   label: string
-  icon: typeof Home
+  icon: typeof HomeIcon
 }
 
 const TABS: TabItem[] = [
-  { route: '/home', label: 'Bàn học', icon: Home },
-  { route: '/library', label: 'Kho bài giảng', icon: BookOpen },
-  { route: '/subjects', label: 'Môn học', icon: Folder },
-  { route: '/review', label: 'Ôn tập', icon: Sparkles },
-  { route: '/profile', label: 'Hồ sơ', icon: User },
+  { route: '/home', label: 'Bàn học', icon: HomeIcon },
+  { route: '/library', label: 'Kho bài giảng', icon: LibraryIcon },
+  { route: '/subjects', label: 'Môn học', icon: SubjectsIcon },
+  { route: '/review', label: 'Ôn tập', icon: ReviewIcon },
+  { route: '/profile', label: 'Hồ sơ', icon: ProfileIcon },
 ]
 
 export function FloatingIslandTabBar() {
@@ -75,7 +82,7 @@ export function FloatingIslandTabBar() {
               aria-label="Thêm bài giảng mới"
               className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#F47F72] to-[#F5C3C9] text-white flex items-center justify-center shadow-lg shadow-[#F47F72]/30 hover:brightness-105 transition-all mochi-press"
             >
-              <Plus className="w-6 h-6 stroke-[2.5]" />
+              <PlusIcon size="lg" strokeWidth={2.2} />
             </button>
           </div>
 

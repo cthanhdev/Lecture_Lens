@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Pause, Headphones } from 'lucide-react'
+import { PlayIcon, PauseIcon, HeadphonesIcon } from '../../components/ui/icons/index.tsx'
 import { useAudioPlayer } from './useAudioPlayer.ts'
 import { useAppNavigation } from '../../router/useAppNavigation.ts'
 
@@ -53,7 +53,7 @@ export function CapsuleAudioPlayer() {
         {/* Cụm Icon & Info */}
         <div className="flex items-center gap-2.5 min-w-0 flex-1 pl-1">
           <div className="w-8 h-8 rounded-full bg-[#F47F72]/15 text-[#F47F72] flex items-center justify-center shrink-0">
-            <Headphones className="w-4 h-4 stroke-[2]" />
+            <HeadphonesIcon size="sm" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-[#261333] truncate leading-tight">
@@ -88,9 +88,9 @@ export function CapsuleAudioPlayer() {
             className="w-8 h-8 rounded-full bg-[#F47F72] hover:bg-[#A03F36] text-white flex items-center justify-center shadow-xs transition-colors mochi-press"
           >
             {isPlaying ? (
-              <Pause className="w-4 h-4 fill-current stroke-[2]" />
+              <PauseIcon size="xs" />
             ) : (
-              <Play className="w-4 h-4 fill-current stroke-[2] ml-0.5" />
+              <PlayIcon size="xs" className="ml-0.5" />
             )}
           </button>
         </div>

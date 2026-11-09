@@ -1,5 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Mic, Upload, Sparkles, CheckCircle2 } from 'lucide-react'
+import {
+  CloseIcon,
+  MicIcon,
+  UploadIcon,
+  SparklesIcon,
+  CheckCircleIcon,
+} from '../components/ui/icons/index.tsx'
 import { useAppNavigation } from '../router/useAppNavigation.ts'
 
 export function ModalSheetHost() {
@@ -49,7 +55,7 @@ export function ModalSheetHost() {
                     onClick={() => nav.closeSheet()}
                     className="w-8 h-8 rounded-full flex items-center justify-center text-[#56423F] hover:bg-slate-100 transition-colors mochi-press"
                   >
-                    <X className="w-4 h-4" />
+                    <CloseIcon size="xs" />
                   </button>
                 </div>
 
@@ -64,7 +70,7 @@ export function ModalSheetHost() {
                     className="p-4 rounded-[24px] bg-[#FFF7FD] border border-[#F47F72]/30 hover:border-[#F47F72] flex items-center gap-4 text-left mochi-press transition-all group"
                   >
                     <div className="w-12 h-12 rounded-2xl bg-[#F47F72] text-white flex items-center justify-center shadow-md shadow-[#F47F72]/20 group-hover:scale-105 transition-transform">
-                      <Mic className="w-6 h-6 stroke-[2]" />
+                      <MicIcon size="lg" strokeColor="#FFFFFF" />
                     </div>
                     <div className="flex-1">
                       <h4 className="text-sm font-bold text-[#261333]">
@@ -86,7 +92,7 @@ export function ModalSheetHost() {
                     className="p-4 rounded-[24px] bg-[#FFF7FD] border border-[#A9D4E8]/50 hover:border-[#A9D4E8] flex items-center gap-4 text-left mochi-press transition-all group"
                   >
                     <div className="w-12 h-12 rounded-2xl bg-[#A9D4E8] text-[#261333] flex items-center justify-center shadow-md shadow-[#A9D4E8]/20 group-hover:scale-105 transition-transform">
-                      <Upload className="w-6 h-6 stroke-[2]" />
+                      <UploadIcon size="lg" strokeColor="#261333" />
                     </div>
                     <div className="flex-1">
                       <h4 className="text-sm font-bold text-[#261333]">
@@ -105,7 +111,7 @@ export function ModalSheetHost() {
             {nav.activeSheet === 'paywall' && (
               <div className="text-center">
                 <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
-                  <Sparkles className="w-7 h-7 stroke-[2]" />
+                  <SparklesIcon size="xl" />
                 </div>
                 <h3 className="text-2xl font-extrabold text-[#261333] mb-1">
                   Kitsune Plus
@@ -116,15 +122,15 @@ export function ModalSheetHost() {
 
                 <div className="space-y-2.5 text-left mb-6 max-w-sm mx-auto">
                   <div className="flex items-center gap-3 text-xs text-[#261333]">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <CheckCircleIcon size="sm" className="text-emerald-500 shrink-0" />
                     <span>Ghi âm bài giảng không giới hạn thời lượng</span>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-[#261333]">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <CheckCircleIcon size="sm" className="text-emerald-500 shrink-0" />
                     <span>Hỏi đáp 2-Stage Neural RAG siêu tốc độ</span>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-[#261333]">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <CheckCircleIcon size="sm" className="text-emerald-500 shrink-0" />
                     <span>Tự động sinh thẻ học Flashcard & Cornell PDF</span>
                   </div>
                 </div>
