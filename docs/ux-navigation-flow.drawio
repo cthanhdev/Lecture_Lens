@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-11-08T06:01:37.059Z" agent="LectureLens Antigravity" version="24.0.0" type="device">
+  <diagram id="lecturelens-ux-flow" name="LectureLens UX &amp; Navigation Flow">
+    <mxGraphModel dx="1600" dy="1800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1600" background="#FFF7FD" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+  <mxCell id="bg-canvas" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7FD;strokeColor=#E2D9E2;strokeWidth=2;arcSize=4;" vertex="1" parent="1">
+    <mxGeometry x="20" y="20" width="1340" height="1520" as="geometry" />
+  </mxCell>
+
+
+  <mxCell id="title-banner" value="&lt;b style=&quot;font-size:24px; color:#261333;&quot;&gt;🌸 LectureLens Mobile Web UX &amp;amp; Navigation Flow Architecture&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:13px; color:#56423F;&quot;&gt;Kitsune Soft Design System — Deterministic Rollback Guarantee &amp;amp; Deep Module Navigation State Machine (28 Screens)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F47F72;strokeWidth=2;align=center;verticalAlign=middle;shadow=1;" vertex="1" parent="1">
+    <mxGeometry x="60" y="45" width="1260" height="70" as="geometry" />
+  </mxCell>
+
+
+  <mxCell id="legend-box" value="&lt;b style=&quot;color:#261333;&quot;&gt;LEGEND &amp;amp; NAVIGATION PATTERNS:&lt;/b&gt; &amp;nbsp;&amp;nbsp; 🟠 &lt;span style=&quot;color:#F47F72;&quot;&gt;&lt;b&gt;Tab Root / Core Flow&lt;/b&gt;&lt;/span&gt; &amp;nbsp;&amp;nbsp;|&amp;nbsp;&amp;nbsp; 🟢 &lt;span style=&quot;color:#4A9372;&quot;&gt;&lt;b&gt;Deterministic Rollback (Safe Back)&lt;/b&gt;&lt;/span&gt; &amp;nbsp;&amp;nbsp;|&amp;nbsp;&amp;nbsp; 🟡 &lt;span style=&quot;color:#967400;&quot;&gt;&lt;b&gt;Guarded Screen (Dirty Check)&lt;/b&gt;&lt;/span&gt; &amp;nbsp;&amp;nbsp;|&amp;nbsp;&amp;nbsp; 🔵 &lt;span style=&quot;color:#2A6F97;&quot;&gt;&lt;b&gt;Modal / Bottom Sheet (Layered Pop)&lt;/b&gt;&lt;/span&gt; &amp;nbsp;&amp;nbsp;|&amp;nbsp;&amp;nbsp; 🟣 &lt;span style=&quot;color:#6A3887;&quot;&gt;&lt;b&gt;Transient Stack (Replaced on Terminate)&lt;/b&gt;&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#A9D4E8;strokeWidth=1.5;align=center;verticalAlign=middle;fontColor=#261333;fontSize=12;" vertex="1" parent="1">
+    <mxGeometry x="60" y="125" width="1260" height="30" as="geometry" />
+  </mxCell>
+
+
+    <mxCell id="S01" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[01] Splash - App Launch&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Bootstrap&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5C3C9;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="160" width="220" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S02" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[02] Onboarding - Step 1&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/onboarding/step-1&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Linear Wizard&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5C3C9;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="290" width="220" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S03" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[03] Onboarding - Step 2&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/onboarding/step-2&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Linear Wizard&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5C3C9;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="420" width="220" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S04" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[04] Onboarding - Step 3&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/onboarding/step-3&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Linear Wizard&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5C3C9;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="550" width="220" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S05" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[05] Auth - Sign In&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/auth/sign-in&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Auth Form&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47F72;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="680" width="220" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S06" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[06] Auth - Create Account&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/auth/create-account&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Auth Form&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47F72;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="810" width="220" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S07" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[07] Paywall - Kitsune Plus&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;modal:paywall&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Modal Sheet&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE27A;strokeColor=#0284C7;strokeWidth=2;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="940" width="220" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S08" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[08] Home - Study Hub&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/home&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Tab Root 1&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47F72;strokeColor=#A03F36;strokeWidth=2.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="380" y="290" width="240" height="100" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S09" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[09] Home - Offline State&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/home [offline]&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: State Layer&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#A9D4E8;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="380" y="430" width="240" height="80" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S10" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[10] Library - Lecture Archive&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/library&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Tab Root 2&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47F72;strokeColor=#A03F36;strokeWidth=2.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="380" y="560" width="240" height="100" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S11" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[11] Library - Empty State&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/library [empty]&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: State Layer&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5C3C9;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="380" y="700" width="240" height="80" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S12" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[12] Library - Offline State&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/library [offline]&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: State Layer&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#A9D4E8;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="380" y="820" width="240" height="80" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S20" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[20] Subjects - Course Archive&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/subjects&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Tab Root 3&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47F72;strokeColor=#A03F36;strokeWidth=2.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="380" y="940" width="240" height="100" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S23" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[23] Review - Study Hub&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/review&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Tab Root 4&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47F72;strokeColor=#A03F36;strokeWidth=2.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="380" y="1080" width="240" height="100" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S27" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[27] Profile - Student Stats&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/profile&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Tab Root 5&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F47F72;strokeColor=#A03F36;strokeWidth=2.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="380" y="1220" width="240" height="100" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S28" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[28] Settings - App Preferences&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/settings&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Detail Stack&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#A9D4E8;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="380" y="1360" width="240" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S13" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[13] Audio - Add Bottom Sheet&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;sheet:add-audio&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Modal Sheet&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#A9D4E8;strokeColor=#0284C7;strokeWidth=2;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="700" y="420" width="240" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S14" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[14] Audio - Live Recording&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/audio/record&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Guarded Screen&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE27A;strokeColor=#D97706;strokeWidth=2.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="700" y="560" width="240" height="100" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S15" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[15] Audio - Processing Pipeline&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/audio/processing/:id&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Transient Stack&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BEE1D0;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="700" y="700" width="240" height="100" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S16" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[16] Audio Detail - Transcript&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/lectures/:id/transcript&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Workspace Hub&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BEE1D0;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="1020" y="460" width="260" height="100" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S17" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[17] Audio Detail - Key Highlights&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/lectures/:id/highlights&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Workspace Tab&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BEE1D0;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="1020" y="600" width="260" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S18" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[18] Audio Detail - Cornell Overview&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/lectures/:id/cornell&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Workspace Tab&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE27A;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="1020" y="730" width="260" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S19" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[19] Audio Detail - Cornell Chapter&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/lectures/:id/chapters/:chId&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Detail Drilldown&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE27A;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="1020" y="860" width="260" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S21" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[21] Subjects - Course Detail&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/subjects/:courseId&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Detail Stack&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5C3C9;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="1020" y="1000" width="260" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S22" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[22] Search - Neural RAG &amp; Audio&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/search&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Global Overlay&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#A9D4E8;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="700" y="290" width="240" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S24" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[24] Flashcard - Question (Front)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/review/session/:deckId?q&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Guarded Session&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE27A;strokeColor=#D97706;strokeWidth=2.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="700" y="1080" width="250" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S25" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[25] Flashcard - Answer (Back)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/review/session/:deckId?a&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: In-Card Flip State&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BEE1D0;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="1020" y="1140" width="250" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="S26" value="&lt;b style=&quot;font-size:13px; color:#261333;&quot;&gt;[26] Review - Session Complete&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#56423F;&quot;&gt;Path: &lt;b&gt;/review/complete/:deckId&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#786470;&quot;&gt;Type: Transient Stack&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5C3C9;strokeColor=#261333;strokeWidth=1.5;arcSize=18;align=left;verticalAlign=middle;spacingLeft=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="700" y="1220" width="250" height="90" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S01_S02_0" value="First Launch (replace)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S01" target="S02">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S01_S05_1" value="Unauthenticated (replace)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S01" target="S05">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S01_S08_2" value="Authenticated (replace)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S01" target="S08">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S02_S03_3" value="Next" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S02" target="S03">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S03_S02_4" value="Back (Rollback)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S03" target="S02">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S02_S05_5" value="Skip" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S02" target="S05">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S03_S04_6" value="Next" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S03" target="S04">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S04_S03_7" value="Back (Rollback)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S04" target="S03">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S03_S05_8" value="Skip" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S03" target="S05">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S04_S05_9" value="Get Started" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S04" target="S05">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S05_S06_10" value="Create Account" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S05" target="S06">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S06_S05_11" value="Sign In (Rollback)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S06" target="S05">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S05_S08_12" value="Sign In Success (replace)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S05" target="S08">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S06_S07_13" value="Welcome Offer" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S06" target="S07">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S06_S08_14" value="Direct to Home" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S06" target="S08">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S07_S08_15" value="Dismiss / Subscribed (Pop Sheet)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S07" target="S08">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S08_S22_16" value="Click Search" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S08" target="S22">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S22_S08_17" value="Close Search (Rollback)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S22" target="S08">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S08_S13_18" value="Click + Audio" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0284C7;strokeWidth=2;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S08" target="S13">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S10_S13_19" value="Click Add Lecture" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0284C7;strokeWidth=2;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S10" target="S13">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S11_S13_20" value="Empty State CTA" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0284C7;strokeWidth=2;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S11" target="S13">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S13_S08_21" value="Dismiss Sheet (Rollback)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S13" target="S08">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S13_S14_22" value="Start Live Record" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S13" target="S14">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S13_S15_23" value="Upload Audio File" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S13" target="S15">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S14_S15_24" value="Stop &amp; Submit (replace)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S14" target="S15">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S14_S08_25" value="Cancel &amp; Guard Confirmed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S14" target="S08">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S15_S16_26" value="PhoWhisper Done (replace)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S15" target="S16">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S15_S10_27" value="Run Background (replace)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S15" target="S10">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S10_S16_28" value="Select Lecture" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S10" target="S16">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S08_S16_29" value="Recent Lecture" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S08" target="S16">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S21_S16_30" value="Course Lecture" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S21" target="S16">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S16_S10_31" value="Back button (Rollback to Library/Parent)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S16" target="S10">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S16_S17_32" value="Switch Tab" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S16" target="S17">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S16_S18_33" value="Switch Tab" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S16" target="S18">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S18_S19_34" value="Chapter Click" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S18" target="S19">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S19_S18_35" value="Back (Rollback to Cornell)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S19" target="S18">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S20_S21_36" value="Select Course" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S20" target="S21">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S21_S20_37" value="Back (Rollback to Subjects)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S21" target="S20">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S22_S16_38" value="Click Timestamp [MM:SS]" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S22" target="S16">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S23_S24_39" value="Start Study Session" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S23" target="S24">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S24_S23_40" value="Exit &amp; Guard Confirmed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S24" target="S23">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S24_S25_41" value="Tap to Flip (In-Card)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S24" target="S25">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S25_S24_42" value="Rate &amp; Next Card (Replace in Session)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S25" target="S24">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S25_S26_43" value="Last Card Finished (replace)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S25" target="S26">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S26_S23_44" value="Finish -&gt; Review Hub (replace)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S26" target="S23">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S27_S28_45" value="Click Settings" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F47F72;strokeWidth=1.5;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S27" target="S28">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S28_S27_46" value="Back (Rollback to Profile)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;dashed=1;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S28" target="S27">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+
+    <mxCell id="edge_S27_S07_47" value="Upgrade to Plus" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0284C7;strokeWidth=2;dashed=0;fontColor=#261333;fontSize=10;labelBackgroundColor=#FFFFFF;rounded=1;" edge="1" parent="1" source="S27" target="S07">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

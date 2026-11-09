@@ -1,0 +1,636 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1340 1420" width="100%" height="100%">
+
+  <defs>
+    <marker id="arrow-forward" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#F47F72"/>
+    </marker>
+    <marker id="arrow-rollback" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#059669"/>
+    </marker>
+    <marker id="arrow-modal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#0284C7"/>
+    </marker>
+    <marker id="arrow-replace" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#7C3AED"/>
+    </marker>
+  </defs>
+
+
+  <!-- Canvas Background -->
+  <rect width="1340" height="1420" rx="32" fill="#FFF7FD" stroke="#EEDAE8" stroke-width="2"/>
+  
+  <!-- Title Card -->
+  <rect x="40" y="30" width="1260" height="90" rx="24" fill="#FFFFFF" stroke="#F47F72" stroke-width="2" filter="drop-shadow(0 6px 18px rgba(38,19,51,0.06))"/>
+  <text x="70" y="65" font-family="'Plus Jakarta Sans', sans-serif" font-size="22" font-weight="800" fill="#261333">🌸 LectureLens Mobile Web UX &amp; Navigation Architecture</text>
+  <text x="70" y="95" font-family="'Plus Jakarta Sans', sans-serif" font-size="13" font-weight="500" fill="#56423F">Kitsune Soft System — 28 Screens Flow, Deep Module Navigation Coordinator, &amp; Zero-Dead-End Rollback Guarantee</text>
+
+  <!-- Legend Badges -->
+  <g transform="translate(40, 130)">
+    <rect width="1260" height="40" rx="20" fill="#FFFFFF" stroke="#E2D9E2" stroke-width="1.2"/>
+    <circle cx="30" cy="20" r="7" fill="#F47F72"/>
+    <text x="45" y="24" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" fill="#261333">Tab Root / Forward</text>
+
+    <line x1="200" y1="20" x2="230" y2="20" stroke="#059669" stroke-width="2.5" stroke-dasharray="4,3"/>
+    <text x="240" y="24" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" fill="#059669">Rollback Guarantee (Pop / Back)</text>
+
+    <circle cx="480" cy="20" r="7" fill="#D97706"/>
+    <text x="495" y="24" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" fill="#D97706">Guarded Screen (Dirty Check)</text>
+
+    <circle cx="730" cy="20" r="7" fill="#0284C7"/>
+    <text x="745" y="24" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" fill="#0284C7">Modal Sheet (Layered Stack)</text>
+
+    <circle cx="960" cy="20" r="7" fill="#7C3AED"/>
+    <text x="975" y="24" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" fill="#7C3AED">Transient (Replaced in History)</text>
+  </g>
+
+
+    <g>
+      <rect x="40" y="150" width="260" height="1040" rx="28" fill="rgba(245, 195, 201, 0.2)" stroke="rgba(38,19,51,0.06)" stroke-width="1.5"/>
+      <text x="58" y="180" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="800" fill="#261333" letter-spacing="0.5">1. ONBOARDING & AUTH (Linear & Sheet)</text>
+    </g>
+  
+
+    <g>
+      <rect x="340" y="150" width="280" height="1220" rx="28" fill="rgba(244, 127, 114, 0.12)" stroke="rgba(38,19,51,0.06)" stroke-width="1.5"/>
+      <text x="358" y="180" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="800" fill="#261333" letter-spacing="0.5">2. MAIN HUB & FLOATING TAB BAR</text>
+    </g>
+  
+
+    <g>
+      <rect x="660" y="150" width="280" height="620" rx="28" fill="rgba(169, 212, 232, 0.2)" stroke="rgba(38,19,51,0.06)" stroke-width="1.5"/>
+      <text x="678" y="180" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="800" fill="#261333" letter-spacing="0.5">3. AUDIO CAPTURE & PIPELINE</text>
+    </g>
+  
+
+    <g>
+      <rect x="980" y="150" width="320" height="860" rx="28" fill="rgba(190, 225, 208, 0.2)" stroke="rgba(38,19,51,0.06)" stroke-width="1.5"/>
+      <text x="998" y="180" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="800" fill="#261333" letter-spacing="0.5">4. LECTURE WORKSPACE & CORNELL</text>
+    </g>
+  
+
+    <g>
+      <rect x="660" y="800" width="640" height="570" rx="28" fill="rgba(255, 226, 122, 0.2)" stroke="rgba(38,19,51,0.06)" stroke-width="1.5"/>
+      <text x="678" y="830" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="800" fill="#261333" letter-spacing="0.5">5. ACTIVE RECALL & FLASHCARDS</text>
+    </g>
+  
+
+    <g id="node-S01">
+      <!-- Card Box -->
+      <rect x="60" y="200" width="220" height="80" rx="20" fill="#FFFFFF" stroke="#F5C3C9" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="74" y="214" width="28" height="20" rx="10" fill="#F5C3C9" fill-opacity="0.25"/>
+      <text x="88" y="228" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">01</text>
+      
+      <!-- Screen Title -->
+      <text x="108" y="229" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Splash - App Launch</text>
+      
+      <!-- Route Path -->
+      <text x="76" y="252" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/</text>
+      
+      <!-- Badge Pill -->
+      <rect x="76" y="259" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="121" y="271" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Bootstrap</text>
+    </g>
+  
+
+    <g id="node-S02">
+      <!-- Card Box -->
+      <rect x="60" y="310" width="220" height="80" rx="20" fill="#FFFFFF" stroke="#F5C3C9" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="74" y="324" width="28" height="20" rx="10" fill="#F5C3C9" fill-opacity="0.25"/>
+      <text x="88" y="338" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">02</text>
+      
+      <!-- Screen Title -->
+      <text x="108" y="339" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Onboarding - Step 1</text>
+      
+      <!-- Route Path -->
+      <text x="76" y="362" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/onboarding/step-1</text>
+      
+      <!-- Badge Pill -->
+      <rect x="76" y="369" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="121" y="381" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Wizard</text>
+    </g>
+  
+
+    <g id="node-S03">
+      <!-- Card Box -->
+      <rect x="60" y="420" width="220" height="80" rx="20" fill="#FFFFFF" stroke="#F5C3C9" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="74" y="434" width="28" height="20" rx="10" fill="#F5C3C9" fill-opacity="0.25"/>
+      <text x="88" y="448" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">03</text>
+      
+      <!-- Screen Title -->
+      <text x="108" y="449" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Onboarding - Step 2</text>
+      
+      <!-- Route Path -->
+      <text x="76" y="472" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/onboarding/step-2</text>
+      
+      <!-- Badge Pill -->
+      <rect x="76" y="479" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="121" y="491" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Wizard</text>
+    </g>
+  
+
+    <g id="node-S04">
+      <!-- Card Box -->
+      <rect x="60" y="530" width="220" height="80" rx="20" fill="#FFFFFF" stroke="#F5C3C9" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="74" y="544" width="28" height="20" rx="10" fill="#F5C3C9" fill-opacity="0.25"/>
+      <text x="88" y="558" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">04</text>
+      
+      <!-- Screen Title -->
+      <text x="108" y="559" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Onboarding - Step 3</text>
+      
+      <!-- Route Path -->
+      <text x="76" y="582" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/onboarding/step-3</text>
+      
+      <!-- Badge Pill -->
+      <rect x="76" y="589" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="121" y="601" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Wizard</text>
+    </g>
+  
+
+    <g id="node-S05">
+      <!-- Card Box -->
+      <rect x="60" y="640" width="220" height="80" rx="20" fill="#FFFFFF" stroke="#F47F72" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="74" y="654" width="28" height="20" rx="10" fill="#F47F72" fill-opacity="0.25"/>
+      <text x="88" y="668" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">05</text>
+      
+      <!-- Screen Title -->
+      <text x="108" y="669" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Auth - Sign In</text>
+      
+      <!-- Route Path -->
+      <text x="76" y="692" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/auth/sign-in</text>
+      
+      <!-- Badge Pill -->
+      <rect x="76" y="699" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="121" y="711" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Auth</text>
+    </g>
+  
+
+    <g id="node-S06">
+      <!-- Card Box -->
+      <rect x="60" y="750" width="220" height="80" rx="20" fill="#FFFFFF" stroke="#F47F72" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="74" y="764" width="28" height="20" rx="10" fill="#F47F72" fill-opacity="0.25"/>
+      <text x="88" y="778" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">06</text>
+      
+      <!-- Screen Title -->
+      <text x="108" y="779" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Auth - Create Account</text>
+      
+      <!-- Route Path -->
+      <text x="76" y="802" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/auth/create-account</text>
+      
+      <!-- Badge Pill -->
+      <rect x="76" y="809" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="121" y="821" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Auth</text>
+    </g>
+  
+
+    <g id="node-S07">
+      <!-- Card Box -->
+      <rect x="60" y="860" width="220" height="80" rx="20" fill="#FFFFFF" stroke="#FFE27A" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="74" y="874" width="28" height="20" rx="10" fill="#FFE27A" fill-opacity="0.25"/>
+      <text x="88" y="888" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">07</text>
+      
+      <!-- Screen Title -->
+      <text x="108" y="889" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Paywall - Kitsune Plus</text>
+      
+      <!-- Route Path -->
+      <text x="76" y="912" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">modal:paywall</text>
+      
+      <!-- Badge Pill -->
+      <rect x="76" y="919" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="121" y="931" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Modal Sheet</text>
+    </g>
+  
+
+    <g id="node-S08">
+      <!-- Card Box -->
+      <rect x="360" y="200" width="240" height="90" rx="20" fill="#FFFFFF" stroke="#F47F72" stroke-width="2.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="374" y="214" width="28" height="20" rx="10" fill="#F47F72" fill-opacity="0.25"/>
+      <text x="388" y="228" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">08</text>
+      
+      <!-- Screen Title -->
+      <text x="408" y="229" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Home - Study Hub</text>
+      
+      <!-- Route Path -->
+      <text x="376" y="252" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/home</text>
+      
+      <!-- Badge Pill -->
+      <rect x="376" y="259" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="421" y="271" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Tab Root 1</text>
+    </g>
+  
+
+    <g id="node-S09">
+      <!-- Card Box -->
+      <rect x="360" y="310" width="240" height="70" rx="20" fill="#FFFBF2" stroke="#A9D4E8" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="374" y="324" width="28" height="20" rx="10" fill="#A9D4E8" fill-opacity="0.25"/>
+      <text x="388" y="338" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">09</text>
+      
+      <!-- Screen Title -->
+      <text x="408" y="339" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Home - Offline State</text>
+      
+      <!-- Route Path -->
+      <text x="376" y="362" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/home [state:offline]</text>
+      
+      <!-- Badge Pill -->
+      <rect x="376" y="369" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="421" y="381" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">State Layer</text>
+    </g>
+  
+
+    <g id="node-S10">
+      <!-- Card Box -->
+      <rect x="360" y="400" width="240" height="90" rx="20" fill="#FFFFFF" stroke="#F47F72" stroke-width="2.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="374" y="414" width="28" height="20" rx="10" fill="#F47F72" fill-opacity="0.25"/>
+      <text x="388" y="428" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">10</text>
+      
+      <!-- Screen Title -->
+      <text x="408" y="429" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Library - Lecture Archive</text>
+      
+      <!-- Route Path -->
+      <text x="376" y="452" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/library</text>
+      
+      <!-- Badge Pill -->
+      <rect x="376" y="459" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="421" y="471" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Tab Root 2</text>
+    </g>
+  
+
+    <g id="node-S11">
+      <!-- Card Box -->
+      <rect x="360" y="510" width="240" height="70" rx="20" fill="#FFFBF2" stroke="#F5C3C9" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="374" y="524" width="28" height="20" rx="10" fill="#F5C3C9" fill-opacity="0.25"/>
+      <text x="388" y="538" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">11</text>
+      
+      <!-- Screen Title -->
+      <text x="408" y="539" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Library - Empty State</text>
+      
+      <!-- Route Path -->
+      <text x="376" y="562" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/library [state:empty]</text>
+      
+      <!-- Badge Pill -->
+      <rect x="376" y="569" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="421" y="581" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">State Layer</text>
+    </g>
+  
+
+    <g id="node-S12">
+      <!-- Card Box -->
+      <rect x="360" y="600" width="240" height="70" rx="20" fill="#FFFBF2" stroke="#A9D4E8" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="374" y="614" width="28" height="20" rx="10" fill="#A9D4E8" fill-opacity="0.25"/>
+      <text x="388" y="628" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">12</text>
+      
+      <!-- Screen Title -->
+      <text x="408" y="629" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Library - Offline State</text>
+      
+      <!-- Route Path -->
+      <text x="376" y="652" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/library [state:offline]</text>
+      
+      <!-- Badge Pill -->
+      <rect x="376" y="659" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="421" y="671" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">State Layer</text>
+    </g>
+  
+
+    <g id="node-S20">
+      <!-- Card Box -->
+      <rect x="360" y="690" width="240" height="90" rx="20" fill="#FFFFFF" stroke="#F47F72" stroke-width="2.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="374" y="704" width="28" height="20" rx="10" fill="#F47F72" fill-opacity="0.25"/>
+      <text x="388" y="718" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">20</text>
+      
+      <!-- Screen Title -->
+      <text x="408" y="719" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Subjects - Course Archive</text>
+      
+      <!-- Route Path -->
+      <text x="376" y="742" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/subjects</text>
+      
+      <!-- Badge Pill -->
+      <rect x="376" y="749" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="421" y="761" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Tab Root 3</text>
+    </g>
+  
+
+    <g id="node-S23">
+      <!-- Card Box -->
+      <rect x="360" y="800" width="240" height="90" rx="20" fill="#FFFFFF" stroke="#F47F72" stroke-width="2.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="374" y="814" width="28" height="20" rx="10" fill="#F47F72" fill-opacity="0.25"/>
+      <text x="388" y="828" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">23</text>
+      
+      <!-- Screen Title -->
+      <text x="408" y="829" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Review - Study Hub</text>
+      
+      <!-- Route Path -->
+      <text x="376" y="852" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/review</text>
+      
+      <!-- Badge Pill -->
+      <rect x="376" y="859" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="421" y="871" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Tab Root 4</text>
+    </g>
+  
+
+    <g id="node-S27">
+      <!-- Card Box -->
+      <rect x="360" y="910" width="240" height="90" rx="20" fill="#FFFFFF" stroke="#F47F72" stroke-width="2.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="374" y="924" width="28" height="20" rx="10" fill="#F47F72" fill-opacity="0.25"/>
+      <text x="388" y="938" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">27</text>
+      
+      <!-- Screen Title -->
+      <text x="408" y="939" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Profile - Student Stats</text>
+      
+      <!-- Route Path -->
+      <text x="376" y="962" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/profile</text>
+      
+      <!-- Badge Pill -->
+      <rect x="376" y="969" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="421" y="981" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Tab Root 5</text>
+    </g>
+  
+
+    <g id="node-S28">
+      <!-- Card Box -->
+      <rect x="360" y="1020" width="240" height="80" rx="20" fill="#FFFFFF" stroke="#4A2A5E" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="374" y="1034" width="28" height="20" rx="10" fill="#4A2A5E" fill-opacity="0.25"/>
+      <text x="388" y="1048" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">28</text>
+      
+      <!-- Screen Title -->
+      <text x="408" y="1049" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Settings - App Preferences</text>
+      
+      <!-- Route Path -->
+      <text x="376" y="1072" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/settings</text>
+      
+      <!-- Badge Pill -->
+      <rect x="376" y="1079" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="421" y="1091" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Detail Stack</text>
+    </g>
+  
+
+    <g id="node-S22">
+      <!-- Card Box -->
+      <rect x="680" y="200" width="240" height="80" rx="20" fill="#FFFFFF" stroke="#A9D4E8" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="694" y="214" width="28" height="20" rx="10" fill="#A9D4E8" fill-opacity="0.25"/>
+      <text x="708" y="228" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">22</text>
+      
+      <!-- Screen Title -->
+      <text x="728" y="229" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Search - Neural RAG & Audio</text>
+      
+      <!-- Route Path -->
+      <text x="696" y="252" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/search</text>
+      
+      <!-- Badge Pill -->
+      <rect x="696" y="259" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="741" y="271" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Global Overlay</text>
+    </g>
+  
+
+    <g id="node-S13">
+      <!-- Card Box -->
+      <rect x="680" y="310" width="240" height="80" rx="20" fill="#FFFFFF" stroke="#0284C7" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="694" y="324" width="28" height="20" rx="10" fill="#0284C7" fill-opacity="0.25"/>
+      <text x="708" y="338" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">13</text>
+      
+      <!-- Screen Title -->
+      <text x="728" y="339" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Audio - Add Bottom Sheet</text>
+      
+      <!-- Route Path -->
+      <text x="696" y="362" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">modal:add-audio</text>
+      
+      <!-- Badge Pill -->
+      <rect x="696" y="369" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="741" y="381" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Modal Sheet</text>
+    </g>
+  
+
+    <g id="node-S14">
+      <!-- Card Box -->
+      <rect x="680" y="420" width="240" height="90" rx="20" fill="#FFFDF0" stroke="#D97706" stroke-width="2.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="694" y="434" width="28" height="20" rx="10" fill="#D97706" fill-opacity="0.25"/>
+      <text x="708" y="448" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">14</text>
+      
+      <!-- Screen Title -->
+      <text x="728" y="449" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Audio - Live Recording</text>
+      
+      <!-- Route Path -->
+      <text x="696" y="472" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/audio/record</text>
+      
+      <!-- Badge Pill -->
+      <rect x="696" y="479" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="741" y="491" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Guarded Screen</text>
+    </g>
+  
+
+    <g id="node-S15">
+      <!-- Card Box -->
+      <rect x="680" y="540" width="240" height="90" rx="20" fill="#F8F6FF" stroke="#7C3AED" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="694" y="554" width="28" height="20" rx="10" fill="#7C3AED" fill-opacity="0.25"/>
+      <text x="708" y="568" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">15</text>
+      
+      <!-- Screen Title -->
+      <text x="728" y="569" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Audio - Processing Pipeline</text>
+      
+      <!-- Route Path -->
+      <text x="696" y="592" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/audio/processing/:id</text>
+      
+      <!-- Badge Pill -->
+      <rect x="696" y="599" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="741" y="611" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Transient Stack</text>
+    </g>
+  
+
+    <g id="node-S16">
+      <!-- Card Box -->
+      <rect x="1000" y="200" width="280" height="90" rx="20" fill="#FFFFFF" stroke="#BEE1D0" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="1014" y="214" width="28" height="20" rx="10" fill="#BEE1D0" fill-opacity="0.25"/>
+      <text x="1028" y="228" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">16</text>
+      
+      <!-- Screen Title -->
+      <text x="1048" y="229" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Audio Detail - Transcript</text>
+      
+      <!-- Route Path -->
+      <text x="1016" y="252" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/lectures/:id/transcript</text>
+      
+      <!-- Badge Pill -->
+      <rect x="1016" y="259" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="1061" y="271" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Workspace Hub</text>
+    </g>
+  
+
+    <g id="node-S17">
+      <!-- Card Box -->
+      <rect x="1000" y="310" width="280" height="80" rx="20" fill="#FFFFFF" stroke="#BEE1D0" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="1014" y="324" width="28" height="20" rx="10" fill="#BEE1D0" fill-opacity="0.25"/>
+      <text x="1028" y="338" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">17</text>
+      
+      <!-- Screen Title -->
+      <text x="1048" y="339" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Audio Detail - Key Highlights</text>
+      
+      <!-- Route Path -->
+      <text x="1016" y="362" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/lectures/:id/highlights</text>
+      
+      <!-- Badge Pill -->
+      <rect x="1016" y="369" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="1061" y="381" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Workspace Tab</text>
+    </g>
+  
+
+    <g id="node-S18">
+      <!-- Card Box -->
+      <rect x="1000" y="410" width="280" height="80" rx="20" fill="#FFFFFF" stroke="#FFE27A" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="1014" y="424" width="28" height="20" rx="10" fill="#FFE27A" fill-opacity="0.25"/>
+      <text x="1028" y="438" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">18</text>
+      
+      <!-- Screen Title -->
+      <text x="1048" y="439" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Audio Detail - Cornell Overview</text>
+      
+      <!-- Route Path -->
+      <text x="1016" y="462" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/lectures/:id/cornell</text>
+      
+      <!-- Badge Pill -->
+      <rect x="1016" y="469" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="1061" y="481" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Workspace Tab</text>
+    </g>
+  
+
+    <g id="node-S19">
+      <!-- Card Box -->
+      <rect x="1000" y="510" width="280" height="80" rx="20" fill="#FFFFFF" stroke="#FFE27A" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="1014" y="524" width="28" height="20" rx="10" fill="#FFE27A" fill-opacity="0.25"/>
+      <text x="1028" y="538" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">19</text>
+      
+      <!-- Screen Title -->
+      <text x="1048" y="539" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Audio Detail - Chapter View</text>
+      
+      <!-- Route Path -->
+      <text x="1016" y="562" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/lectures/:id/chapters/:chId</text>
+      
+      <!-- Badge Pill -->
+      <rect x="1016" y="569" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="1061" y="581" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Drilldown</text>
+    </g>
+  
+
+    <g id="node-S21">
+      <!-- Card Box -->
+      <rect x="1000" y="610" width="280" height="80" rx="20" fill="#FFFFFF" stroke="#F5C3C9" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="1014" y="624" width="28" height="20" rx="10" fill="#F5C3C9" fill-opacity="0.25"/>
+      <text x="1028" y="638" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">21</text>
+      
+      <!-- Screen Title -->
+      <text x="1048" y="639" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Subjects - Course Detail</text>
+      
+      <!-- Route Path -->
+      <text x="1016" y="662" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/subjects/:courseId</text>
+      
+      <!-- Badge Pill -->
+      <rect x="1016" y="669" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="1061" y="681" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Detail Stack</text>
+    </g>
+  
+
+    <g id="node-S24">
+      <!-- Card Box -->
+      <rect x="680" y="880" width="280" height="90" rx="20" fill="#FFFDF0" stroke="#D97706" stroke-width="2.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="694" y="894" width="28" height="20" rx="10" fill="#D97706" fill-opacity="0.25"/>
+      <text x="708" y="908" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">24</text>
+      
+      <!-- Screen Title -->
+      <text x="728" y="909" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Flashcard - Question (Front)</text>
+      
+      <!-- Route Path -->
+      <text x="696" y="932" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/review/session/:deckId?q</text>
+      
+      <!-- Badge Pill -->
+      <rect x="696" y="939" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="741" y="951" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Guarded Session</text>
+    </g>
+  
+
+    <g id="node-S25">
+      <!-- Card Box -->
+      <rect x="1000" y="880" width="280" height="90" rx="20" fill="#F4FFF8" stroke="#BEE1D0" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="1014" y="894" width="28" height="20" rx="10" fill="#BEE1D0" fill-opacity="0.25"/>
+      <text x="1028" y="908" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">25</text>
+      
+      <!-- Screen Title -->
+      <text x="1048" y="909" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Flashcard - Answer (Back)</text>
+      
+      <!-- Route Path -->
+      <text x="1016" y="932" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/review/session/:deckId?a</text>
+      
+      <!-- Badge Pill -->
+      <rect x="1016" y="939" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="1061" y="951" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">In-Card Flip State</text>
+    </g>
+  
+
+    <g id="node-S26">
+      <!-- Card Box -->
+      <rect x="840" y="1020" width="300" height="90" rx="20" fill="#FFF8FA" stroke="#F5C3C9" stroke-width="1.5" filter="drop-shadow(0 4px 12px rgba(38,19,51,0.04))"/>
+      
+      <!-- Number Chip -->
+      <rect x="854" y="1034" width="28" height="20" rx="10" fill="#F5C3C9" fill-opacity="0.25"/>
+      <text x="868" y="1048" font-family="'Plus Jakarta Sans', sans-serif" font-size="10" font-weight="800" fill="#261333" text-anchor="middle">26</text>
+      
+      <!-- Screen Title -->
+      <text x="888" y="1049" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" fill="#261333">Review - Session Complete</text>
+      
+      <!-- Route Path -->
+      <text x="856" y="1072" font-family="'Plus Jakarta Sans', monospace" font-size="10" font-weight="600" fill="#56423F">/review/complete/:deckId</text>
+      
+      <!-- Badge Pill -->
+      <rect x="856" y="1079" width="90" height="16" rx="8" fill="rgba(38,19,51,0.05)"/>
+      <text x="901" y="1091" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#261333" text-anchor="middle">Transient Stack</text>
+    </g>
+  
+</svg>
