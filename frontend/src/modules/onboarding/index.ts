@@ -1,0 +1,5 @@
+export * from './OnboardingDotIndicator.tsx'
+export * from './OnboardingShell.tsx'
+export * from './Step1AudioLectures.tsx'
+export * from './Step2EffortlessClarity.tsx'
+export * from './Step3ActiveRecall.tsx'

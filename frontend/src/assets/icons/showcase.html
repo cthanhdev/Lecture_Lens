@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>LectureLens — Kitsune Soft Iconography Showcase</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: #FFF7FD;
+      color: #261333;
+      padding: 60px 48px;
+      width: 1800px;
+      margin: 0 auto;
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(244, 127, 114, 0.08) 0%, transparent 35%),
+        radial-gradient(circle at 90% 20%, rgba(169, 212, 232, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(255, 226, 122, 0.10) 0%, transparent 45%);
+    }
+
+    /* HEADER */
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(244, 127, 114, 0.15);
+      color: #A03F36;
+      border: 1px solid rgba(244, 127, 114, 0.3);
+      padding: 8px 24px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(244, 127, 114, 0.15);
+    }
+
+    .main-title {
+      font-size: 44px;
+      font-weight: 800;
+      color: #261333;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .sub-title {
+      font-size: 18px;
+      color: #56423F;
+      max-width: 900px;
+      margin: 0 auto 24px auto;
+      line-height: 1.5;
+    }
+
+    .palette-strip {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      padding: 10px 24px;
+      border-radius: 9999px;
+      box-shadow: 0 8px 24px rgba(38, 19, 51, 0.06);
+    }
+
+    .swatch-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #261333;
+    }
+
+    .swatch-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 9999px;
+      box-shadow: 0 2px 4px rgba(38, 19, 51, 0.15);
+    }
+
+    /* CATEGORIES & BENTO */
+    .category-block {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(20px);
+      border: 1.5px solid rgba(255, 255, 255, 0.95);
+      border-radius: 36px;
+      padding: 36px 40px;
+      margin-bottom: 40px;
+      box-shadow: 0 16px 40px -8px rgba(38, 19, 51, 0.07), 0 2px 6px rgba(38, 19, 51, 0.03);
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1.5px solid rgba(38, 19, 51, 0.06);
+    }
+
+    .category-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #261333;
+      letter-spacing: -0.01em;
+    }
+
+    .category-count {
+      background: #261333;
+      color: #FFF7FD;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 16px;
+      border-radius: 9999px;
+    }
+
+    /* ICONS GRID */
+    .icons-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 20px;
+    }
+
+    .icon-card {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(38, 19, 51, 0.08);
+      border-radius: 24px;
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 6px 16px rgba(38, 19, 51, 0.04);
+      transition: all 0.2s ease;
+    }
+
+    .icon-wrapper {
+      position: relative;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+
+    .icon-svg {
+      overflow: visible;
+      filter: drop-shadow(0 1.5px 2px rgba(38, 19, 51, 0.12));
+    }
+
+    .blob-path {
+      filter: drop-shadow(0 3px 6px rgba(38, 19, 51, 0.16));
+    }
+
+    .icon-comp {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: #261333;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+
+    .icon-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: #A03F36;
+      margin-bottom: 4px;
+    }
+
+    .icon-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #56423F;
+      line-height: 1.3;
+    }
+
+    /* FOOTER */
+    .footer {
+      background: #261333;
+      color: #FFF7FD;
+      border-radius: 32px;
+      padding: 36px 48px;
+      text-align: center;
+      margin-top: 50px;
+      box-shadow: 0 20px 48px rgba(38, 19, 51, 0.25);
+    }
+
+    .footer-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #FFE27A;
+      margin-bottom: 10px;
+      letter-spacing: 0.02em;
+    }
+
+    .footer-desc {
+      font-size: 15px;
+      color: rgba(255, 247, 253, 0.85);
+      max-width: 1000px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="badge-pill">🌸 LECTURELENS DESIGN SYSTEM — KITSUNE SOFT</div>
+    <h1 class="main-title">Thư Viện 74 Biểu Tượng Chuẩn Hóa<br/>Duotone Soft-Blob with Warm Plum Shadow</h1>
+    <p class="sub-title">
+      Thiết kế trên hệ lưới tọa độ 24x24 • Nét vẽ Plum Ink #261333 dày 1.75px • Tấm lót hữu cơ Soft-Blob pastel • Đổ bóng mận chín ấm tách lớp quang học 3D • Tương thích React 19 Strict Mode & Tailwind CSS v4
+    </p>
+
+    <!-- PALETTE STRIP -->
+    <div class="palette-strip">
+      <div class="swatch-item">
+        <div class="swatch-dot" style="background: #F47F72;"></div>
+        <span>Kitsune Coral #F47F72</span>
+      </div>
+      <div class="swatch-item">
+        <div class="swatch-dot" style="background: #F5C3C9;"></div>
+        <span>Sakura Pink #F5C3C9</span>
+      </div>
+      <div class="swatch-item">
+        <div class="swatch-dot" style="background: #A9D4E8;"></div>
+        <span>Mist Sky #A9D4E8</span>
+      </div>
+      <div class="swatch-item">
+        <div class="swatch-dot" style="background: #FFE27A;"></div>
+        <span>Mochi Yellow #FFE27A</span>
+      </div>
+      <div class="swatch-item">
+        <div class="swatch-dot" style="background: #BEE1D0;"></div>
+        <span>Matcha Mint #BEE1D0</span>
+      </div>
+      <div class="swatch-item">
+        <div class="swatch-dot" style="background: #261333;"></div>
+        <span>Plum Ink #261333</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORIES -->
+  
+    <div class="category-block">
+      <div class="category-header">
+        <h2 class="category-title">1. Điều Hướng & Khung Ứng Dụng (Navigation & Shell)</h2>
+        <span class="category-count">20 biểu tượng</span>
+      </div>
+      <div class="icons-grid">
+        
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M3 10.5L12 3l9 7.5v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M9 21v-7a3 3 0 0 1 6 0v7" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><HomeIcon /></div>
+        <div class="icon-name">home</div>
+        <div class="icon-title">Bàn học</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#A9D4E8" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M2 6s3-2 8-2 8 2 8 2v13s-3-2-8-2-8 2-8 2V6z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M10 4v13" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><LibraryIcon /></div>
+        <div class="icon-name">library</div>
+        <div class="icon-title">Kho bài giảng</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#FFE27A" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M3 10h18" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><SubjectsIcon /></div>
+        <div class="icon-name">subjects</div>
+        <div class="icon-title">Môn học</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#BEE1D0" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M7 4h10a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 2v3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 19v3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M2 12h3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M19 12h3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M10 9l4 3-4 3V9z" fill="currentColor" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><ReviewIcon /></div>
+        <div class="icon-name">review</div>
+        <div class="icon-title">Ôn tập</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F47F72" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M5 21a7 7 0 0 1 14 0" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><ProfileIcon /></div>
+        <div class="icon-name">profile</div>
+        <div class="icon-title">Hồ sơ sinh viên</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F47F72" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 5v14" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M5 12h14" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><PlusIcon /></div>
+        <div class="icon-name">plus</div>
+        <div class="icon-title">Thêm mới</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M19 12H5" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 19l-7-7 7-7" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><ArrowLeftIcon /></div>
+        <div class="icon-name">arrow-left</div>
+        <div class="icon-title">Quay lại</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M5 12h14" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 5l7 7-7 7" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><ArrowRightIcon /></div>
+        <div class="icon-name">arrow-right</div>
+        <div class="icon-title">Tiếp tục</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M18 6L6 18" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M6 6l12 12" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><CloseIcon /></div>
+        <div class="icon-name">close</div>
+        <div class="icon-title">Đóng</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor" /><path d="M19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor" /><path d="M5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><MoreHorizontalIcon /></div>
+        <div class="icon-name">more-horizontal</div>
+        <div class="icon-title">Tùy chọn ngang</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor" /><path d="M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor" /><path d="M12 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><MoreVerticalIcon /></div>
+        <div class="icon-name">more-vertical</div>
+        <div class="icon-title">Tùy chọn dọc</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#A9D4E8" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M21 21l-4.35-4.35" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><SearchIcon /></div>
+        <div class="icon-name">search</div>
+        <div class="icon-title">Tìm kiếm ngữ nghĩa</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M4 6h16" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M7 12h10" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M10 18h4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><FilterIcon /></div>
+        <div class="icon-name">filter</div>
+        <div class="icon-title">Bộ lọc</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M7 4v16" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M3 8l4-4 4 4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M17 20V4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M13 16l4 4 4-4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><SortIcon /></div>
+        <div class="icon-name">sort</div>
+        <div class="icon-title">Sắp xếp</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#261333" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><SettingsIcon /></div>
+        <div class="icon-name">settings</div>
+        <div class="icon-title">Cài đặt</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#FFE27A" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><BellIcon /></div>
+        <div class="icon-name">bell</div>
+        <div class="icon-title">Thông báo</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F47F72" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M19 4a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" fill="#F47F72" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><BellDotIcon /></div>
+        <div class="icon-name">bell-dot</div>
+        <div class="icon-title">Thông báo chưa đọc</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M6 9l6 6 6-6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><ChevronDownIcon /></div>
+        <div class="icon-name">chevron-down</div>
+        <div class="icon-title">Mở rộng</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M18 15l-6-6-6 6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><ChevronUpIcon /></div>
+        <div class="icon-name">chevron-up</div>
+        <div class="icon-title">Thu gọn</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M9 18l6-6-6-6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><ChevronRightIcon /></div>
+        <div class="icon-name">chevron-right</div>
+        <div class="icon-title">Điều hướng mục</div>
+      </div>
+    
+      </div>
+    </div>
+  
+    <div class="category-block">
+      <div class="category-header">
+        <h2 class="category-title">2. Không Gian Âm Thanh & Trình Phát (Audio & Playback)</h2>
+        <span class="category-count">15 biểu tượng</span>
+      </div>
+      <div class="icons-grid">
+        
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F47F72" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 19v3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M8 22h8" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><MicIcon /></div>
+        <div class="icon-name">mic</div>
+        <div class="icon-title">Thu âm giảng đường</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M1 1l22 22" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V5a3 3 0 0 0-5.94-.6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M19 10v2a7 7 0 0 1-.58 2.81" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M5 10v2a7 7 0 0 0 8.8 6.77" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 19v3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M8 22h8" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><MicOffIcon /></div>
+        <div class="icon-name">mic-off</div>
+        <div class="icon-title">Tắt mic</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#A9D4E8" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M17 8l-5-5-5 5" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 3v12" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><UploadIcon /></div>
+        <div class="icon-name">upload</div>
+        <div class="icon-title">Tải tệp âm thanh</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#A9D4E8" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 13l3-3 3 3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M15 10v6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><CloudUploadIcon /></div>
+        <div class="icon-name">cloud-upload</div>
+        <div class="icon-title">Tải lên đám mây</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#FFE27A" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><LinkIcon /></div>
+        <div class="icon-name">link</div>
+        <div class="icon-title">Dán liên kết</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#BEE1D0" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M4 10v4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M8 7v10" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 3v18" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M16 6v12" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M20 9v6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><WaveformIcon /></div>
+        <div class="icon-name">waveform</div>
+        <div class="icon-title">Ghi âm Voice Memos</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M6 4.5l14 7.5-14 7.5v-15z" fill="currentColor" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><PlayIcon /></div>
+        <div class="icon-name">play</div>
+        <div class="icon-title">Phát âm thanh</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M6 4h4v16H6z" fill="currentColor" /><path d="M14 4h4v16h-4z" fill="currentColor" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><PauseIcon /></div>
+        <div class="icon-name">pause</div>
+        <div class="icon-title">Tạm dừng</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M6 6h12v12H6z" fill="currentColor" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><StopIcon /></div>
+        <div class="icon-name">stop</div>
+        <div class="icon-title">Dừng ghi âm</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M3 10h5V5" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M3.5 10a9 9 0 1 1 1.7 8.3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M10 12v4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M14 12v4a1.5 1.5 0 0 0 3 0v-4a1.5 1.5 0 0 0-3 0z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><Replay10Icon /></div>
+        <div class="icon-name">replay-10</div>
+        <div class="icon-title">Tua lại 10s</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M21 10h-5V5" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M20.5 10a9 9 0 1 0-1.7 8.3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M9 12v4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M13 12v4a1.5 1.5 0 0 0 3 0v-4a1.5 1.5 0 0 0-3 0z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><Forward10Icon /></div>
+        <div class="icon-name">forward-10</div>
+        <div class="icon-title">Tua tới 10s</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a9 9 0 0 1 18 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><HeadphonesIcon /></div>
+        <div class="icon-name">headphones</div>
+        <div class="icon-title">Tai nghe bài giảng</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M11 5L6 9H2v6h4l5 4V5z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><SpeakerIcon /></div>
+        <div class="icon-name">speaker</div>
+        <div class="icon-title">Loa trích đoạn</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 6v6l4 2" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><SpeedIcon /></div>
+        <div class="icon-name">speed</div>
+        <div class="icon-title">Tốc độ phát</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F47F72" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M10 8l6 4-6 4V8z" fill="currentColor" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><SnippetPlayIcon /></div>
+        <div class="icon-name">snippet-play</div>
+        <div class="icon-title">Nghe trích đoạn gốc</div>
+      </div>
+    
+      </div>
+    </div>
+  
+    <div class="category-block">
+      <div class="category-header">
+        <h2 class="category-title">3. Trí Tuệ AI & Ghi Chú Cornell (AI & Cornell Study)</h2>
+        <span class="category-count">13 biểu tượng</span>
+      </div>
+      <div class="icons-grid">
+        
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F47F72" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8L12 3z" fill="#F47F72" /><path d="M19 15l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z" fill="#FFE27A" /><path d="M5 17l.8 1.6L7.4 19l-1.6.8L5 21.4l-.8-1.6L2.6 19l1.6-.8L5 17z" fill="#A9D4E8" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><SparklesIcon /></div>
+        <div class="icon-name">sparkles</div>
+        <div class="icon-title">Trợ lý AI Kitsune</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#FFE27A" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M14 2v6h6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M8 13h8" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M8 17h6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><FileTextIcon /></div>
+        <div class="icon-name">file-text</div>
+        <div class="icon-title">Tóm tắt Cornell Notes</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#BEE1D0" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 6v6l4 2" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><ClockIcon /></div>
+        <div class="icon-name">clock</div>
+        <div class="icon-title">Mốc thời gian [MM:SS]</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#FFE27A" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#FFE27A" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><StarIcon /></div>
+        <div class="icon-name">star</div>
+        <div class="icon-title">Đánh dấu điểm nhấn</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><BookmarkIcon /></div>
+        <div class="icon-name">bookmark</div>
+        <div class="icon-title">Đánh dấu phân đoạn</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#FFE27A" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M9 11l-6 6v3h3l6-6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M13.5 6.5l4 4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M17.5 2.5a2.121 2.121 0 0 1 3 3l-9.5 9.5-4-4 9.5-9.5z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><HighlighterIcon /></div>
+        <div class="icon-name">highlighter</div>
+        <div class="icon-title">Trích xuất điểm nhấn</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F47F72" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="#F47F72" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><FlameIcon /></div>
+        <div class="icon-name">flame</div>
+        <div class="icon-title">Chuỗi streak & Cảnh báo đề thi</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#A9D4E8" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 17h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><HelpCircleIcon /></div>
+        <div class="icon-name">help-circle</div>
+        <div class="icon-title">Câu hỏi gợi nhớ Cues</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M21 12h-8" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M21 6H8" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M21 18h-8" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M3 6v12a2 2 0 0 0 2 2h3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M3 12h5" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><ListTreeIcon /></div>
+        <div class="icon-name">list-tree</div>
+        <div class="icon-title">Cây mục lục chương</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#BEE1D0" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M7 10l5 5 5-5" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 15V3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><DownloadIcon /></div>
+        <div class="icon-name">download</div>
+        <div class="icon-title">Tải vào bộ nhớ máy Vault</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M8.59 13.51l6.83 3.98" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M15.41 6.51l-6.82 3.98" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><ShareIcon /></div>
+        <div class="icon-name">share</div>
+        <div class="icon-title">Xuất & Chia sẻ</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M9 9h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><CopyIcon /></div>
+        <div class="icon-name">copy</div>
+        <div class="icon-title">Sao chép văn bản</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F47F72" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 2v3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M4 8a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V8z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M9 11h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M15 11h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M9 15h6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M2 13h2" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M20 13h2" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><RobotAiIcon /></div>
+        <div class="icon-name">robot-ai</div>
+        <div class="icon-title">Trợ lý Neural RAG</div>
+      </div>
+    
+      </div>
+    </div>
+  
+    <div class="category-block">
+      <div class="category-header">
+        <h2 class="category-title">4. Ôn Tập, Flashcards & Phản Xạ (Review & Flashcards)</h2>
+        <span class="category-count">10 biểu tượng</span>
+      </div>
+      <div class="icons-grid">
+        
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M7 4h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M3 8v10a2 2 0 0 0 2 2h11" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><CardsIcon /></div>
+        <div class="icon-name">cards</div>
+        <div class="icon-title">Thẻ ghi nhớ Flashcards</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#FFE27A" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M3 12a9 9 0 0 1 15-6.7L21 8" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M21 3v5h-5" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M3 21v-5h5" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><FlipIcon /></div>
+        <div class="icon-name">flip</div>
+        <div class="icon-title">Lật thẻ 3D</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#FFE27A" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M9 18h6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M10 22h4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .5 2.5 1.5 3.5.76.76 1.23 1.52 1.41 2.5h6.18z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><LightbulbIcon /></div>
+        <div class="icon-name">lightbulb</div>
+        <div class="icon-title">Gợi ý đáp án</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#FFE27A" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M6 3h12v7a6 6 0 0 1-12 0V3z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 16v3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M8 22h8" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><TrophyIcon /></div>
+        <div class="icon-name">trophy</div>
+        <div class="icon-title">Vinh danh hoàn thành</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M5.8 11.3L2 22l10.7-3.8L5.8 11.3z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M4 3h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M22 6h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M15 2h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M22 20h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M11 6a4 4 0 0 0 4-4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M16 11a4 4 0 0 0 4-4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><PartyPopperIcon /></div>
+        <div class="icon-name">party-popper</div>
+        <div class="icon-title">Chúc mừng thành tích</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#A9D4E8" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M9.5 2A4.5 4.5 0 0 0 5 6.5c0 .41.05.81.16 1.19A4.5 4.5 0 0 0 3 11.5c0 2.08 1.41 3.82 3.33 4.33A4.5 4.5 0 0 0 10.5 20c.41 0 .81-.05 1.19-.16" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M14.5 2A4.5 4.5 0 0 1 19 6.5c0 .41-.05.81-.16 1.19A4.5 4.5 0 0 1 21 11.5c0 2.08-1.41 3.82-3.33 4.33A4.5 4.5 0 0 1 13.5 20c-.41 0-.81-.05-1.19-.16" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 2v18" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><BrainIcon /></div>
+        <div class="icon-name">brain</div>
+        <div class="icon-title">Ghi nhớ ngắt quãng</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M1 4v6h6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><RatingAgainIcon /></div>
+        <div class="icon-name">rating-again</div>
+        <div class="icon-title">Đánh giá Quên hẳn</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M8 15h8" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M9 9h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M15 9h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><RatingHardIcon /></div>
+        <div class="icon-name">rating-hard</div>
+        <div class="icon-title">Đánh giá Khó nhớ</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><RatingGoodIcon /></div>
+        <div class="icon-name">rating-good</div>
+        <div class="icon-title">Đánh giá Nhớ tốt</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#BEE1D0" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><RatingEasyIcon /></div>
+        <div class="icon-name">rating-easy</div>
+        <div class="icon-title">Đánh giá Dễ ợt</div>
+      </div>
+    
+      </div>
+    </div>
+  
+    <div class="category-block">
+      <div class="category-header">
+        <h2 class="category-title">5. Linh Vật, Bảo Mật & Hệ Thống (Mascot, Auth & System)</h2>
+        <span class="category-count">16 biểu tượng</span>
+      </div>
+      <div class="icons-grid">
+        
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F47F72" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M4 8l3-6 4 4 1-2 1 2 4-4 3 6-2 10a8 8 0 0 1-14 0L4 8z" fill="#FFFFFF" /><path d="M4 8l3-6 2 2-3 4-2 0z" fill="#F47F72" /><path d="M20 8l-3-6-2 2 3 4 2 0z" fill="#F47F72" /><path d="M11 15h2l-1 1-1-1z" fill="#261333" /><path d="M8 12h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M16 12h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><KitsuneFoxIcon /></div>
+        <div class="icon-name">kitsune-fox</div>
+        <div class="icon-title">Linh vật Cáo Kitsune</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#FFE27A" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" fill="#FFE27A" /><path d="M5 20h14" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><CrownIcon /></div>
+        <div class="icon-name">crown</div>
+        <div class="icon-title">Vương miện Kitsune Plus</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M20 6L9 17l-5-5" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><CheckIcon /></div>
+        <div class="icon-name">check</div>
+        <div class="icon-title">Dấu tích</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#BEE1D0" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M22 4L12 14.01l-3-3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><CheckCircleIcon /></div>
+        <div class="icon-name">check-circle</div>
+        <div class="icon-title">Hoàn thành</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M18 6L7 17l-5-5" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M22 10l-7.5 7.5-1.5-1.5" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><CheckDoubleIcon /></div>
+        <div class="icon-name">check-double</div>
+        <div class="icon-title">Đã xử lý</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M1 1l22 22" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M10.71 5.05A16 16 0 0 1 22.58 9" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 20h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><WifiOffIcon /></div>
+        <div class="icon-name">wifi-off</div>
+        <div class="icon-title">Ngoại tuyến</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#261333" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 15v3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><LockIcon /></div>
+        <div class="icon-name">lock</div>
+        <div class="icon-title">Khóa bảo mật On-Premise</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#BEE1D0" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M10 16l1.5 1.5 3-3" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><LockCheckIcon /></div>
+        <div class="icon-name">lock-check</div>
+        <div class="icon-title">Khóa an toàn</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><EyeIcon /></div>
+        <div class="icon-name">eye</div>
+        <div class="icon-title">Hiện mật khẩu</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M1 1l22 22" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><EyeOffIcon /></div>
+        <div class="icon-name">eye-off</div>
+        <div class="icon-title">Ẩn mật khẩu</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#A9D4E8" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M22 6l-10 7L2 6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><MailIcon /></div>
+        <div class="icon-name">mail</div>
+        <div class="icon-title">Email sinh viên</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><PencilIcon /></div>
+        <div class="icon-name">pencil</div>
+        <div class="icon-title">Chỉnh sửa ghi chú</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M3 6h18" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><TrashIcon /></div>
+        <div class="icon-name">trash</div>
+        <div class="icon-title">Xóa bài giảng</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M23 4v6h-6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M1 20v-6h6" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><RefreshIcon /></div>
+        <div class="icon-name">refresh</div>
+        <div class="icon-title">Đồng bộ & Thử lại</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><GoogleIcon /></div>
+        <div class="icon-name">google</div>
+        <div class="icon-title">Đăng nhập Google</div>
+      </div>
+    
+
+      <div class="icon-card">
+        <div class="icon-wrapper">
+          
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" class="icon-svg">
+      <path d="M16.8 4.2C19.7 7.1 20.8 11.8 19.4 15.8C18 19.8 14.1 23.1 9.9 22.4C5.7 21.7 1.2 17 0.3 12.3C-0.6 7.6 2.1 2.9 6.3 1C10.5 -0.9 13.9 1.3 16.8 4.2Z" fill="#F5C3C9" fill-opacity="0.55" class="blob-path" />
+      <g class="outline-path">
+        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 0.92-2.87-.93.04-2.03.62-2.68 1.38-.56.65-.99 1.68-.87 2.7.99.08 2.01-.46 2.63-1.21z" fill="currentColor" />
+      </g>
+    </svg>
+  
+        </div>
+        <div class="icon-comp"><AppleIcon /></div>
+        <div class="icon-name">apple</div>
+        <div class="icon-title">Đăng nhập Apple</div>
+      </div>
+    
+      </div>
+    </div>
+  
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-title">🛡️ QUY CHUẨN KỸ THUẬT BẮT BUỘC (ARCHITECTURAL INVARIANT)</div>
+    <div class="footer-desc">
+      Toàn bộ các nhà phát triển và AI Agents khi xây dựng màn hình Frontend <strong>BẮT BUỘC</strong> phải import biểu tượng từ <code>@/components/ui/icons</code>. Tuyệt đối không tự ý vẽ lại inline SVG, không dùng thư viện ngoài tùy tiện làm phá vỡ nét vẽ 1.75px và phong cách Duotone Soft-Blob của hệ thống Kitsune Soft.
+    </div>
+  </div>
+
+</body>
+</html>

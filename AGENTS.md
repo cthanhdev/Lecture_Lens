@@ -8,7 +8,13 @@ Tài liệu này là **Hiến Chương Kỹ Thuật (Constitution)** bắt buộ
 
 > [!CAUTION]
 > **TUYỆT ĐỐI KHÔNG TỰ Ý SINH MÃ REACT NATIVE / EXPO CŨ!**
-> Dự án đã chuyển đổi hoàn toàn cấu trúc Frontend sang Web Application hiện đại tại thư mục `frontend/`. Không được tham chiếu hay sinh mã cho thư mục `FE/` (đã bị xóa).
+> Dự án đã chuyển đổi hoàn toàn cấu trúc sang Web Stack hiện đại tại thư mục `frontend/`. Không được tham chiếu hay sinh mã cho thư mục `FE/` (đã bị xóa).
+
+> [!IMPORTANT]
+> **📱 BẢN CHẤT DỰ ÁN: ĐÂY LÀ ỨNG DỤNG DI ĐỘNG (MOBILE APPLICATION FORMAT)!**
+> - **LectureLens là một Mobile App 100%**: Mọi màn hình được thiết kế theo tỉ lệ điện thoại di động: **`390px × 844px`** hoặc **`390px × 884px`** (dựa trên toàn bộ 28 tệp thiết kế SVG mẫu tại `frontend/src/assets/LectureLens App Design System - SVG/`).
+> - **TUYỆT ĐỐI KHÔNG THIẾT KẾ DÀN TRẢI KIỂU WEB DESKTOP!** Mọi thành phần (Header, Hero, Bento Card, Floating Island Tab Bar, Capsule Audio Player) đều phải nằm gọn trong khung điện thoại di động `max-w-[412px]`.
+> - **Khung hiển thị Mobile Container**: Trên màn hình Desktop lớn, toàn bộ ứng dụng phải được căn giữa bên trong khung điện thoại mô phỏng (`max-w-[412px]`, `rounded-[48px]`, `shadow-2xl`) kèm thanh `Home Indicator` (`128px × 4px`) ở chân trang. Trên thiết bị di động thật, ứng dụng hiển thị tràn viền 100% linh hoạt.
 
 ### Frontend Web (`frontend/`)
 - **Runtime & Bundler**: Node.js 20+, [Vite 8](https://vitejs.dev/)
@@ -54,6 +60,11 @@ Mọi mã nguồn giao diện được sinh ra trong thư mục `frontend/` bắ
    - **BẮT BUỘC** sử dụng bộ Icon chuẩn hóa tại `frontend/src/components/ui/icons/` (hoặc `frontend/src/assets/icons/`) và bộ Button viên thuốc tại `frontend/src/components/ui/button/`.
    - **TUYỆT ĐỐI KHÔNG TỰ Ý VẼ LẠI INLINE SVG** trong các component giao diện.
    - **TUYỆT ĐỐI KHÔNG DÙNG THƯ VIỆN BÊN NGOÀI TÙY TIỆN** (như `lucide-react`, `heroicons`,...) làm phá vỡ nét vẽ `1.75px` và phong cách Duotone Soft-Blob của Kitsune Soft. Chi tiết tra cứu tại `frontend/src/components/ui/icons/README.md`.
+7. **Quy Chuẩn Định Dạng Điện Thoại Di Động (Mobile Phone Format Invariant):**
+   - **Tỷ lệ chuẩn (Target Viewport)**: Chiều rộng tham chiếu là `390px` (chuẩn kích thước của toàn bộ 28 tệp SVG).
+   - **Khung vỏ di động (Mobile Container Shell)**: Khi chạy trên môi trường Desktop, ứng dụng luôn hiển thị bên trong khung điện thoại mô phỏng (`MobileContainer`: `max-w-[412px]`, bo tròn viền máy `rounded-[48px]`, bóng đổ nổi `shadow-2xl`) kèm thanh `Home Indicator` (`128px × 4px`, bo góc `2px`, màu `#1F1A21` độ mờ 20%) ở chân trang.
+   - **Vùng chạm ngón tay (Touch Targets)**: Tất cả nút bấm, thanh điều hướng nổi (Floating Island Tab Bar), và Capsule Audio Player phải được tối ưu cho ngón tay cái (Thumb Zone), chiều cao tối thiểu `44px` - `52px`.
+   - **Safe Areas**: Luôn chừa khoảng cách an toàn cho Status Bar (tai thỏ / Dynamic Island) ở đỉnh màn hình và Home Indicator ở đáy màn hình.
 
 ---
 

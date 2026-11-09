@@ -40,7 +40,7 @@ export function FloatingIslandTabBar() {
 
   return (
     <div className="fixed bottom-4 inset-x-0 z-40 px-4 pointer-events-none">
-      <div className="max-w-md mx-auto pointer-events-auto">
+      <div className="w-full max-w-[370px] mx-auto pointer-events-auto">
         <nav
           aria-label="Điều hướng chính"
           className="rounded-full miruku-glass-elevated border border-white/95 px-3 py-2 flex items-center justify-between shadow-2xl relative"

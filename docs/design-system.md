@@ -210,3 +210,24 @@ Toàn bộ 28 màn hình mẫu đã được đồng bộ hóa tên gọi và ch
 | **26** | **Ôn Tập** | `26 - Review - Session Complete Celebration` | Màn hình chúc mừng sau khi hoàn thành phiên ôn tập, cập nhật streak và số thẻ làm đúng |
 | **27** | **Hồ Sơ** | `27 - Profile - Student Stats & Activity` | Trang cá nhân sinh viên: Thống kê số giờ nghe giảng, thẻ đã thuộc, bản đồ nhiệt học tập (Activity Heatmap) |
 | **28** | **Cài Đặt** | `28 - Settings - App Preferences` | Cài đặt ứng dụng: Nhắc nhở học tập, tốc độ phát mặc định, ngôn ngữ ASR, quản lý bộ nhớ đệm và tài khoản |
+
+---
+
+## 8. 📱 Quy Chuẩn Kích Thước & Định Dạng Mobile App (Mobile Viewport & Device Format)
+
+> [!IMPORTANT]
+> **BẢN CHẤT PRODUCT: LECTURELENS LÀ ỨNG DỤNG DI ĐỘNG (MOBILE APPLICATION FORMAT)**
+> Tất cả các nhà thiết kế và AI Agents khi sinh code giao diện bắt buộc phải tuân theo format điện thoại di động:
+
+1. **Kích Thước Khung Di Động Chuẩn (Mobile Viewport Reference)**:
+   - Chiều rộng chuẩn: **`390px`** (iPhone 14/15/16).
+   - Chiều cao chuẩn: **`844px`** đến **`884px`** (khớp chính xác 1:1 với kích thước canvas của 28 tệp thiết kế SVG mẫu).
+   - Chiều rộng tối đa khung máy: **`max-w-[412px]`**.
+2. **Khung Vỏ Điện Thoại Mô Phỏng (Mobile Device Frame on Desktop)**:
+   - Khi chạy trên trình duyệt máy tính (Desktop/Laptop), ứng dụng bắt buộc được đặt trong `MobileContainer` căn giữa màn hình với nền giấy Washi ấm `#F3EAF1`, bo viền máy `sm:rounded-[48px]`, viền bezel `sm:border-[8px] sm:border-[#261333]/15`, bóng đổ nổi `sm:shadow-2xl`.
+   - Đỉnh máy có thanh trạng thái mô phỏng (`MobileStatusBar`: giờ `9:41`, Dynamic Island, vạch sóng & pin).
+   - Chân máy có thanh Home Indicator (`128px × 4px`, bo tròn `2px`, màu `#1F1A21` độ mờ 20%).
+3. **Hiển Thị Trên Thiết Bị Di Động Thật (Native Mobile Viewport)**:
+   - Trên thiết bị di động (màn hình < 640px), ứng dụng mở rộng tràn viền tự nhiên 100% viewport (`100dvh`), tận dụng `viewport-fit=cover` và vùng đệm an toàn (`safe-area-inset`).
+4. **Vùng Tương Tác Chạm (Thumb Zone & Touch Targets)**:
+   - Mọi nút bấm, tab điều hướng, chip lọc phải có chiều cao tối thiểu `44px` - `52px`, đạt tiêu chuẩn công thái học điều khiển một tay (One-Handed Mobile Ergonomics).
