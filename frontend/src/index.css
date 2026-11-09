@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+@theme {
+  --color-washi-cream: #FFF7FD;
+  --color-kitsune-coral: #F47F72;
+  --color-kitsune-coral-dark: #A03F36;
+  --color-sakura-pink: #F5C3C9;
+  --color-mist-sky: #A9D4E8;
+  --color-mochi-yellow: #FFE27A;
+  --color-matcha-mint: #BEE1D0;
+  --color-plum-ink: #261333;
+  --color-plum-ink-muted: #56423F;
+  --color-plum-ink-subtle: rgba(86, 66, 63, 0.5);
+
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --radius-squircle: 28px;
+  --radius-pill: 9999px;
+}
+
+/* Base Body Styles */
+body {
+  background-color: var(--color-washi-cream);
+  color: var(--color-plum-ink);
+  font-family: var(--font-sans);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hiệu ứng tương tác Mochi Tactile Press */
+.mochi-press {
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease;
+}
+.mochi-press:active {
+  transform: scale(0.97);
+}
+
+/* Lớp kính sữa Miruku Glass - Level 1 (Bento Cards) */
+.miruku-glass {
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 24px -4px rgba(38, 19, 51, 0.06), 0 2px 6px -1px rgba(38, 19, 51, 0.03);
+}
+
+/* Lớp kính sữa Miruku Glass - Level 2 (Floating Tab Island & Bottom Sheets) */
+.miruku-glass-elevated {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 14px 36px -6px rgba(38, 19, 51, 0.10), 0 4px 12px -2px rgba(38, 19, 51, 0.05);
+}
+
+/* Plum Ambient Shadow - Level 3 (Primary Modals) */
+.plum-shadow-modal {
+  box-shadow: 0 20px 48px -8px rgba(38, 19, 51, 0.14), 0 8px 16px -2px rgba(38, 19, 51, 0.06);
+}
