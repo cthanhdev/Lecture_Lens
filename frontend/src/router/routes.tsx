@@ -5,6 +5,12 @@ import { FullscreenLayout } from '../layouts/FullscreenLayout.tsx'
 import { RouteSlot } from './RouteSlot.tsx'
 import { useEffect } from 'react'
 import { useAppNavigation } from './useAppNavigation.ts'
+import { SplashView } from '../modules/splash/index.ts'
+import {
+  Step1AudioLectures,
+  Step2EffortlessClarity,
+  Step3ActiveRecall,
+} from '../modules/onboarding/index.ts'
 
 /**
  * RouteSlot có kích hoạt Route Guard để kiểm tra tính năng chặn thoát khi đang ghi âm
@@ -69,56 +75,14 @@ function GuardedFlashcardSlot() {
 export function AppRoutes() {
   return (
     <Routes>
-      {/* 1. KHỞI ĐỘNG & XÁC THỰC (AuthLayout) */}
+      {/* 1. KHỞI ĐỘNG & ONBOARDING (Fullscreen Edge-to-Edge) */}
+      <Route path="/" element={<SplashView />} />
+      <Route path="/onboarding/step-1" element={<Step1AudioLectures />} />
+      <Route path="/onboarding/step-2" element={<Step2EffortlessClarity />} />
+      <Route path="/onboarding/step-3" element={<Step3ActiveRecall />} />
+
+      {/* 2. XÁC THỰC (AuthLayout) */}
       <Route element={<AuthLayout />}>
-        <Route
-          path="/"
-          element={
-            <RouteSlot
-              id="S01"
-              number="01"
-              name="Splash - App Launch"
-              category="Bootstrap Entry"
-              description="Điểm khởi chạy ứng dụng ban đầu. Tự động kiểm tra phiên đăng nhập và onboarding."
-            />
-          }
-        />
-        <Route
-          path="/onboarding/step-1"
-          element={
-            <RouteSlot
-              id="S02"
-              number="02"
-              name="Onboarding - Step 1 (Record or Upload)"
-              category="Linear Wizard"
-              description="Giới thiệu tính năng ghi âm và trích xuất ASR tiếng Việt với PhoWhisper."
-            />
-          }
-        />
-        <Route
-          path="/onboarding/step-2"
-          element={
-            <RouteSlot
-              id="S03"
-              number="03"
-              name="Onboarding - Step 2 (Find What Matters)"
-              category="Linear Wizard"
-              description="Giới thiệu tính năng tìm kiếm ngữ nghĩa 2-Stage Neural RAG kèm mốc thời gian [MM:SS]."
-            />
-          }
-        />
-        <Route
-          path="/onboarding/step-3"
-          element={
-            <RouteSlot
-              id="S04"
-              number="04"
-              name="Onboarding - Step 3 (Remember It)"
-              category="Linear Wizard"
-              description="Giới thiệu phương pháp ghi chép Cornell và thẻ học lặp lại ngắt quãng Spaced Repetition."
-            />
-          }
-        />
         <Route
           path="/auth/sign-in"
           element={
