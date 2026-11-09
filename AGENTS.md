@@ -50,6 +50,10 @@ Mọi mã nguồn giao diện được sinh ra trong thư mục `frontend/` bắ
    - Các phần tử tương tác (button, card) khi nhấn (`active` state) phải thu nhỏ nhẹ `scale(0.97)` với thời gian chuyển động `0.15s`.
 5. **Đối chiếu màn hình mẫu:**
    - Luôn đối chiếu với **28 tệp màn hình mẫu** tại `frontend/src/assets/LectureLens App Design System - SVG/` và `frontend/src/assets/LectureLens App Design System - PNG/` trước khi xây dựng bất kỳ màn hình hoặc component mới nào.
+6. **Quy Chuẩn Biểu Tượng & Nút Bấm Độc Quyền (Icons & UI Atoms Invariant):**
+   - **BẮT BUỘC** sử dụng bộ Icon chuẩn hóa tại `frontend/src/components/ui/icons/` (hoặc `frontend/src/assets/icons/`) và bộ Button viên thuốc tại `frontend/src/components/ui/button/`.
+   - **TUYỆT ĐỐI KHÔNG TỰ Ý VẼ LẠI INLINE SVG** trong các component giao diện.
+   - **TUYỆT ĐỐI KHÔNG DÙNG THƯ VIỆN BÊN NGOÀI TÙY TIỆN** (như `lucide-react`, `heroicons`,...) làm phá vỡ nét vẽ `1.75px` và phong cách Duotone Soft-Blob của Kitsune Soft. Chi tiết tra cứu tại `frontend/src/components/ui/icons/README.md`.
 
 ---
 

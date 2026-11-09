@@ -165,7 +165,9 @@ Mọi phần tử có thể tương tác (Buttons, Cards, Chips) đều tích h�
 
 ### 6.4. Biểu Tượng Đồ Họa Hai Tông (Duotone Soft-Blob Iconography)
 - Nét vẽ chính: Vector Outline sắc nét độ dày **1.75px** bằng màu Mực mận chín (`#261333`).
-- Tấm lót phía sau: Hình đốm pastel hữu cơ mềm mại (Sakura Pink, Mist Sky, Mochi Yellow hoặc Matcha Mint) thu nhỏ tỷ lệ 65%, đặt lệch góc 3px tạo chiều sâu thị giác ấm áp.
+- Tấm lót phía sau: Hình đốm pastel hữu cơ mềm mại (Sakura Pink, Mist Sky, Mochi Yellow hoặc Matcha Mint) thu nhỏ tỷ lệ 68%, đặt lệch góc 2-3px tạo chiều sâu thị giác ấm áp.
+- **Thư Viện Chuẩn Hóa**: Đã được số hóa 100% thành **74 biểu tượng vector** tại `frontend/src/assets/icons/` và gói React Component tại `frontend/src/components/ui/icons/`.
+- **Nguyên Tắc Bắt Buộc**: Bắt buộc mọi màn hình và component phải import từ `@/components/ui/icons`, tuyệt đối không vẽ lại inline SVG hay kéo icon bên ngoài vào. Xem tài liệu hướng dẫn và bảng tra cứu tại [`frontend/src/components/ui/icons/README.md`](../frontend/src/components/ui/icons/README.md).
 
 ### 6.5. Thanh Điều Hướng Đảo Nổi (Floating Island Tab Bar)
 - Thanh capsule bo tròn hoàn hảo treo lơ lửng cách đáy màn hình `16px`.

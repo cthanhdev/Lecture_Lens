@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+  <!-- LectureLens Kitsune Soft Icon: Linh vật Cáo Kitsune (Kitsune Fox) -->
+  <path d="M4 8l3-6 4 4 1-2 1 2 4-4 3 6-2 10a8 8 0 0 1-14 0L4 8z" fill="#FFFFFF" />
+  <path d="M4 8l3-6 2 2-3 4-2 0z" fill="#F47F72" />
+  <path d="M20 8l-3-6-2 2 3 4 2 0z" fill="#F47F72" />
+  <path d="M11 15h2l-1 1-1-1z" fill="#261333" />
+  <path d="M8 12h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M16 12h.01" fill="none" stroke="#261333" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
