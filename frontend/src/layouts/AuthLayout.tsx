@@ -1,14 +1,14 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import { FloatingPetalsCanvas } from '../modules/auth/components/3d/FloatingPetalsCanvas.tsx'
+import { FloatingPetals2D } from '../modules/auth/components/FloatingPetals2D.tsx'
 
 export function AuthLayout() {
   const location = useLocation()
 
   return (
     <div className="min-h-screen bg-[#FFF7FD] text-[#261333] flex flex-col justify-center items-center px-2 py-4 sm:py-8 relative overflow-x-hidden selection:bg-[#F5C3C9] selection:text-[#261333]">
-      {/* 1. Tầng Three.js 3D Cánh hoa rơi tương tác (Canvas z-0) */}
-      <FloatingPetalsCanvas />
+      {/* 1. Cánh hoa anh đào vector 2D mềm mại */}
+      <FloatingPetals2D />
 
       {/* 2. Soft Blobs tĩnh bổ trợ ánh sáng */}
       <div className="absolute top-8 -left-12 w-80 h-80 rounded-full bg-[#FDCBD1]/35 blur-3xl pointer-events-none" />

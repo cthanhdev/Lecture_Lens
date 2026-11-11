@@ -6,7 +6,7 @@ import { FormInputPill } from '../components/FormInputPill.tsx'
 import { PasswordStrengthBar } from '../components/PasswordStrengthBar.tsx'
 import { KawaiiCheckbox } from '../components/KawaiiCheckbox.tsx'
 import { SocialLoginGroup } from '../components/SocialLoginGroup.tsx'
-import { MascotAvatar3D } from '../components/3d/MascotAvatar3D.tsx'
+import { MascotAvatar } from '../components/MascotAvatar.tsx'
 import { BackendStatusBanner } from '../components/BackendStatusBanner.tsx'
 import { AuthSkeletonView } from '../components/AuthSkeletonView.tsx'
 import { useBackendHealth } from '../infrastructure/networkMonitor.ts'
@@ -25,7 +25,6 @@ export function CreateAccountPage() {
   const [email, setEmail] = useState('minh.tran@university.edu')
   const [password, setPassword] = useState('KitsuneSmart2025')
   const [agreeTerms, setAgreeTerms] = useState(true)
-  const [isTypingPassword, setIsTypingPassword] = useState(false)
 
   const [nameError, setNameError] = useState<string | undefined>()
   const [emailError, setEmailError] = useState<string | undefined>()
@@ -146,8 +145,8 @@ export function CreateAccountPage() {
         <AuthSkeletonView mode="register" />
       ) : (
         <>
-          {/* 3. Header: Avatar 3D & Tiêu đề */}
-          <MascotAvatar3D isTypingPassword={isTypingPassword} />
+          {/* 3. Header: Avatar Cáo Kitsune & Tiêu đề */}
+          <MascotAvatar />
 
           <h2 className="text-2xl font-extrabold text-[#261333] tracking-tight mb-1 text-center">
             Create your account
@@ -200,8 +199,6 @@ export function CreateAccountPage() {
                     setPassword(e.target.value)
                     if (passwordError) setPasswordError(undefined)
                   }}
-                  onFocus={() => setIsTypingPassword(true)}
-                  onBlur={() => setIsTypingPassword(false)}
                   error={passwordError}
                 />
 

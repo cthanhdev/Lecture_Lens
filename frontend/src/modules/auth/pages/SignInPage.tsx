@@ -4,7 +4,7 @@ import { Icon } from '../../../components/ui/icons/Icon.tsx'
 import { Button } from '../../../components/ui/button/Button.tsx'
 import { FormInputPill } from '../components/FormInputPill.tsx'
 import { SocialLoginGroup } from '../components/SocialLoginGroup.tsx'
-import { MascotAvatar3D } from '../components/3d/MascotAvatar3D.tsx'
+import { MascotAvatar } from '../components/MascotAvatar.tsx'
 import { BackendStatusBanner } from '../components/BackendStatusBanner.tsx'
 import { AuthSkeletonView } from '../components/AuthSkeletonView.tsx'
 import { useBackendHealth } from '../infrastructure/networkMonitor.ts'
@@ -16,7 +16,6 @@ export function SignInPage() {
   const nav = useAppNavigation()
   const [email, setEmail] = useState('minh.tran@university.edu')
   const [password, setPassword] = useState('KitsuneSecret99')
-  const [isTypingPassword, setIsTypingPassword] = useState(false)
   const [emailError, setEmailError] = useState<string | undefined>()
   const [passwordError, setPasswordError] = useState<string | undefined>()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -107,8 +106,8 @@ export function SignInPage() {
         <AuthSkeletonView mode="signin" />
       ) : (
         <>
-          {/* 3. Header: Avatar 3D & Tiêu đề */}
-          <MascotAvatar3D isTypingPassword={isTypingPassword} />
+          {/* 3. Header: Avatar Cáo Kitsune & Tiêu đề */}
+          <MascotAvatar />
 
           <h2 className="text-2xl font-extrabold text-[#261333] tracking-tight mb-1 text-center">
             Welcome back
@@ -147,8 +146,6 @@ export function SignInPage() {
                     setPassword(e.target.value)
                     if (passwordError) setPasswordError(undefined)
                   }}
-                  onFocus={() => setIsTypingPassword(true)}
-                  onBlur={() => setIsTypingPassword(false)}
                   error={passwordError}
                 />
 
