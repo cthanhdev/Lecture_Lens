@@ -166,19 +166,19 @@ Mọi phần tử có thể tương tác (Buttons, Cards, Chips) đều tích h�
 ### 6.4. Biểu Tượng Đồ Họa Hai Tông (Duotone Soft-Blob Iconography)
 - Nét vẽ chính: Vector Outline sắc nét độ dày **1.75px** bằng màu Mực mận chín (`#261333`).
 - Tấm lót phía sau: Hình đốm pastel hữu cơ mềm mại (Sakura Pink, Mist Sky, Mochi Yellow hoặc Matcha Mint) thu nhỏ tỷ lệ 68%, đặt lệch góc 2-3px tạo chiều sâu thị giác ấm áp.
-- **Thư Viện Chuẩn Hóa**: Đã được số hóa 100% thành **74 biểu tượng vector** tại `frontend/src/assets/icons/` và gói React Component tại `frontend/src/components/ui/icons/`.
-- **Nguyên Tắc Bắt Buộc**: Bắt buộc mọi màn hình và component phải import từ `@/components/ui/icons`, tuyệt đối không vẽ lại inline SVG hay kéo icon bên ngoài vào. Xem tài liệu hướng dẫn và bảng tra cứu tại [`frontend/src/components/ui/icons/README.md`](../frontend/src/components/ui/icons/README.md).
+- **Thư Viện Chuẩn Hóa**: Đã được số hóa 100% thành **74 biểu tượng vector** tại `docs/design-assets/icons/` và gói React Native SVG Component tại `mobile/src/components/ui/icons/`.
+- **Nguyên Tắc Bắt Buộc**: Bắt buộc mọi màn hình và component phải import từ `mobile/src/components/ui/icons/`, tuyệt đối không vẽ lại inline SVG hay kéo icon bên ngoài vào. Xem tài liệu hướng dẫn và bảng tra cứu tại [`mobile/src/components/ui/icons/README.md`](../mobile/src/components/ui/icons/README.md).
 
 ### 6.5. Thanh Điều Hướng Đảo Nổi (Floating Island Tab Bar)
 - Thanh capsule bo tròn hoàn hảo treo lơ lửng cách đáy màn hình `16px`.
-- Nền: Kính sữa trong suốt `rgba(255, 255, 255, 0.85)` với blur `20px` và bóng đổ mận ấm.
+- Nền: Kính sữa trong suốt `rgba(255, 255, 255, 0.85)` với `expo-blur` và bóng đổ mận ấm.
 - Con trỏ trượt (**Sliding Pill Indicator**): Trượt mượt mà phía sau tab đang kích hoạt với màu san hô trong suốt `rgba(244, 127, 114, 0.15)`.
 
 ---
 
 ## 7. 📱 Danh Mục 28 Màn Hình Mẫu Chuẩn Hóa (Screen Assets Inventory)
 
-Toàn bộ 28 màn hình mẫu đã được đồng bộ hóa tên gọi và chức năng chuẩn xác 1:1 giữa hai định dạng Vector (`frontend/src/assets/LectureLens App Design System - SVG/`) và Raster (`frontend/src/assets/LectureLens App Design System - PNG/`):
+Toàn bộ 28 màn hình mẫu đã được đồng bộ hóa tên gọi và chức năng chuẩn xác 1:1 giữa hai định dạng Vector (`docs/design-assets/screens/svg/`) và Raster (`docs/design-assets/screens/png/`):
 
 | STT | Nhóm Nghiệp Vụ | Tên Tệp Chuẩn Hóa (`.svg` / `.png`) | Chức Vụ & Ý Nghĩa Thiết Kế |
 | :---: | :--- | :--- | :--- |
@@ -213,21 +213,20 @@ Toàn bộ 28 màn hình mẫu đã được đồng bộ hóa tên gọi và ch
 
 ---
 
-## 8. 📱 Quy Chuẩn Kích Thước & Định Dạng Mobile App (Mobile Viewport & Device Format)
+## 8. 📱 Quy Chuẩn Định Dạng Ứng Dụng Di Động Native (Expo SDK 58 Architecture)
 
 > [!IMPORTANT]
-> **BẢN CHẤT PRODUCT: LECTURELENS LÀ ỨNG DỤNG DI ĐỘNG (MOBILE APPLICATION FORMAT)**
+> **BẢN CHẤT PRODUCT: LECTURELENS LÀ ỨNG DỤNG DI ĐỘNG NATIVE (EXPO SDK 58 / REACT NATIVE 0.88+)**
 > Tất cả các nhà thiết kế và AI Agents khi sinh code giao diện bắt buộc phải tuân theo format điện thoại di động:
 
 1. **Kích Thước Khung Di Động Chuẩn (Mobile Viewport Reference)**:
    - Chiều rộng chuẩn: **`390px`** (iPhone 14/15/16).
    - Chiều cao chuẩn: **`844px`** đến **`884px`** (khớp chính xác 1:1 với kích thước canvas của 28 tệp thiết kế SVG mẫu).
-   - Chiều rộng tối đa khung máy: **`max-w-[412px]`**.
-2. **Khung Vỏ Điện Thoại Mô Phỏng (Mobile Device Frame on Desktop)**:
-   - Khi chạy trên trình duyệt máy tính (Desktop/Laptop), ứng dụng bắt buộc được đặt trong `MobileContainer` căn giữa màn hình với nền giấy Washi ấm `#F3EAF1`, bo viền máy `sm:rounded-[48px]`, viền bezel `sm:border-[8px] sm:border-[#261333]/15`, bóng đổ nổi `sm:shadow-2xl`.
-   - Đỉnh máy có thanh trạng thái mô phỏng (`MobileStatusBar`: giờ `9:41`, Dynamic Island, vạch sóng & pin).
-   - Chân máy có thanh Home Indicator (`128px × 4px`, bo tròn `2px`, màu `#1F1A21` độ mờ 20%).
-3. **Hiển Thị Trên Thiết Bị Di Động Thật (Native Mobile Viewport)**:
-   - Trên thiết bị di động (màn hình < 640px), ứng dụng mở rộng tràn viền tự nhiên 100% viewport (`100dvh`), tận dụng `viewport-fit=cover` và vùng đệm an toàn (`safe-area-inset`).
+2. **Native Safe Areas & Status Bar**:
+   - Sử dụng `react-native-safe-area-context` để tự động xử lý khoảng cách an toàn cho notch / Dynamic Island và thanh Home Indicator của hệ điều hành.
+   - `<StatusBar style="dark" />` hiển thị hài hòa trên nền canvas Washi Cream `#FFF7FD`.
+3. **Đồ Họa & Chuyển Động Native**:
+   - Động cơ đồ họa `@shopify/react-native-skia` chạy ở tần số 60–120 FPS để thể hiện linh vật Cáo Kitsune và hiệu ứng cánh hoa anh đào rơi (`FloatingPetals2D`).
+   - Phản hồi xúc giác `expo-haptics` kết hợp `react-native-reanimated` cho hiệu ứng nén Mochi (`scale 0.97` / 150ms).
 4. **Vùng Tương Tác Chạm (Thumb Zone & Touch Targets)**:
    - Mọi nút bấm, tab điều hướng, chip lọc phải có chiều cao tối thiểu `44px` - `52px`, đạt tiêu chuẩn công thái học điều khiển một tay (One-Handed Mobile Ergonomics).

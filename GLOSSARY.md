@@ -88,6 +88,12 @@ Trình phát bài giảng dạng con nhộng ghim cố định đáy màn hình,
 **Floating Island Tab Bar**:
 Thanh điều hướng capsule lơ lửng cách đáy màn hình 16px với nền kính sữa Miruku Glass và con trỏ trượt san hô mềm.
 
+**Shopify Skia 2D Canvas**:
+Động cơ đồ họa 2D vector hiệu năng cao trên thiết bị di động (60-120fps) dùng để dựng Linh vật Cáo Kitsune và hiệu ứng cánh hoa rơi `FloatingPetals2D` mượt mà, thay thế cho giải pháp Three.js / WebGL nặng nề.
+
+**Expo SDK 58 Architecture**:
+Nền tảng ứng dụng di động React Native New Architecture chính thức của LectureLens, tích hợp điều hướng tệp tin `expo-router`, xử lý âm thanh `expo-audio`, phản hồi xúc giác `expo-haptics` và lưu trữ cục bộ qua `KeyValueStorage` seam.
+
 ---
 
 ## 3. 📐 Thuật Ngữ Thiết Kế Mã Nguồn (Matt Pocock Codebase Design)
