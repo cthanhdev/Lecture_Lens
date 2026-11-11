@@ -11,6 +11,8 @@ import {
   Step2EffortlessClarity,
   Step3ActiveRecall,
 } from '../modules/onboarding/index.ts'
+import { SignInPage } from '../modules/auth/pages/SignInPage.tsx'
+import { CreateAccountPage } from '../modules/auth/pages/CreateAccountPage.tsx'
 
 /**
  * RouteSlot có kích hoạt Route Guard để kiểm tra tính năng chặn thoát khi đang ghi âm
@@ -83,30 +85,8 @@ export function AppRoutes() {
 
       {/* 2. XÁC THỰC (AuthLayout) */}
       <Route element={<AuthLayout />}>
-        <Route
-          path="/auth/sign-in"
-          element={
-            <RouteSlot
-              id="S05"
-              number="05"
-              name="Auth - Sign In"
-              category="Authentication"
-              description="Đăng nhập tài khoản sinh viên với email và mật khẩu."
-            />
-          }
-        />
-        <Route
-          path="/auth/create-account"
-          element={
-            <RouteSlot
-              id="S06"
-              number="06"
-              name="Auth - Create Account"
-              category="Authentication"
-              description="Tạo tài khoản học tập LectureLens mới."
-            />
-          }
-        />
+        <Route path="/auth/sign-in" element={<SignInPage />} />
+        <Route path="/auth/create-account" element={<CreateAccountPage />} />
       </Route>
 
       {/* 2. CÁC MÀN HÌNH CHÍNH & KHÔNG GIAN BÀI GIẢNG (AppLayout - Có Floating Tab Bar & Capsule Player) */}
