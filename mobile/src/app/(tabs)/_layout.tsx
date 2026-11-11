@@ -3,6 +3,7 @@ import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Tabs } from 'expo-router'
 import { FloatingIslandTabBar } from '../../components/navigation/FloatingIslandTabBar'
+import { CapsuleAudioPlayer } from '../../modules/audio/CapsuleAudioPlayer'
 import { KITSUNE_COLORS } from '../../theme/tokens'
 
 export default function TabsLayout() {
@@ -21,6 +22,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="review" />
         <Tabs.Screen name="profile" />
       </Tabs>
+      <CapsuleAudioPlayer />
     </View>
   )
 }
