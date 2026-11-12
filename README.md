@@ -1,24 +1,24 @@
 <div align="center">
 
-<img src="./frontend/src/assets/logo-LectureLens.png" alt="LectureLens Logo" width="130" height="130" style="border-radius: 28px; box-shadow: 0 12px 32px rgba(38, 19, 51, 0.12);" />
+<img src="./docs/design-assets/branding/logo-LectureLens.png" alt="LectureLens Logo" width="130" height="130" style="border-radius: 28px; box-shadow: 0 12px 32px rgba(38, 19, 51, 0.12);" />
 
 # 🦉 LectureLens
 
 ### Nền Tảng Học Tập Thông Minh & Trợ Lý Bài Giảng AI Tiếng Việt
-**Biến đổi bản ghi âm bài giảng thành sổ tay tri thức tương tác — Kiến trúc On-Premise 2-Stage Neural RAG bảo mật tuyệt đối.**
+**Biến đổi bản ghi âm bài giảng thành sổ tay tri thức tương tác — Kiến trúc Mobile Native & On-Premise 2-Stage Neural RAG bảo mật tuyệt đối.**
 
 <br/>
 
-[![React 19](https://img.shields.io/badge/React-19.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![Vite 8](https://img.shields.io/badge/Vite-8.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![TypeScript 5.8](https://img.shields.io/badge/TypeScript-5.8%20(Strict)-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind%20CSS-v4.3-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Three.js](https://img.shields.io/badge/Three.js-R3F%20%7C%20Drei-000000?style=for-the-badge&logo=three.js&logoColor=white)](https://threejs.org/)
+[![Expo SDK 58](https://img.shields.io/badge/Expo-SDK%2058-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
+[![React Native 0.88](https://img.shields.io/badge/React%20Native-0.88.1%20(New%20Arch)-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
+[![TypeScript 5.8 Strict](https://img.shields.io/badge/TypeScript-5.8%20(Strict)-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Shopify Skia](https://img.shields.io/badge/Shopify%20Skia-2D%20Canvas%20120FPS-FF5722?style=for-the-badge)](https://shopify.github.io/react-native-skia/)
 [![Spring Boot 3.3](https://img.shields.io/badge/Spring%20Boot-3.3.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PostgreSQL 16 + pgvector](https://img.shields.io/badge/PostgreSQL%2016-pgvector%200.7+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 [![Ollama Gemma 4](https://img.shields.io/badge/Ollama-Gemma%204%20E4B-111111?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.ai/)
-[![oxlint](https://img.shields.io/badge/oxlint-Siêu%20Tốc-FF6F00?style=for-the-badge)](https://oxc.rs/)
+[![Mobile Tests](https://img.shields.io/badge/Mobile%20Tests-31%20passed-brightgreen?style=for-the-badge)](./mobile)
+[![Backend Tests](https://img.shields.io/badge/Backend%20Tests-27%20passed-brightgreen?style=for-the-badge)](./backend)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge)](./LICENSE)
 
 <br/>
@@ -33,12 +33,13 @@
 
 Trong các giảng đường đại học và môi trường nghiên cứu chuyên sâu, sinh viên thường xuyên đối mặt với **áp lực kép**: vừa phải tập trung nghe giảng viên phân tích các khái niệm trừu tượng, vừa phải cặm cụi ghi chép tài liệu. Việc nghe lại toàn bộ bản ghi âm bài giảng dài từ 2 đến 3 tiếng là một sự lãng phí thời gian khổng lồ trong mùa thi cử.
 
-**LectureLens** ra đời như một **Bàn Học Điện Tử Thông Minh (Smart Study Hub)** được may đo riêng cho người học Việt Nam:
-1. **Thu âm & Chuyển đổi chính xác cao:** Sử dụng mô hình nhận dạng giọng nói tiếng Việt chuyên biệt (`PhoWhisper-base`), tự động tách câu và gắn mốc thời gian (*Timestamps*) theo định dạng `[MM:SS]`.
-2. **Cấu trúc hóa tri thức tự động:** Chuyển đổi nội dung bài giảng thành hệ thống ghi chép khoa học chuẩn **Cornell Notes** (Summary tổng quan, Cues từ khóa trọng tâm, và Notes chi tiết).
-3. **Truy vấn ngữ nghĩa 2 giai đoạn (2-Stage Neural RAG):** Cho phép người học đặt câu hỏi trực tiếp trên toàn bộ kho bài giảng, nhận câu trả lời súc tích kèm mốc thời gian dẫn nguồn chính xác để bấm vào nghe lại tức thì.
-4. **Bộ công cụ ôn tập cá nhân hóa:** Tự động trích xuất thẻ học **Kitsune Flashcard** hai mặt (Active Recall) liên kết trực tiếp với đoạn phát lại âm thanh gốc và bài kiểm tra trắc nghiệm tương tác.
-5. **Linh vật Cáo Kitsune 3D đồng hành:** Tạo dựng không gian học tập thư thái, xua tan áp lực thi cử với linh vật Cáo Kitsune Pixel Art tương tác trên nền tảng Canvas 3D.
+**LectureLens** ra đời như một **Bàn Học Điện Tử Di Động Thông Minh (Smart Study Hub)** được may đo riêng cho người học Việt Nam:
+1. **Ứng dụng di động Native 100% ([ADR 0003](./docs/adr/0003-native-mobile-architecture-expo-sdk58.md)):** Xây dựng trên **Expo SDK 58** (React Native 0.88.1 New Architecture), tối ưu hoàn hảo cho ngón tay cái (**Thumb Zone**) trên khung nhìn chuẩn **`390px`**, tôn trọng Native Safe Areas và vận hành trình phát âm thanh liên tục trong nền (`expo-audio`).
+2. **Thu âm & Chuyển đổi chính xác cao ([ADR 0002](./docs/adr/0002-audio-ingest-storage-and-transcript.md)):** Sử dụng mô hình nhận dạng giọng nói tiếng Việt chuyên biệt (`PhoWhisper-base` / `PhoWhisper-medium`), tự động tách câu và gắn mốc thời gian (*Timestamps*) theo định dạng `[MM:SS]`.
+3. **Cấu trúc hóa tri thức tự động:** Chuyển đổi nội dung bài giảng thành hệ thống ghi chép khoa học chuẩn **Cornell Notes** (Summary tổng quan, Cues từ khóa trọng tâm, và Notes chi tiết).
+4. **Truy vấn ngữ nghĩa 2 giai đoạn (2-Stage Neural RAG):** Cho phép người học đặt câu hỏi trực tiếp trên toàn bộ kho bài giảng, nhận câu trả lời súc tích kèm mốc thời gian dẫn nguồn chính xác để bấm vào nghe lại tức thì.
+5. **Bộ công cụ ôn tập cá nhân hóa:** Tự động trích xuất thẻ học **Kitsune Flashcard** hai mặt (Active Recall & Spaced Repetition) liên kết trực tiếp với đoạn phát lại âm thanh gốc.
+6. **Linh vật Cáo Kitsune Skia 2D Canvas:** Người bạn đồng hành AI được thể hiện bằng Pixel Art Nhật Bản trên nền tảng **Shopify Skia 2D Canvas** (`FloatingPetals2D` & `KitsuneMascotCanvas`), đạt tần số 60–120 FPS mượt mà và tiết kiệm pin.
 
 > [!IMPORTANT]
 > **Triết lý Bất Biến — Privacy-First & Zero Cloud Leakage ([ADR 0001](./docs/adr/0001-privacy-first-local-ai-architecture.md)):**  
@@ -53,7 +54,7 @@ Trong các giảng đường đại học và môi trường nghiên cứu chuy�
                        🎙️ BÀI GIẢNG ÂM THANH (AUDIO INGEST)
                                       │
                                       ▼
-               ⚡ NHẬN DẠNG TIẾNG NÓI TIẾNG VIỆT (PhoWhisper-base)
+               ⚡ NHẬN DẠNG TIẾNG NÓI TIẾNG VIỆT (PhoWhisper)
                      (Tự động gán mốc thời gian [MM:SS])
                                       │
                                       ▼
@@ -66,12 +67,12 @@ Trong các giảng đường đại học và môi trường nghiên cứu chuy�
      • 3-Stream Hybrid Search (RRF)            • Ghi chép khoa học Cornell Notes
      • Cross-Encoder (BGE-Reranker-v2-m3)      • Kitsune Flashcard (Active Recall)
      • Ollama Gemma 4 E4B (Grounded)           • Lặp lại ngắt quãng Spaced Repetition
-     • Trích dẫn mốc thời gian [MM:SS]         • Trợ lý Cáo Kitsune tương tác 3D
+     • Trích dẫn mốc thời gian [MM:SS]         • Linh vật Cáo Kitsune Skia 2D Canvas
 ```
 
 ### 2.1. 🎙️ Nhận Dạng Giọng Nói Chuyên Biệt Cho Tiếng Việt (Vietnamese ASR)
-- Ứng dụng mô hình **PhoWhisper-base** được huấn luyện tối ưu cho ngữ điệu học thuật, thuật ngữ chuyên ngành và các phương ngữ địa phương Việt Nam.
-- Gắn timestamp `[MM:SS]` chính xác đến từng câu nói. Khi bấm vào bất kỳ dòng văn bản nào trên giao diện, trình phát âm thanh sẽ tự động nhảy đến đúng thời điểm giảng viên phát biểu.
+- Ứng dụng mô hình **PhoWhisper** (`phowhisper-base` / `phowhisper-medium`) được huấn luyện tối ưu cho ngữ điệu học thuật, thuật ngữ chuyên ngành và các phương ngữ địa phương Việt Nam.
+- Gán timestamp `[MM:SS]` chính xác đến từng câu nói. Khi bấm vào bất kỳ dòng văn bản nào trên giao diện, trình phát âm thanh sẽ tự động nhảy đến đúng thời điểm giảng viên phát biểu.
 
 ### 2.2. 🔍 Truy Vấn Ngữ Nghĩa Hai Giai Đoạn (2-Stage Neural RAG)
 - **Giai đoạn 1 — Candidate Retrieval:** Truy vấn lai 3 luồng đồng thời (**Dense HNSW Vector** + **Full-Text Search TSVECTOR** + **Trigram pg_trgm Fuzzy**) được hợp nhất bằng thuật toán **Reciprocal Rank Fusion (RRF)** để trích xuất nhanh Top-25 phân đoạn tiềm năng.
@@ -80,75 +81,81 @@ Trong các giảng đường đại học và môi trường nghiên cứu chuy�
 
 ### 2.3. 🗂️ Bộ Công Cụ Học Tập Thông Minh (Smart Stationery)
 - **Cấu Trúc Cornell Notes:** Bố cục 3 phần khoa học gồm Summary (khái quát nhanh), Cues (thuật ngữ trọng tâm, gợi ý câu hỏi) và Notes (nội dung bài giảng chi tiết).
-- **Kitsune Flashcard (Active Recall & Spaced Repetition):** Thẻ học lật 3D hai mặt (Front: Câu hỏi kích thích tư duy; Back: Lời giải thích, đánh giá mức độ ghi nhớ và lối tắt phát lại đúng đoạn âm thanh bài giảng).
-- **Capsule Audio Player:** Trình phát bài giảng dạng con nhộng ghim cố định ở đáy màn hình, hỗ trợ phát liên tục không ngắt quãng, điều chỉnh đa tốc độ (`0.75x` đến `2.0x`) và tua nhanh/chậm 10 giây.
+- **Kitsune Flashcard (Active Recall & Spaced Repetition):** Thẻ học lật hai mặt (Front: Câu hỏi kích thích tư duy; Back: Lời giải thích, đánh giá mức độ ghi nhớ và lối tắt phát lại đúng đoạn âm thanh bài giảng).
+- **Capsule Audio Player:** Trình phát bài giảng dạng con nhộng ghim cố định ở đáy màn hình, hỗ trợ phát ngầm liên tục qua `expo-audio`, điều chỉnh đa tốc độ (`0.75x` đến `2.0x`) và tua nhanh/chậm 10 giây.
+- **Floating Island Tab Bar:** Thanh điều hướng 5 đảo nổi cách đáy màn hình 16px với nền kính sữa Miruku Glass và con trỏ trượt san hô mềm.
 
-### 2.4. 🦊 Linh Vật Cáo Kitsune 3D Tương Tác (Kitsune Fox Companion)
-- Linh vật Cáo trắng Kitsune Pixel Art được tích hợp trong không gian 3D tương tác (`Three.js` + `@react-three/fiber` + `@react-three/drei`), mang lại trải nghiệm học tập ấm áp, trực quan và tràn đầy năng lượng tích cực.
+### 2.4. 🦊 Linh Vật Cáo Kitsune Skia 2D Canvas (Kitsune Fox Companion)
+- Linh vật Cáo trắng Kitsune Pixel Art được dựng bằng **Shopify Skia 2D Vector Canvas** (`@shopify/react-native-skia`), kết hợp hiệu ứng cánh hoa anh đào rơi (`FloatingPetals2D`), đem lại trải nghiệm học tập ấm áp, thanh bình ở tần số 60–120 FPS.
 
 ---
 
 ## 🌸 3. Ngôn Ngữ Thiết Kế: Kitsune Soft (Design System)
 
-Giao diện LectureLens được xây dựng dựa trên hệ thống thiết kế độc quyền **Kitsune Soft** (*"Kawaii-Calm" Japanese Soft-Minimalism*) — lấy cảm hứng từ bàn học tối giản, ấm cúng của sinh viên Nhật Bản:
+Giao diện LectureLens được xây dựng dựa trên hệ thống thiết kế độc quyền **Kitsune Soft** (*"Kawaii-Calm" Japanese Soft-Minimalism*) — lấy cảm hứng từ bàn học tối giản, ấm cúng của sinh viên Nhật Bản (chi tiết tại [`docs/design-system.md`](./docs/design-system.md)):
 
 ### 3.1. Bảng Màu Cốt Lõi (Color Palette Tokens)
 
-| Token CSS | Mã Màu HEX / RGBA | Vai Trò & Vị Trí Áp Dụng |
-| :--- | :---: | :--- |
-| **`washi-cream`** | `#FFF7FD` | Nền canvas toàn bộ ứng dụng: Giấy Washi ngà ấm áp, chống mỏi mắt tuyệt đối khi học lâu |
-| **`kitsune-coral`** | `#F47F72` | San hô Kitsune: Màu thương hiệu chính (Primary CTA, viền focus, trạng thái active) |
-| **`sakura-pink`** | `#F5C3C9` | Hồng hoa anh đào: Badge phân loại môn học, điểm nhấn linh vật |
-| **`mist-sky`** | `#A9D4E8` | Xanh sương lam: Thanh tiến độ học tập, thông báo hệ thống cân bằng |
-| **`mochi-yellow`** | `#FFE27A` | Vàng mochi: Đánh dấu sao yêu thích, khối tóm tắt bài học Cornell, huy hiệu học tập |
-| **`matcha-mint`** | `#BEE1D0` | Xanh trà matcha: Trạng thái hoàn thành bài học, nhãn thời gian timestamp `[MM:SS]` |
-| **`plum-ink`** | `#261333` | Mực mận chín cao cấp: Toàn bộ chữ tiêu đề, nội dung và viền nét icon (đạt chuẩn **WCAG AAA**) |
+| Token Thiết Kế | Mã Màu HEX | Hằng Số TypeScript (`mobile/src/theme/tokens.ts`) | Vai Trò & Vị Trí Áp Dụng |
+| :--- | :---: | :--- | :--- |
+| **`washi-cream`** | `#FFF7FD` | `KITSUNE_COLORS.washiCream` | Nền canvas toàn bộ ứng dụng: Giấy Washi ngà ấm áp, chống mỏi mắt |
+| **`kitsune-coral`** | `#F47F72` | `KITSUNE_COLORS.kitsuneCoral` | San hô Kitsune: Màu thương hiệu chính (Primary CTA, viền focus, active) |
+| **`kitsune-coral-dark`** | `#A03F36` | `KITSUNE_COLORS.kitsuneCoralDark` | San hô sẫm: Viền nhấn & trạng thái active |
+| **`sakura-pink`** | `#F5C3C9` | `KITSUNE_COLORS.sakuraPink` | Hồng hoa anh đào: Badge phân loại môn học, điểm nhấn linh vật |
+| **`mist-sky`** | `#A9D4E8` | `KITSUNE_COLORS.mistSky` | Xanh sương lam: Thanh tiến độ học tập, thông báo hệ thống cân bằng |
+| **`mochi-yellow`** | `#FFE27A` | `KITSUNE_COLORS.mochiYellow` | Vàng mochi: Đánh dấu sao yêu thích, khối tóm tắt Cornell, huy hiệu |
+| **`matcha-mint`** | `#BEE1D0` | `KITSUNE_COLORS.matchaMint` | Xanh trà matcha: Trạng thái hoàn thành, nhãn timestamp `[MM:SS]` |
+| **`plum-ink`** | `#261333` | `KITSUNE_COLORS.plumInk` | Mực mận chín cao cấp: Toàn bộ chữ tiêu đề, nội dung và nét icon (**WCAG AAA**) |
+| **`plum-ink-muted`** | `#56423F` | `KITSUNE_COLORS.plumInkMuted` | Chữ phụ đề, văn bản thứ cấp |
+| **`plum-ink-subtle`** | — | `KITSUNE_COLORS.plumInkSubtle` | Placeholder, viền kẻ mờ (`rgba(86,66,63,0.50)`) |
 
 ### 3.2. Bề Mặt & Động Lực Học (Surfaces & Mochi Physics)
-- **Kính Mờ Sữa (Miruku Glass):** Nền thẻ nội dung bán trong suốt `rgba(255, 255, 255, 0.76)` kết hợp làm mờ hậu cảnh `backdrop-filter: blur(16px)` và bóng đổ ấm mận chín `rgba(38, 19, 51, 0.06)`.
-- **Bo Góc Squircle & Pill:** Bo góc Squircle nảy nở `28px` cho các thẻ Bento bài học và bo tròn tuyệt đối `9999px` (Pill Shape) cho toàn bộ nút bấm, thanh điều khiển, trường nhập liệu.
-- **Động Lực Học Mochi (Mochi Press Depth):** Mọi nút bấm và thẻ tương tác khi nhấn (`:active`) đều co nhẹ `scale(0.97)` trong thời gian `0.15s`, tạo cảm giác đàn hồi mềm mại như chạm vào bánh mochi tươi.
+- **Kính Mờ Sữa (Miruku Glass):** Nền thẻ card bán trong suốt `rgba(255, 255, 255, 0.76)` kết hợp `<BlurView>` của `expo-blur` và bóng đổ mận chín `rgba(38, 19, 51, 0.06)` (`KITSUNE_SHADOWS.miruku`).
+- **Bo Góc Squircle & Pill:** Bo góc Squircle `28px` (`KITSUNE_RADII.squircleCard`) cho các thẻ Bento bài học và bo tròn tuyệt đối `9999px` (`KITSUNE_RADII.pill`) cho toàn bộ nút bấm, trường nhập liệu, chip lọc.
+- **Động Lực Học Mochi (Mochi Press Depth):** Mọi nút bấm và thẻ tương tác khi nhấn co nhẹ `scale(0.97)` trong thời gian `0.15s` qua `react-native-reanimated` kết hợp rung xúc giác nhẹ qua `expo-haptics`.
+- **Hệ Thống 74 Biểu Tượng Chuẩn Hóa:** Bộ icon độc quyền Duotone Soft-Blob tại `mobile/src/components/ui/icons/` (tra cứu chi tiết tại [`mobile/src/components/ui/icons/README.md`](./mobile/src/components/ui/icons/README.md)).
 
-### 3.3. Danh Mục 28 Màn Hình Mẫu Đã Chuẩn Hóa Toàn Diện
+### 3.3. Danh Mục 28 Màn Hình Mẫu Chuẩn Hóa
 
-Toàn bộ 28 màn hình đã được đối soát nội dung và đồng bộ hóa danh xưng 1:1 giữa hai thư mục:
-- Vector SVG: [`frontend/src/assets/LectureLens App Design System - SVG/`](./frontend/src/assets/LectureLens%20App%20Design%20System%20-%20SVG/)
-- Raster PNG (4x): [`frontend/src/assets/LectureLens App Design System - PNG/`](./frontend/src/assets/LectureLens%20App%20Design%20System%20-%20PNG/)
+Toàn bộ 28 màn hình đã được đối soát nội dung và đồng bộ hóa danh xưng 1:1 giữa hai định dạng:
+- Vector SVG: [`docs/design-assets/screens/svg/`](./docs/design-assets/screens/svg/)
+- Raster PNG (4x): [`docs/design-assets/screens/png/`](./docs/design-assets/screens/png/)
+- Bản đồ luồng điều hướng: [`docs/UX-NAVIGATION-FLOW.md`](./docs/UX-NAVIGATION-FLOW.md)
 
 <details>
 <summary><b>👉 Nhấn vào đây để xem chi tiết danh sách 28 màn hình chuẩn hóa</b></summary>
 <br/>
 
-| STT | Tên Tệp Chuẩn Hóa (`.svg` / `.png`) | Nhóm Nghiệp Vụ | Chức Vụ & Vai Trò Thực Tế |
+| STT | Tên Tệp Chuẩn Hóa (`.svg` / `.png`) | Nhóm Nghiệp Vụ | Đường Dẫn Route Expo Router (`mobile/src/app`) |
 | :---: | :--- | :--- | :--- |
-| **01** | `01 - Splash - App Launch` | Khởi Động | Màn hình khởi động ứng dụng, logo Cáo Kitsune & tiến trình chuẩn bị |
-| **02** | `02 - Onboarding - Step 1 (Record or Upload)` | Onboarding | Giới thiệu bước 1: Thu âm bài giảng trực tiếp hoặc tải file âm thanh |
-| **03** | `03 - Onboarding - Step 2 (Find What Matters)` | Onboarding | Giới thiệu bước 2: Trợ lý AI tự động trích xuất điểm nhấn và tóm tắt trọng tâm |
-| **04** | `04 - Onboarding - Step 3 (Remember It)` | Onboarding | Giới thiệu bước 3: Thẻ ghi nhớ Flashcard thông minh gắn kèm audio bài giảng |
-| **05** | `05 - Auth - Sign In` | Xác Thực | Đăng nhập tài khoản sinh viên (Email trường / Mật khẩu / Google / Apple) |
-| **06** | `06 - Auth - Create Account` | Xác Thực | Đăng ký tài khoản sinh viên mới kèm xác nhận điều khoản dịch vụ |
-| **07** | `07 - Paywall - Kitsune Plus Subscription` | Gói Dịch Vụ | Màn hình nâng cấp gói học tập Kitsune Plus (không giới hạn giờ ASR & RAG) |
-| **08** | `08 - Home - Study Hub Dashboard` | Bàn Học Chính | Bàn học thông minh: Tiếp tục nghe bài giảng, thẻ cần ôn hôm nay, chuỗi ngày streak |
-| **09** | `09 - Home - Offline State` | Trạng Thái | Giao diện Home khi mất kết nối mạng, hiển thị thông báo offline và bài đã tải |
-| **10** | `10 - Library - Lecture Archive` | Thư Viện | Kho lưu trữ bài giảng tổng hợp, hỗ trợ lọc theo môn học và mốc thời gian |
-| **11** | `11 - Library - Empty State` | Thư Viện | Trạng thái rỗng của thư viện khi người dùng chưa có bản thu âm nào |
-| **12** | `12 - Library - Offline State` | Thư Viện | Thư viện ngoại tuyến, chỉ truy cập kho bài học đã lưu vào bộ nhớ máy (Vault) |
-| **13** | `13 - Audio - Add Audio Bottom Sheet` | Ghi Âm | Bảng điều khiển nạp âm thanh: Thu trực tiếp, tải file, dán link, Voice Memos |
-| **14** | `14 - Audio - Live Recording` | Ghi Âm | Màn hình đang thu âm bài giảng trực tiếp: Hiển thị sóng âm, timer, gắn sao highlight |
-| **15** | `15 - Audio - Processing Pipeline` | Xử Lý AI | Tiến trình AI tổng hợp 5 giai đoạn (Upload ➔ ASR ➔ Highlight ➔ Tóm tắt ➔ Flashcard) |
-| **16** | `16 - Audio Detail - Synchronized Transcript` | Chi Tiết Audio | Trình phát bài giảng tab Lời thoại: Bản gỡ băng tự động đồng bộ theo từng mốc `[MM:SS]` |
-| **17** | `17 - Audio Detail - Key Highlights` | Chi Tiết Audio | Trình phát bài giảng tab Điểm nhấn: Phân đoạn quan trọng do AI lọc hoặc sinh viên đánh dấu |
-| **18** | `18 - Audio Detail - Cornell Summary Overview` | Chi Tiết Audio | Trình phát bài giảng tab Tóm tắt: Bản tóm tắt chuẩn Cornell Notes tổng quan |
-| **19** | `19 - Audio Detail - Cornell Summary Chapter View` | Chi Tiết Audio | Bản tóm tắt Cornell mở rộng chi tiết theo chương kèm phím tua 10 giây |
-| **20** | `20 - Subjects - Course Archive` | Môn Học | Danh mục tổng hợp tất cả môn học trong học kỳ kèm tỷ lệ hoàn thành |
-| **21** | `21 - Subjects - Course Detail (Macroeconomics)` | Môn Học | Chi tiết môn học: Mức độ ghi nhớ, số thẻ cần ôn và danh sách bài giảng của môn |
-| **22** | `22 - Search - Neural RAG & Audio Snippets` | Tìm Kiếm RAG | Tìm kiếm ngữ nghĩa 2-Stage Neural RAG trích xuất phân đoạn audio tức thì |
-| **23** | `23 - Review - Spaced Repetition Study Hub` | Ôn Tập | Trung tâm ôn luyện ngắt quãng (Spaced Repetition), quản lý bộ thẻ (Decks) |
-| **24** | `24 - Flashcard - Question (Front)` | Flashcard | Mặt trước thẻ học Flashcard (Active Recall Question) kèm gợi ý và mốc nghe lại |
-| **25** | `25 - Flashcard - Answer (Back)` | Flashcard | Mặt sau thẻ học Flashcard: Lời giải thích, phát lại đoạn audio và tự chấm điểm |
-| **26** | `26 - Review - Session Complete Celebration` | Ôn Tập | Màn hình chúc mừng hoàn thành phiên ôn tập, cập nhật streak và số thẻ làm đúng |
-| **27** | `27 - Profile - Student Stats & Activity` | Hồ Sơ | Trang cá nhân sinh viên: Thống kê giờ học, streak, bản đồ nhiệt học tập (Heatmap) |
-| **28** | `28 - Settings - App Preferences` | Cài Đặt | Cài đặt ứng dụng: Nhắc nhở học tập, tốc độ phát mặc định, ngôn ngữ ASR, cache |
+| **01** | `01 - Splash - App Launch` | Khởi Động | `app/index.tsx` |
+| **02** | `02 - Onboarding - Step 1 (Record or Upload)` | Onboarding | `app/(onboarding)/step-1.tsx` |
+| **03** | `03 - Onboarding - Step 2 (Find What Matters)` | Onboarding | `app/(onboarding)/step-2.tsx` |
+| **04** | `04 - Onboarding - Step 3 (Remember It)` | Onboarding | `app/(onboarding)/step-3.tsx` |
+| **05** | `05 - Auth - Sign In` | Xác Thực | `app/(auth)/sign-in.tsx` |
+| **06** | `06 - Auth - Create Account` | Xác Thực | `app/(auth)/create-account.tsx` |
+| **07** | `07 - Paywall - Kitsune Plus Subscription` | Gói Dịch Vụ | `app/(modal)/paywall.tsx` |
+| **08** | `08 - Home - Study Hub Dashboard` | Bàn Học Chính | `app/(tabs)/home.tsx` |
+| **09** | `09 - Home - Offline State` | Trạng Thái | `app/(tabs)/home.tsx` (offline overlay) |
+| **10** | `10 - Library - Lecture Archive` | Thư Viện | `app/(tabs)/library.tsx` |
+| **11** | `11 - Library - Empty State` | Thư Viện | `app/(tabs)/library.tsx` (empty overlay) |
+| **12** | `12 - Library - Offline State` | Thư Viện | `app/(tabs)/library.tsx` (vault offline) |
+| **13** | `13 - Audio - Add Audio Bottom Sheet` | Ghi Âm | `app/(modal)/add-audio.tsx` |
+| **14** | `14 - Audio - Live Recording` | Ghi Âm | `app/(guarded)/audio/record.tsx` |
+| **15** | `15 - Audio - Processing Pipeline` | Xử Lý AI | `app/(guarded)/audio/processing/[jobId].tsx` |
+| **16** | `16 - Audio Detail - Synchronized Transcript` | Chi Tiết Audio | `app/lectures/[id]/transcript.tsx` |
+| **17** | `17 - Audio Detail - Key Highlights` | Chi Tiết Audio | `app/lectures/[id]/highlights.tsx` |
+| **18** | `18 - Audio Detail - Cornell Summary Overview` | Chi Tiết Audio | `app/lectures/[id]/cornell.tsx` |
+| **19** | `19 - Audio Detail - Cornell Summary Chapter View` | Chi Tiết Audio | `app/lectures/[id]/chapters/[chId].tsx` |
+| **20** | `20 - Subjects - Course Archive` | Môn Học | `app/(tabs)/subjects.tsx` |
+| **21** | `21 - Subjects - Course Detail (Macroeconomics)` | Môn Học | `app/subjects/[courseId].tsx` |
+| **22** | `22 - Search - Neural RAG & Audio Snippets` | Tìm Kiếm RAG | `app/(modal)/search.tsx` |
+| **23** | `23 - Review - Spaced Repetition Study Hub` | Ôn Tập | `app/(tabs)/review.tsx` |
+| **24** | `24 - Flashcard - Question (Front)` | Flashcard | `app/(guarded)/review/session/[deckId].tsx` |
+| **25** | `25 - Flashcard - Answer (Back)` | Flashcard | `app/(guarded)/review/session/[deckId].tsx` |
+| **26** | `26 - Review - Session Complete Celebration` | Ôn Tập | `app/(guarded)/review/complete/[deckId].tsx` |
+| **27** | `27 - Profile - Student Stats & Activity` | Hồ Sơ | `app/(tabs)/profile.tsx` |
+| **28** | `28 - Settings - App Preferences` | Cài Đặt | `app/settings.tsx` |
 
 </details>
 
@@ -161,28 +168,32 @@ Hệ thống được thiết kế theo mô hình **Microservices Topology** v�
 ```mermaid
 flowchart TD
     subgraph Clients ["📱 Lớp Ứng Dụng Khách (Clients)"]
-        WEB["🌐 Web Study Portal (React 19 / Vite 8 / Tailwind CSS v4)"]
-        MOBILE["📱 Mobile Companion App"]
+        MOBILE["📱 LectureLens Mobile App<br/>(Expo SDK 58 / React Native 0.88 / Expo Router v58)<br/>• Shopify Skia 2D Canvas (60-120 FPS)<br/>• Capsule Audio Player (expo-audio)<br/>• Vùng chạm Thumb Zone 390px"]
+        LEGACY["🗄️ legacy/web-frontend (Lưu trữ lịch sử)"]
     end
 
     subgraph PublicDMZ ["🛡️ Phân Vùng Công Khai (Public Facing Ingress)"]
         SPRING["🍃 Spring Boot 3.3 Gateway (Container: spring)<br/>• Port 8080 (Hoặc HTTPS qua Reverse Proxy)<br/>• Xác thực JWT Stateless & Phân quyền RBAC<br/>• Quản lý Tệp Âm Thanh & Máy trạng thái Jobs"]
     end
 
-    Clients -->|HTTPS / REST API + Bearer JWT| SPRING
+    MOBILE -->|HTTPS / REST API + Bearer JWT| SPRING
 
     subgraph PrivateSubnet ["🔒 Mạng Nội Bộ Docker Cô Lập (rag-internal-network)"]
         direction TB
 
         subgraph AIService ["⚡ FastAPI AI Service (Container: ai - Internal Port: 8000)"]
             direction TB
-            INGEST_FLOW["📥 Pipeline Ingest (Offline Worker)<br/>PhoWhisper-base ➔ Recursive Chunking ➔ BGE-M3"]
+            INGEST_FLOW["📥 Pipeline Ingest (Offline Worker)<br/>PhoWhisper ➔ VAD Chunking ➔ transcript.json (ADR 0002)"]
             QUERY_FLOW["🔍 Pipeline Query (Online Engine)<br/>BGE-M3 Query ➔ 3-Stream RRF ➔ BGE-Reranker-v2-m3"]
+        end
+
+        subgraph SharedVol ["💾 Thư Mục Dùng Chung (Shared Volume)"]
+            VOLUME[("volumes/rag_data<br/>• ingest/incoming/{jobId}.ext<br/>• audio/{jobId}/manifest.json<br/>• transcripts/{jobId}/transcript.json")]
         end
 
         subgraph StorageLayer ["🐘 PostgreSQL 16 + pgvector (Container: db)"]
             direction LR
-            SCHEMA_APP[("🗄️ Schema: app<br/>users, roles, lectures, jobs")]
+            SCHEMA_APP[("🗄️ Schema: app<br/>users, roles, lectures, jobs (STT_COMPLETED)")]
             SCHEMA_RAG[("📐 Schema: rag<br/>lecture_chunks (halfvec 1024-d, HNSW)<br/>semantic_query_cache, audit_logs")]
         end
 
@@ -191,19 +202,22 @@ flowchart TD
         end
     end
 
+    SPRING -->|Ghi audio nguyên tử| VOLUME
+    AIService -->|Đọc audio & Ghi transcript| VOLUME
     SPRING -->|HTTP + Header: X-Internal-Secret| AIService
     SPRING -->|JDBC / JPA Connections| SCHEMA_APP
     INGEST_FLOW -->|Batch Insert Chunks & Vectors| SCHEMA_RAG
     QUERY_FLOW <-->|3-Stream RRF Hybrid Query| SCHEMA_RAG
     QUERY_FLOW -->|Prompt Context + Re-ranked Chunks| GEMMA
     GEMMA -->|Streamed Answer + Timestamp Citations| QUERY_FLOW
-    AIService -.->|Webhook Notification: Job READY| SPRING
+    AIService -.->|Webhook Notification: STT_COMPLETED| SPRING
 ```
 
 ### Cơ Chế An Toàn Mạng (Security Invariants):
-1. **Chỉ mở cổng Ingress:** Duy nhất dịch vụ `spring` được bind port ra máy chủ vật lý (`8080:8080`).
-2. **Khóa bí mật nội bộ (`X-Internal-Secret`):** Toàn bộ lời gọi nội bộ từ Spring Boot sang FastAPI bắt buộc phải đính kèm khóa bí mật, ngăn ngừa hoàn toàn truy cập trái phép.
-3. **Cô lập CSDL & LLM:** Container `db`, `ai`, `llm` hoạt động trong subnet khép kín `rag-internal-network`, không mở bất kỳ cổng nào ra Internet.
+1. **Chỉ mở cổng Ingress:** Duy nhất dịch vụ `spring` được bind port ra mạng ngoài (`8080:8080`).
+2. **Khóa bí mật nội bộ (`X-Internal-Secret`):** Toàn bộ lời gọi nội bộ từ Spring Boot sang FastAPI bắt buộc phải đính kèm khóa bí mật.
+3. **Cô lập CSDL & LLM:** Container `db`, `ai`, `llm` hoạt động trong subnet khép kín `rag-internal-network`, không mở port ra Internet.
+4. **Bắt tay âm thanh qua Volume chia sẻ ([ADR 0002](./docs/adr/0002-audio-ingest-storage-and-transcript.md)):** Spring Boot ghi file âm thanh nguyên tử vào `volumes/rag_data/ingest/incoming/{jobId}.ext`; FastAPI chỉ đọc và xuất bản `transcripts/{jobId}/transcript.json` với tra cứu $O(1)$.
 
 ---
 
@@ -213,26 +227,26 @@ Hệ thống vận hành bằng 4 mô hình trí tuệ nhân tạo chuyên biệ
 
 | Thư Mục Mô Hình | Định Danh Hugging Face | Dung Lượng | Kiến Trúc Mạng | Ngữ Cảnh Tối Đa | Nhiệm Vụ Kỹ Thuật |
 | :--- | :--- | :---: | :--- | :---: | :--- |
-| **`phowhisper-base`** | [`vinai/phowhisper-base`](https://huggingface.co/vinai/phowhisper-base) | ~290 MB | Whisper (Encoder-Decoder) | 30s audio / chunk | Phiên âm tiếng Việt phương ngữ, gán timestamp `[MM:SS]` |
+| **`phowhisper-base`** / **`medium`** | [`vinai/phowhisper-base`](https://huggingface.co/vinai/phowhisper-base) | ~290 MB - 1.5 GB | Whisper (Encoder-Decoder) | 30s audio / window | Phiên âm tiếng Việt học thuật, gán timestamp `[MM:SS]` |
 | **`bge-m3`** | [`BAAI/bge-m3`](https://huggingface.co/BAAI/bge-m3) | ~2.2 GB | XLM-RoBERTa (1024-d) | 8192 tokens | Sinh Dense Embedding 1024 chiều và trọng số từ vựng |
 | **`bge-reranker-v2-m3`** | [`BAAI/bge-reranker-v2-m3`](https://huggingface.co/BAAI/bge-reranker-v2-m3) | ~2.27 GB | Cross-Encoder | 8192 tokens | Tái xếp hạng ngữ nghĩa sâu Top-25 xuống Top 3–5 đoạn |
 | **`gemma-4-e4b`** | [`google/gemma-4-E4B-it`](https://ai.google.dev/gemma) | ~15.8 GB | Gemma 4 Decoder-only | 8192 tokens | Suy luận ngữ cảnh, trả lời câu hỏi và đính kèm dẫn nguồn |
 
 > [!TIP]
-> **Quản lý trọng số lớn trên Git:** Các tệp nhị phân (`.bin`, `.safetensors`, `.pt`) đã được đưa vào `.gitignore`. Khi thiết lập dự án trên máy mới, chỉ cần chạy lệnh `npm run backend:download-models` để tải tự động toàn bộ trọng số.
+> **Tải tự động:** Chạy lệnh `python backend/download_models.py` để tải tự động toàn bộ trọng số về thư mục `backend/models/`.
 
 ---
 
 ## 🐘 6. Cơ Sở Dữ Liệu Vector (Multi-Schema Database)
 
-Hệ thống cơ sở dữ liệu được tổ chức thành 2 schema phân lập trong PostgreSQL 16:
+Hệ thống cơ sở dữ liệu được tổ chức thành 2 schema phân lập trong PostgreSQL 16 (chi tiết tại [`backend/db/README.md`](./backend/db/README.md)):
 
 ```
 lecturelens_db
 ├── 🗄️ schema: app (Nghiệp vụ do Spring Boot quản trị)
 │   ├── users (Thông tin sinh viên, giảng viên, vai trò RBAC)
 │   ├── lectures (Metadata bài giảng, đường dẫn audio, thời lượng)
-│   └── jobs (Máy trạng thái xử lý: QUEUED -> STT -> CHUNKING -> EMBEDDING -> READY)
+│   └── jobs (Máy trạng thái xử lý: QUEUED -> PROCESSING_STT -> STT_COMPLETED -> CHUNKING -> EMBEDDING -> READY)
 │
 └── 📐 schema: rag (Tri thức số hóa do FastAPI quản trị)
     ├── lecture_chunks (Phân đoạn bài giảng, halfvec 1024-d, timestamps, unaccent, TSVECTOR)
@@ -242,10 +256,7 @@ lecturelens_db
 
 ### Các Đặc Tính Tối Ưu Nâng Cao:
 - **`halfvec(1024)` (pgvector 0.7+):** Lưu trữ vector ở nửa độ chính xác FP16, giảm 50% RAM, tăng 1.8x tốc độ quét HNSW với độ bao phủ Recall duy trì > 99.2%.
-- **3-Stream RRF Hybrid Search (`rag.search_vietnamese_rag_rrf`):** Kết hợp đồng thời:
-  1. *Dense Stream:* Khoảng cách Cosine trên chỉ mục HNSW (`m=16`, `ef_construction=64`).
-  2. *Lexical Stream:* Khớp từ khóa chuẩn xác qua `to_tsvector('simple', unaccent(content))`.
-  3. *Fuzzy Stream:* Khớp mờ viết tắt hoặc gõ không dấu qua `pg_trgm`.
+- **3-Stream RRF Hybrid Search (`rag.search_vietnamese_rag_rrf`):** Kết hợp đồng thời Dense Vector + Lexical Full-Text (`to_tsvector('simple', unaccent(content))`) + Fuzzy Trigram (`pg_trgm`).
 - **Mở Rộng Ngữ Cảnh 3 Chiều (`rag.get_expanded_context`):** Tự động liên kết `prev_chunk_id` và `next_chunk_id` để cung cấp cho LLM đoạn văn bản mạch lạc 2–3 phút xung quanh mốc trích xuất.
 
 ---
@@ -254,57 +265,51 @@ lecturelens_db
 
 ```
 lecture_lens/
-├── package.json                         # Monorepo Orchestrator: Quản trị toàn bộ scripts của dự án
+├── package.json                         # Monorepo Orchestrator: scripts uỷ quyền sang mobile & understand
 ├── AGENTS.md                            # Hiến chương kỹ thuật bắt buộc cho AI Agents
 ├── GLOSSARY.md                          # Từ điển ngôn ngữ miền chuẩn (Ubiquitous Language)
-├── README.md                            # Hồ sơ kỹ thuật dự án (Tài liệu này)
+├── README.md                            # Hồ sơ kỹ thuật tổng thể (Tài liệu này)
 │
-├── frontend/                            # 🌐 LỚP WEB CLIENT (React 19, Vite 8, Tailwind v4, Three.js)
-│   ├── public/                          # Tài nguyên tĩnh, favicon, web manifest
-│   ├── src/                             # Mã nguồn ứng dụng
-│   │   ├── assets/                      # Tài nguyên đồ họa
-│   │   │   ├── LectureLens App Design System - PNG/ # 🌸 28 Màn hình mẫu raster (4x)
-│   │   │   ├── LectureLens App Design System - SVG/ # 🌸 28 Màn hình mẫu vector sắc nét
-│   │   │   └── logo-LectureLens.png     # Logo Cáo Kitsune Pixel Art
-│   │   ├── App.tsx                      # Component chính & 3D Interactive Mascot Canvas
-│   │   ├── index.css                    # Tailwind CSS v4 entrypoint & Kitsune Soft Tokens
-│   │   └── main.tsx                     # Khởi chạy React DOM
-│   ├── .oxlintrc.json                   # Cấu hình linter siêu tốc oxlint
-│   ├── package.json                     # Quản lý thư viện Frontend
-│   ├── tsconfig.json                    # Cấu hình TypeScript Strict Mode
-│   └── vite.config.ts                   # Cấu hình Vite 8 & Tailwind CSS plugin
+├── mobile/                              # 📱 ỨNG DỤNG DI ĐỘNG NATIVE (Expo SDK 58 / React Native 0.88)
+│   ├── app.json / eas.json              # Cấu hình Expo, quyền micro, audio background, EAS Build
+│   ├── assets/                          # Icon, Splash Screen, tài nguyên di động
+│   ├── src/
+│   │   ├── app/                         # 28 màn hình file-based routes (Expo Router v58)
+│   │   ├── components/
+│   │   │   ├── canvas/                  # Shopify Skia 2D: KitsuneMascotCanvas, FloatingPetals2D
+│   │   │   ├── navigation/              # FloatingIslandTabBar, RouteSlot
+│   │   │   └── ui/                      # Atoms: Button, Chip, FormInputPill, KawaiiCheckbox, Icons
+│   │   ├── modules/
+│   │   │   ├── audio/                   # CapsuleAudioPlayer, useAudioPlayer, AudioContext
+│   │   │   ├── auth/                    # Validation, passwordEntropy, AuthSeam
+│   │   │   └── storage/                 # KeyValueStorage seam (AsyncStorageAdapter, MemoryStorageAdapter)
+│   │   ├── navigation/                  # useAppNavigation, parentFallback, MochiConfirmDialog
+│   │   ├── services/                    # ApiClient, AudioPipelineService, NetworkMonitor
+│   │   └── theme/                       # tokens.ts (KITSUNE_COLORS, KITSUNE_RADII, KITSUNE_SHADOWS)
+│   └── README.md                        # Đặc tả chi tiết ứng dụng di động
 │
 ├── backend/                             # ⚙️ HẠ TẦNG BACKEND & AI ENGINE (On-Premise 2-Stage RAG)
-│   ├── db/                              # 🐘 Cơ sở dữ liệu PostgreSQL 16 + pgvector
-│   │   ├── init/                        # 5 SQL Scripts khởi tạo tự động
-│   │   │   ├── 01_rag_extensions.sql    # Kích hoạt vector, pg_trgm, unaccent
-│   │   │   ├── 02_rag_chunks_schema.sql # Bảng lecture_chunks với halfvec(1024)
-│   │   │   ├── 03_rag_indexes.sql       # Chỉ mục HNSW, GIN TSVECTOR, GiST Trigram
-│   │   │   ├── 04_rag_hybrid_search_rrf.sql # Hàm Hybrid Search 3 luồng & Context Expansion
-│   │   │   └── 05_rag_telemetry_cache.sql   # Bảng Semantic Query Cache & Audit Logs
-│   │   ├── postgresql.conf              # Cấu hình tối ưu bộ nhớ & HNSW
-│   │   ├── rag_schema_complete.sql      # Schema hợp nhất hoàn chỉnh
-│   │   ├── verify_rag_db.py             # Script tự động kiểm tra CSDL và chỉ mục
-│   │   └── README.md                    # Tài liệu đặc tả cơ sở dữ liệu
-│   ├── models/                          # 🧠 Thư mục lưu trữ 4 mô hình AI (~21.5 GB)
-│   │   ├── phowhisper-base/             # ASR Tiếng Việt
-│   │   ├── bge-m3/                      # Dense Embedding 1024-d
-│   │   ├── bge-reranker-v2-m3/          # Cross-Encoder Reranker
-│   │   └── gemma-4-e4b/                 # LLM Contextual Generation
+│   ├── ai_service/                      # FastAPI AI & RAG Engine (routers: health, ingest)
+│   ├── db/                              # PostgreSQL 16 + pgvector init scripts (01-06) & verify
+│   ├── models/                          # Thư mục lưu trữ 4 mô hình AI (~21.5 GB)
+│   ├── tests/                           # Bộ kiểm thử 27 tests pytest cho backend
+│   ├── docker-compose.ai-dev.yml        # Docker compose phát triển nội bộ cho db + ai
 │   ├── download_models.py               # Script tự động tải mô hình từ Hugging Face
-│   ├── .env.example                     # Mẫu biến môi trường an toàn
 │   └── README.md                        # Đặc tả chi tiết kiến trúc Backend
 │
 ├── docs/                                # 📚 TÀI LIỆU KỸ THUẬT & KIẾN TRÚC
 │   ├── design-system.md                 # Đặc tả hệ thống thiết kế Kitsune Soft
-│   ├── adr/                             # Quyết định kiến trúc phần mềm (ADR)
-│   │   └── 0001-privacy-first-local-ai-architecture.md
-│   └── agents/                          # Hướng dẫn quy trình Domain & Issues
+│   ├── UX-NAVIGATION-FLOW.md            # Đặc tả luồng điều hướng 28 màn hình
+│   ├── adr/                             # Architectural Decision Records (ADR 0001, 0002, 0003)
+│   └── design-assets/                   # 28 màn hình (SVG, PNG 4x), 74 icons vector, branding
 │
-└── tools/                               # 🛠️ CÔNG CỤ & KỸ NĂNG KỸ THUẬT
-    ├── mattpocock-skills/               # Bộ kỹ năng Deep Modules, TDD, Domain Modeling
-    ├── Understand-Anything/             # Công cụ quét và sinh Knowledge Graph dự án
-    └── stitch/                          # Công cụ hỗ trợ giao diện Google Stitch
+├── legacy/                              # 🗄️ LƯU TRỮ LỊCH SỬ
+│   └── web-frontend/                    # Bản web study portal cũ (React 19 / Vite 8 / Three.js)
+│
+├── TEST/                                # 🧪 TEST LAB CÔ LẬP
+│   └── server.py / docker-compose       # Lab kiểm thử độc lập cho audio ingest & transcript
+│
+└── volumes/rag_data/                    # 💾 Thư mục dùng chung giữa Spring Boot và FastAPI
 ```
 
 ---
@@ -313,59 +318,72 @@ lecture_lens/
 
 ### 8.1. Yêu Cầu Tiên Quyết (Prerequisites)
 - **Node.js:** Phiên bản `v20.x` hoặc `v22.x` (LTS)
-- **Python:** Phiên bản `3.10+` kèm `pip`
+- **Python:** Phiên bản `3.10+` kèm `pip` (khuyến nghị tạo môi trường ảo `.venv`)
 - **Docker & Docker Compose:** Phiên bản `v2.20+`
 - **Phần cứng đề xuất:** Card đồ họa NVIDIA RTX 3060 12GB VRAM (tối thiểu) hoặc RTX 4090 / A10G 24GB (khuyến nghị cho môi trường Production).
 
 ---
 
-### 8.2. Khởi Chạy Frontend Web (Kitsune Soft Portal)
+### 8.2. Khởi Chạy Ứng Dụng Di Động (`mobile/`)
 
 Thực thi trực tiếp từ thư mục gốc thông qua npm scripts:
 
 ```bash
-# 1. Cài đặt các gói phụ thuộc
-npm install --prefix frontend
+# 1. Cài đặt các gói phụ thuộc cho mobile
+npm install --prefix mobile
 
-# 2. Khởi chạy máy chủ phát triển Vite Dev Server (Port 5173)
-npm run dev
+# 2. Khởi chạy Expo Development Server
+npm run start        # hoặc: npm run dev
 
-# 3. Kiểm tra kiểu dữ liệu TypeScript & đóng gói thử nghiệm
+# 3. Chạy trực tiếp trên thiết bị hoặc máy ảo
+npm run android      # Mở trên Android emulator / thiết bị (kết nối gateway qua 10.0.2.2:8080)
+npm run ios          # Mở trên iOS simulator (kết nối gateway qua localhost:8080)
+npm run web          # Xem trước nhanh trên nền tảng web
+
+# 4. Kiểm tra 31 bài test tự động (Node Native Test Runner)
+npm test
+
+# 5. Kiểm tra kiểu dữ liệu TypeScript (Strict Mode)
 npm run typecheck
 
-# 4. Kiểm tra quy chuẩn mã nguồn bằng oxlint
+# 6. Kiểm tra chuẩn mã nguồn
 npm run lint
-
-# 5. Xem trước bản đóng gói Production
-npm run preview
 ```
-
-Giao diện Web phát triển sẽ sẵn sàng tại: `http://localhost:5173`
 
 ---
 
-### 8.3. Khởi Chạy Backend & Cụm Mô Hình AI
+### 8.3. Khởi Chạy Backend & AI Engine (`backend/`)
 
 ```bash
-# 1. Di chuyển vào thư mục backend
-cd backend
+# 1. Tạo môi trường ảo và cài đặt thư viện
+python -m venv .venv
+.venv\Scripts\activate        # Trên Windows (hoặc: source .venv/bin/activate trên Linux)
+pip install -r backend/requirements.txt
 
-# 2. Thiết lập biến môi trường từ mẫu an toàn
-cp .env.example .env
+# 2. Tải toàn bộ trọng số mô hình AI về backend/models/ (~21.5 GB)
+python backend/download_models.py
 
-# 3. Tải toàn bộ trọng số 4 mô hình AI về thư mục models/ (~21.5 GB)
-pip install huggingface_hub
-python download_models.py
+# 3. Khởi chạy nhanh môi trường CSDL và AI Service qua Docker
+docker compose -f backend/docker-compose.ai-dev.yml up --build
 
-# 4. Kiểm tra kết nối và xác minh chỉ mục CSDL RAG
-python db/verify_rag_db.py
+# 4. Chạy bộ 27 bài kiểm thử tự động của Backend
+pytest backend/tests -v
+
+# 5. Kiểm tra và xác minh CSDL pgvector RAG
+python backend/db/verify_rag_db.py
 ```
 
-Khi triển khai trên Docker:
-- **Spring Boot Gateway:** `http://localhost:8080` (Cổng công khai Ingress)
-- **FastAPI AI Service:** `http://ai:8000` (Nội bộ qua `X-Internal-Secret`)
-- **PostgreSQL 16 + pgvector:** `db:5432` (Nội bộ, phân vùng `app` và `rag`)
-- **Ollama LLM Engine:** `http://llm:11434` (Nội bộ phục vụ Gemma 4 E4B)
+---
+
+### 8.4. Công Cụ Phân Tích Mã Nguồn (Understand Anything)
+
+```bash
+# Quét toàn bộ codebase và cập nhật Knowledge Graph (.ua/manifest.json)
+npm run understand:scan
+
+# Khởi chạy dashboard phân tích kiến trúc
+npm run understand:dashboard
+```
 
 ---
 
@@ -376,7 +394,7 @@ Mọi kỹ sư và trợ lý AI khi làm việc trên kho lưu trữ **LectureLe
 ### 1. Thiết Kế Mô-đun Sâu (Deep Modules Principle)
 - Giữ giao diện (**Interface**) của mọi component, service hoặc hàm ở mức tối giản, dễ hiểu và dễ tiếp cận.
 - Ẩn giấu toàn bộ tính toán phức tạp vào phần triển khai (**Implementation**).
-- *Ví dụ:* Giao diện tìm kiếm `search_vietnamese_rag_rrf` chỉ nhận câu hỏi và danh sách ID bài giảng; ẩn giấu hoàn toàn 3 luồng tính toán vector, trigram, full-text và thuật toán RRF bên dưới.
+- *Ví dụ:* Interface `KeyValueStorage` chỉ gồm 4 phương thức `getItem`, `setItem`, `removeItem`, `clear`; ẩn giấu toàn bộ việc lưu trữ AsyncStorage của native hoặc Memory của kiểm thử bên trong.
 
 ### 2. Tuân Thủ Ngôn Ngữ Miền Bắt Buộc (Ubiquitous Language)
 - Luôn đối soát thuật ngữ với [GLOSSARY.md](./GLOSSARY.md).
@@ -386,18 +404,6 @@ Mọi kỹ sư và trợ lý AI khi làm việc trên kho lưu trữ **LectureLe
 ### 3. Phát Triển Hướng Kiểm Thử Qua Ranh Giới (Test Through The Seam)
 - Viết kiểm thử trước khi hiện thực hóa logic (TDD).
 - Kiểm thử thông qua ranh giới thay đổi (**Seam**), không kiểm thử xuyên qua chi tiết triển khai nội bộ để đảm bảo mã nguồn dễ tái cấu trúc mà không làm gãy test.
-
----
-
-## 🤝 Đóng Góp Phát Triển (Contributing)
-
-Dự án hoan nghênh mọi đóng góp từ cộng đồng nghiên cứu giáo dục và mã nguồn mở:
-1. Fork repository về tài khoản cá nhân.
-2. Tạo nhánh tính năng mới (`git checkout -b feature/amazing-feature`).
-3. Commit các thay đổi tuân thủ Conventional Commits (`git commit -m 'feat: add mochi tactile interactive card'`).
-4. Kiểm tra linter và kiểu dữ liệu (`npm run lint && npm run typecheck`).
-5. Đẩy nhánh lên repository của bạn (`git push origin feature/amazing-feature`).
-6. Tạo một Pull Request mô tả chi tiết giải pháp kỹ thuật.
 
 ---
 

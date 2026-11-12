@@ -62,8 +62,8 @@ Hệ thống tuân thủ mô hình **Microservices Topology** với ranh giới 
 ```mermaid
 flowchart TD
     subgraph Clients ["📱 Ứng Dụng Khách (Clients)"]
-        MOBILE["📱 Mobile App (iOS / Android)"]
-        WEB["🌐 Web Study Portal"]
+        MOBILE["📱 LectureLens Mobile App (Expo SDK 58 / React Native 0.88)"]
+        LEGACY["🗄️ legacy/web-frontend (Lưu trữ lịch sử)"]
     end
 
     subgraph PublicDMZ ["🛡️ Phân Vùng Công Khai (Public Facing Ingress)"]
@@ -112,7 +112,7 @@ flowchart TD
   - **Bảo mật & Phân quyền:** Xác thực qua Spring Security 6 với JWT Stateless Tokens. Kiểm soát quyền hạn (RBAC) nghiêm ngặt: `ADMIN`, `LECTURER`, `STUDENT`.
   - **Quản lý Tệp Âm Thanh:** Tiếp nhận tệp âm thanh tải lên (`.mp3`, `.wav`, `.m4a`, dung lượng lên tới 500MB), phân tích metadata âm thanh và lưu trữ tạm thời tại volume dùng chung.
   - **Máy trạng thái tác vụ (Job State Machine):** Khởi tạo và theo dõi trạng thái bài giảng:
-    $$\text{QUEUED} \longrightarrow \text{PROCESSING\_STT} \longrightarrow \text{CHUNKING} \longrightarrow \text{EMBEDDING} \longrightarrow \text{READY} \text{ (hoặc FAILED)}$$
+    $$\text{QUEUED} \longrightarrow \text{PROCESSING\_STT} \longrightarrow \text{STT\_COMPLETED} \longrightarrow \text{CHUNKING} \longrightarrow \text{EMBEDDING} \longrightarrow \text{READY} \text{ (hoặc FAILED)}$$
   - **Đồng bộ liên dịch vụ:** Giao tiếp với FastAPI thông qua Spring `WebClient` có cấu hình Retry với Circuit Breaker (Resilience4j) và kiểm định khóa bí mật nội bộ (`X-Internal-Secret`).
 
 ### 3.2. FastAPI AI & RAG Engine (`ai`)
@@ -157,15 +157,17 @@ sequenceDiagram
     participant DB as 🐘 PostgreSQL (pgvector)
 
     GV->>SB: POST /api/v1/lectures/upload (Audio File)
-    SB->>FS: Ghi tệp âm thanh (16kHz PCM WAV)
+    SB->>FS: Ghi nguyên tử vào incoming/{jobId}.{ext} (ADR 0002)
     SB->>DB: INSERT INTO app.jobs (status = 'QUEUED')
     SB-->>GV: HTTP 202 Accepted (jobId: UUID)
     
-    SB->>AI: POST /internal/v1/ai/ingest (lectureId, filePath, X-Internal-Secret)
+    SB->>AI: POST /internal/v1/ai/ingest (jobId, lectureId, fileExtension, X-Internal-Secret)
     AI->>SB: Cập nhật job status: 'PROCESSING_STT'
     
     AI->>STT: Trích xuất lời nói thành văn bản tiếng Việt
     STT-->>AI: Danh sách các câu văn kèm Timestamp [start_sec, end_sec]
+    AI->>FS: Xuất bản tệp transcripts/{jobId}/transcript.json
+    AI->>SB: Cập nhật job status: 'STT_COMPLETED' (Ranh giới Seam Giai đoạn 1)
     
     AI->>SB: Cập nhật job status: 'CHUNKING'
     AI->>SPLIT: Chia đoạn đệ quy (Recursive Chunking: 512 tokens, 64 overlap)
@@ -530,21 +532,26 @@ CREATE INDEX IF NOT EXISTS idx_chunks_lecture_id ON rag.lecture_chunks(lecture_i
 
 #### [POST] `/internal/v1/ai/ingest`
 - **Header:** `X-Internal-Secret: ${INTERNAL_API_SECRET_KEY}`
-- **Request Body:**
+- **Request Body (ADR 0002 — cấm truyền arbitrary path):**
   ```json
   {
-    "jobId": "f103b415-992a-4bc8-8f55-1178a9c0012f",
-    "lectureId": "a9010344-77bb-4e32-9112-229988776655",
-    "audioFilePath": "/shared/audio/a9010344-77bb.wav"
+    "job_id": "f103b415-992a-4bc8-8f55-1178a9c0012f",
+    "lecture_id": "a9010344-77bb-4e32-9112-229988776655",
+    "file_extension": "wav"
   }
   ```
-- **Response (200 OK):**
+- **Response (202 Accepted):**
   ```json
   {
     "status": "ACCEPTED",
+    "job_id": "f103b415-992a-4bc8-8f55-1178a9c0012f",
     "message": "Ingest pipeline background task spawned successfully."
   }
   ```
+
+#### [GET] `/internal/v1/ai/audio/{job_id}/manifest`
+- **Header:** `X-Internal-Secret: ${INTERNAL_API_SECRET_KEY}`
+- **Response (200 OK):** Trả về `manifest.json` của tác vụ với tra cứu $O(1)$.
 
 #### [GET] `/internal/v1/ai/health`
 - **Header:** `X-Internal-Secret: ${INTERNAL_API_SECRET_KEY}`

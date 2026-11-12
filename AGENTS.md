@@ -69,13 +69,17 @@ Mọi mã nguồn giao diện được sinh ra trong thư mục `mobile/` bắt 
 
 ## 3. 🛡️ Quy Tắc Kỹ Thuật & An Ninh (Invariants & Security)
 
-1. **Privacy-First & Zero Cloud Leakage (ADR 0001):**
+1. **Privacy-First & Zero Cloud Leakage ([ADR 0001](./docs/adr/0001-privacy-first-local-ai-architecture.md)):**
    - Tuyệt đối không tích hợp các API đám mây bên thứ ba (OpenAI, Anthropic, Google Cloud Speech, AWS Transcribe, Pinecone,...) cho các tác vụ xử lý bài giảng.
    - Toàn bộ pipeline ASR, Embeddings, Reranking và LLM phải chạy 100% cục bộ trên hạ tầng on-premise.
-2. **Tuân Thủ Ngôn Ngữ Miền (Ubiquitous Language):**
+2. **Audio Ingest Handshake & Shared Volume ([ADR 0002](./docs/adr/0002-audio-ingest-storage-and-transcript.md)):**
+   - Trao đổi âm thanh giữa Spring Boot Gateway và FastAPI AI Service thực hiện qua volume chia sẻ và `jobId` định danh $O(1)$; tệp `transcript.json` là hợp đồng dữ liệu bất biến giữa ASR (Giai đoạn 1) và Vectorization (Giai đoạn 2).
+3. **Kiến Trúc Di Động Native 100% ([ADR 0003](./docs/adr/0003-native-mobile-architecture-expo-sdk58.md)):**
+   - Ứng dụng khách chính thức là Mobile App trên Expo SDK 58 (`mobile/`). Web study portal cũ đã được đóng gói và lưu trữ tại `legacy/web-frontend/` (không phát triển tính năng mới vào đây).
+4. **Tuân Thủ Ngôn Ngữ Miền (Ubiquitous Language):**
    - Luôn đọc và đối chiếu thuật ngữ với [GLOSSARY.md](./GLOSSARY.md).
    - Dùng đúng `LectureLens` (không dùng `SmartLecture`, `LectureApp`), dùng đúng `Kitsune Soft`, `Kitsune Fox Companion`, `Capsule Audio Player`, `Cornell Notes`, `2-Stage Neural RAG`.
-3. **Bảo Tồn Ranh Giới (Seams):**
+5. **Bảo Tồn Ranh Giới (Seams):**
    - Client (`mobile/`) không bao giờ truy vấn trực tiếp cơ sở dữ liệu hoặc AI model weights. Mọi luồng đi qua Gateway hoặc Backend API.
 
 ---
