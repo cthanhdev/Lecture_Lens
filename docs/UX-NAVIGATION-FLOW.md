@@ -2,7 +2,7 @@
 ## Hiến Chương Điều Hướng & Luồng Trải Nghiệm Người Dùng (28 Màn Hình)
 
 > **Tài liệu đặc tả kiến trúc điều hướng chuẩn (Single Source of Truth - SSOT)**  
-> Dựa trên 28 tệp thiết kế tại `frontend/src/assets/LectureLens App Design System - SVG/` & `PNG/`, tuân thủ triết lý **Deep Modules (Matt Pocock)**, ngôn ngữ thiết kế **Kitsune Soft** và hệ thống thực thể **LectureLens Domain Glossary**.
+> Dựa trên 28 tệp thiết kế tại [`docs/design-assets/screens/svg/`](./design-assets/screens/svg/) & [`png/`](./design-assets/screens/png/), tuân thủ triết lý **Deep Modules (Matt Pocock)**, ngôn ngữ thiết kế **Kitsune Soft** và hệ thống thực thể **LectureLens Domain Glossary**.
 >
 > 📁 **Tệp sơ đồ đi kèm:**  
 > - **Draw.io Master File**: [`docs/ux-navigation-flow.drawio`](./ux-navigation-flow.drawio) (Mở trực tiếp trên diagrams.net / VS Code Extension)  
@@ -12,7 +12,7 @@
 
 ## 1. 🧭 Triết Lý Kiến Trúc Điều Hướng (Navigation Architecture Philosophy)
 
-Hệ thống điều hướng của LectureLens Web Application được thiết kế nhằm đạt được 3 mục tiêu bất biến:
+Hệ thống điều hướng của LectureLens Mobile Application (Expo Router v58 / React Native New Architecture) được thiết kế nhằm đạt được 3 mục tiêu bất biến:
 1. **Zero-Dead-End Guarantee (Bảo đảm không bao giờ cụt đường / kẹt trang):** Tuyệt đối không có bất kỳ màn hình nào rơi vào tình trạng người dùng bấm quay lại (Back button / gesture / browser history) mà bị kẹt, bị tải lại trang vô tận hoặc không thể rollback về trạng thái an toàn.
 2. **Deep Module Navigation Coordinator (Module sâu theo Matt Pocock):** Giao diện điều hướng (`AppNavigator`) cực kỳ nhỏ gọn và dễ sử dụng cho các view/component; toàn bộ logic phức tạp (ngăn chặn mất dữ liệu, đồng bộ URL, quản lý ngăn xếp modal sheet, duy trì âm thanh của Capsule Audio Player) được ẩn giấu hoàn toàn bên trong Implementation.
 3. **Capsule Audio Player Continuity (Âm thanh bài giảng không gián đoạn):** Quá trình nghe bài giảng tiếp diễn liên tục không ngắt quãng khi người dùng di chuyển giữa các màn hình, chuyển tab hoặc mở modal.
@@ -270,41 +270,65 @@ flowchart TD
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.1. Định Nghĩa Interface TypeScript Chuẩn (`frontend/src/router/types.ts`)
+### 5.1. Định Nghĩa Interface TypeScript Chuẩn (`mobile/src/navigation/types.ts`)
 
 ```typescript
-export type TabRoute = '/home' | '/library' | '/subjects' | '/review' | '/profile'
+export type TabRoute = '/(tabs)/home' | '/(tabs)/library' | '/(tabs)/subjects' | '/(tabs)/review' | '/(tabs)/profile'
 
-export type AppRoute = 
+export type AppRoute =
   | '/'
-  | '/onboarding/step-1'
-  | '/onboarding/step-2'
-  | '/onboarding/step-3'
-  | '/auth/sign-in'
-  | '/auth/create-account'
+  | '/(onboarding)/step-1'
+  | '/(onboarding)/step-2'
+  | '/(onboarding)/step-3'
+  | '/(auth)/sign-in'
+  | '/(auth)/create-account'
   | TabRoute
-  | '/audio/record'
+  | '/home'
+  | '/library'
+  | '/subjects'
+  | '/review'
+  | '/profile'
+  | '/(guarded)/audio/record'
   | `/audio/processing/${string}`
   | `/lectures/${string}/transcript`
   | `/lectures/${string}/highlights`
   | `/lectures/${string}/cornell`
   | `/lectures/${string}/chapters/${string}`
   | `/subjects/${string}`
+  | '/(modal)/search'
   | '/search'
-  | `/review/session/${string}`
-  | `/review/complete/${string}`
+  | `/(guarded)/review/session/${string}`
+  | `/(guarded)/review/complete/${string}`
   | '/settings'
 
-export type ModalSheetType = 'paywall' | 'add-audio' | 'filter-options' | null
+export type ModalSheetType = 'paywall' | 'add-audio' | 'search' | null
 
 export interface NavigateOptions {
+  /** Ghi đè lịch sử thay vì push (dùng cho các màn hình chuyển tiếp terminal) */
   replace?: boolean
+  /** Đường dẫn cần chuyển tiếp sau khi đăng nhập thành công */
   returnTo?: string
-  state?: Record<string, unknown>
+  /** State tùy chọn gửi kèm navigation */
+  params?: Record<string, string | number>
 }
 
+/** Hàm kiểm tra bảo vệ điều hướng (Route Guard). Trả về false để chặn điều hướng */
 export type NavigationGuardFn = () => Promise<boolean> | boolean
 
+export interface GuardConfig {
+  id: string
+  title: string
+  message: string
+  confirmText?: string
+  cancelText?: string
+  onConfirmExit?: () => void
+  guard: NavigationGuardFn
+}
+
+/**
+ * Interface Seam của AppNavigator (Matt Pocock Deep Module)
+ * Giao diện tối giản - ẩn toàn bộ độ phức tạp bên trong Implementation
+ */
 export interface AppNavigator {
   /** Đường dẫn hiện tại */
   readonly currentRoute: string
@@ -314,27 +338,30 @@ export interface AppNavigator {
   readonly activeSheet: ModalSheetType
   /** Có thể quay lại an toàn trong lịch sử không */
   readonly canGoBack: boolean
-  
+
   /** Điều hướng tới route mới */
-  goTo(route: AppRoute, options?: NavigateOptions): void
-  
-  /** 
-   * Quay lui an toàn (Rollback Guarantee). 
-   * Tự động ưu tiên đóng modal sheet -> nếu không có sheet, kiểm tra guard -> nếu không có guard, pop history -> nếu history rỗng, fallback về parent!
+  goTo(route: AppRoute | string, options?: NavigateOptions): void
+
+  /**
+   * Quay lui an toàn (Zero-Dead-End Rollback Guarantee).
+   * 1. Ưu tiên đóng Modal Sheet nếu đang mở
+   * 2. Kiểm tra Route Guard nếu có dữ liệu chưa lưu
+   * 3. Pop history nếu có lịch sử
+   * 4. Fallback về Parent Route nếu vào bằng Deep-link
    */
   goBack(): void
-  
-  /** Mở modal / action sheet trượt lên */
+
+  /** Mở modal / action sheet */
   openSheet(sheet: ModalSheetType, params?: Record<string, unknown>): void
-  
+
   /** Đóng modal sheet trên cùng */
   closeSheet(): void
-  
-  /** 
+
+  /**
    * Đăng ký bộ bảo vệ chống mất dữ liệu khi đang ở màn hình nhạy cảm (Ghi âm, Làm thẻ).
-   * Trả về hàm unregister để cleanup khi component unmount.
+   * Trả về hàm unregister để dọn dẹp khi unmount.
    */
-  registerGuard(guard: NavigationGuardFn): () => void
+  registerGuard(config: GuardConfig): () => void
 }
 ```
 
@@ -343,30 +370,30 @@ export interface AppNavigator {
 ## 6. 📱 Trải Nghiệm Điều Khiển Kitsune Soft Đặc Thù
 
 ### 6.1. Capsule Audio Player: Neo Giữ Âm Thanh Toàn Cục
-- Vị trí: Đặt cố định ở cấp Layout cao nhất (`AppLayout.tsx`), nổi ngay trên thanh `Floating Island Tab Bar`.
+- Vị trí: Đặt cố định ở cấp Layout cao nhất (`mobile/src/app/(tabs)/_layout.tsx` và `mobile/src/app/_layout.tsx`), nổi ngay trên thanh `Floating Island Tab Bar`.
 - Hành vi khi chuyển trang:
   - Khi xem bài giảng tại `[16] Transcript`: Player mở rộng tích hợp thanh tua sóng âm và nhảy timestamp đồng bộ.
-  - Khi người dùng bấm về `[08] Home` hoặc chuyển sang `[20] Subjects`: Player tự động thu nhỏ thành con nhộng **Capsule Pill** (`height: 52px`), tiếp tục phát bài giảng ngầm.
+  - Khi người dùng bấm về `[08] Home` hoặc chuyển sang `[20] Subjects`: Player tự động thu nhỏ thành con nhộng **Capsule Pill** (`height: 52px`), tiếp tục phát bài giảng ngầm qua `expo-audio`.
   - Khi vào màn hình `[14] Audio - Live Recording`: Player tự động tạm dừng (Pause) để giải phóng micro và tránh lẫn tạp âm vào bài giảng mới.
 
 ### 6.2. Floating Island Tab Bar: Thanh Điều Hướng 5 Đảo Lơ Lửng
-- Vị trí: Ghim đáy màn hình, lơ lửng cách đáy `16px`, bo tròn viên thuốc tuyệt đối (`rounded-full`), bề mặt kính sữa **Miruku Glass** (`rgba(255,255,255,0.88)` + `blur(24px)`).
+- Vị trí: Ghim đáy màn hình, lơ lửng cách đáy `16px`, bo tròn viên thuốc tuyệt đối (`rounded-full`), bề mặt kính sữa **Miruku Glass** (`rgba(255,255,255,0.88)` + `BlurView` của `expo-blur`).
 - Tự động ẩn:
   - Ẩn hoàn toàn khi ở các màn hình tập trung cao: `[01-04]` Onboarding, `[05-06]` Auth, `[14]` Live Recording, `[24-25]` Flashcard Session.
   - Hiện diện và trượt êm ái khi ở 5 Tab chính và các màn hình duyệt bài giảng.
 
 ---
 
-## 7. 🚀 Hướng Dẫn Dành Cho AI Khi Chuyển Nhánh (Branch Handoff Blueprint)
+## 7. 🚀 Hướng Dẫn Dành Cho AI & Kỹ Sư Khi Triển Khai Màn Hình (Engineering Blueprint)
 
-Khi một AI Agent hoặc lập trình viên chuyển sang nhánh mới để triển khai code giao diện, hãy thực hiện theo thứ tự 4 bước sau:
+Khi một AI Agent hoặc lập trình viên triển khai thêm màn hình hoặc component mới, hãy thực hiện theo thứ tự 4 bước sau:
 
-1. **Bước 1: Cài đặt thư viện điều hướng và cấu hình Seam**
-   - Sử dụng React 19 + TypeScript. Hiện thực hóa `AppNavigator` dựa trên `History API` hoặc `react-router-dom` v7 theo Seam định nghĩa ở Mục 5.
-   - Luôn sử dụng `ROUTE_PARENT_FALLBACK` để gắn kết nút Back của mỗi component.
+1. **Bước 1: Sử dụng Seam điều hướng chuẩn hóa**
+   - Sử dụng `useAppNavigation()` từ `mobile/src/navigation/NavigationContext.tsx`.
+   - Luôn định nghĩa `ROUTE_PARENT_FALLBACK` trong `parentFallback.ts` cho mọi route con mới để bảo đảm không bao giờ cụt đường.
 2. **Bước 2: Đối chiếu asset đồ họa**
-   - Đọc đối chiếu tên màn hình và layout trong `frontend/src/assets/LectureLens App Design System - PNG/` tương ứng với số thứ tự `[01]` đến `[28]`.
+   - Đọc đối chiếu tên màn hình và layout trong [`docs/design-assets/screens/png/`](./design-assets/screens/png/) tương ứng với số thứ tự `[01]` đến `[28]`.
 3. **Bước 3: Gắn Route Guard ở các màn hình nhạy cảm**
-   - Tại component màn hình `14 - Audio - Live Recording` và `24 - Flashcard - Question`, bắt buộc gọi `navigator.registerGuard(...)` trong `useEffect` để chặn sự kiện thoát bất ngờ.
+   - Tại component màn hình đang ghi âm hoặc đang làm bài, bắt buộc gọi `navigator.registerGuard(...)` trong `useEffect` để kích hoạt hộp thoại `MochiConfirmDialog` khi người dùng bấm Back bất ngờ.
 4. **Bước 4: Kiểm tra khả năng Rollback 100%**
-   - Kiểm tra mọi nút Back trong giao diện: Không có bất kỳ nút nào gọi trực tiếp `window.history.back()` trần trụi; toàn bộ phải gọi qua `navigator.goBack()`.
+   - Kiểm tra mọi nút Back trong giao diện: Tuyệt đối không gọi lệnh chuyển trang thô ráp; toàn bộ phải gọi qua `navigator.goBack()`. Chạy bài test `parentFallback.test.ts` để xác minh.

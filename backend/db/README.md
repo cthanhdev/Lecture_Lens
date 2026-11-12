@@ -4,10 +4,10 @@ Tài liệu này đặc tả toàn bộ kiến trúc cơ sở dữ liệu chuyê
 
 ---
 
-## 📑 Danh Mục Tệp Khởi Tạo (`BE/db/`)
+## 📑 Danh Mục Tệp Khởi Tạo (`backend/db/`)
 
 ```
-BE/db/
+backend/db/
 ├── postgresql.conf                      # Cấu hình bộ nhớ, WAL, và tham số HNSW tối ưu cho 16-32GB RAM
 ├── rag_schema_complete.sql              # Tệp SQL duy nhất chứa toàn bộ schema, bảng, index và hàm
 ├── verify_rag_db.py                     # Script Python tự động kiểm thử và xác minh toàn bộ tính năng RAG
@@ -17,7 +17,8 @@ BE/db/
     ├── 02_rag_chunks_schema.sql         # Bảng rag.lecture_chunks chuẩn hóa tiếng Việt & BGE-M3
     ├── 03_rag_indexes.sql               # Chỉ mục HNSW halfvec(1024), GIN Trigram, GIN TSVector
     ├── 04_rag_hybrid_search_rrf.sql     # Hàm Hybrid Search 3 luồng (RRF) & Context Expansion
-    └── 05_rag_telemetry_cache.sql       # Bảng Semantic Query Cache & Audit Logs
+    ├── 05_rag_telemetry_cache.sql       # Bảng Semantic Query Cache & Audit Logs
+    └── 06_app_jobs_status_migration.sql # Bổ sung trạng thái STT_COMPLETED cho app.jobs (ADR 0002)
 ```
 
 ---
@@ -52,7 +53,14 @@ Mỗi phân đoạn giữ liên kết 2 chiều với đoạn liền trước (`
 ## 🚀 Hướng Dẫn Sử Dụng & Triển Khai
 
 ### Cách 1: Khởi Chạy Tự Động Qua Docker Compose
-Cấu hình Docker Compose để mount thư mục `BE/db/init/` vào thư mục khởi tạo của PostgreSQL container:
+
+> [!TIP]
+> Môi trường dev có sẵn [`backend/docker-compose.ai-dev.yml`](../docker-compose.ai-dev.yml). Tệp này mount `rag_schema_complete.sql` và `init/06_app_jobs_status_migration.sql` vào container `db`, rồi khởi chạy cùng container `ai` (FastAPI) trên mạng `rag-internal-network`:
+> ```bash
+> docker compose -f backend/docker-compose.ai-dev.yml up --build
+> ```
+
+Hoặc tự cấu hình Docker Compose để mount thư mục `backend/db/init/` vào thư mục khởi tạo của PostgreSQL container:
 
 ```yaml
 services:
@@ -75,12 +83,12 @@ services:
 Nếu bạn đã có sẵn PostgreSQL 16 chạy trên máy chủ:
 
 ```bash
-psql -U ll_admin -d lecturelens_db -f BE/db/rag_schema_complete.sql
+psql -U ll_admin -d lecturelens_db -f backend/db/rag_schema_complete.sql
 ```
 
 ### Cách 3: Chạy Kiểm Thử Tự Động (Verification Script)
 ```bash
 pip install psycopg2-binary
-python BE/db/verify_rag_db.py
+python backend/db/verify_rag_db.py
 ```
 Script sẽ tự động chèn dữ liệu tiếng Việt mẫu, kiểm tra tính năng tính toán vector, kiểm tra câu hỏi không dấu qua RRF, và kiểm tra mở rộng ngữ cảnh 3 chiều.

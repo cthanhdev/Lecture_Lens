@@ -28,7 +28,7 @@
 ### 1.2. Linh Vật Chính Thức: Cáo Kitsune Pixel Art (Kitsune Fox Companion)
 - **Hình tượng:** Cáo trắng Kitsune được tạo hình theo phong cách **Pixel Art Nhật Bản**, đeo chuông cổ vàng may mắn (*suzu*), điểm xuyết cánh hoa anh đào (*sakura*), cổng trời (*torii*) và vầng thái dương đỏ rạng rỡ.
 - **Ý nghĩa:** Biểu trưng cho sự lanh lợi, trí tuệ mẫn tiệp, khả năng lắng nghe tinh tường và lòng đồng hành trung kiên cùng sinh viên suốt những giờ học căng thẳng.
-- **Vai trò trong ứng dụng:** Xuất hiện trong các trạng thái động viên: chào mừng (Onboarding), trạng thái rảnh rỗi (Empty State), quá trình phân tích âm thanh (Processing), chúc mừng hoàn thành bài học (Session Celebration) và mô hình 3D tương tác trong phòng học.
+- **Vai trò trong ứng dụng:** Xuất hiện trong các trạng thái động viên: chào mừng (Onboarding), trạng thái rảnh rỗi (Empty State), quá trình phân tích âm thanh (Processing), chúc mừng hoàn thành bài học (Session Celebration) và canvas linh vật động dựng bằng **Shopify Skia 2D** (`KitsuneMascotCanvas` kèm `FloatingPetals2D`) — thay cho mô hình 3D Three.js của bản web cũ (xem [ADR 0003](./adr/0003-native-mobile-architecture-expo-sdk58.md)).
 
 ---
 
@@ -92,6 +92,30 @@ LectureLens loại bỏ các bóng đổ đen xám cứng nhắc, thay bằng b�
   - Màu nền: `#FFFFFF` (Solid White)
   - Bóng đổ nổi khối: `box-shadow: 0 20px 48px -8px rgba(38, 19, 51, 0.14), 0 8px 16px -2px rgba(38, 19, 51, 0.06)`
 
+> [!NOTE]
+> **Ánh xạ sang React Native:** React Native không có `backdrop-filter` hay `box-shadow` của CSS. Các giá trị trên là đặc tả thị giác. Khi hiện thực trong `mobile/`:
+> - Kính mờ dùng `<BlurView>` của `expo-blur`, đặt dưới lớp nền bán trong suốt `KITSUNE_COLORS.mirukuCard`.
+> - Bóng đổ dùng `KITSUNE_SHADOWS.miruku` (Level 1–2) và `KITSUNE_SHADOWS.plumModal` (Level 3). Các token này khai báo `shadowColor`/`shadowOpacity`/`shadowRadius` cho iOS và `elevation` cho Android.
+
+### 3.2. Ánh Xạ Token Sang Mã Nguồn (`mobile/src/theme/tokens.ts`)
+
+| Token thiết kế | Hằng số TypeScript | Giá trị |
+| :--- | :--- | :--- |
+| `washi-cream` | `KITSUNE_COLORS.washiCream` | `#FFF7FD` |
+| `plum-ink` / `-muted` / `-subtle` | `KITSUNE_COLORS.plumInk` / `plumInkMuted` / `plumInkSubtle` | `#261333` / `#56423F` / `rgba(86,66,63,0.50)` |
+| `kitsune-coral` / `-dark` | `KITSUNE_COLORS.kitsuneCoral` / `kitsuneCoralDark` | `#F47F72` / `#A03F36` |
+| `sakura-pink` | `KITSUNE_COLORS.sakuraPink` | `#F5C3C9` |
+| `mist-sky` | `KITSUNE_COLORS.mistSky` | `#A9D4E8` |
+| `mochi-yellow` | `KITSUNE_COLORS.mochiYellow` | `#FFE27A` |
+| `matcha-mint` | `KITSUNE_COLORS.matchaMint` | `#BEE1D0` |
+| Miruku Glass (nền / viền) | `KITSUNE_COLORS.mirukuCard` / `mirukuBorder` | `rgba(255,255,255,0.76)` / `rgba(255,255,255,0.85)` |
+| Plum Ambient Shadow | `KITSUNE_COLORS.plumShadow` | `rgba(38,19,51,0.06)` |
+| Pill | `KITSUNE_RADII.pill` | `9999` |
+| Squircle card / small | `KITSUNE_RADII.squircleCard` / `squircleSmall` | `28` / `20` |
+| Đỉnh Modal Sheet | `KITSUNE_RADII.sheetTop` | `32` |
+
+Bộ test `mobile/src/theme/__tests__/tokens.test.ts` khoá các giá trị này theo tài liệu. Nếu đổi token ở đây, hãy cập nhật cả code lẫn test.
+
 ---
 
 ## 4. ✍️ Quy Chuẩn Kiểu Chữ (Typography: Plus Jakarta Sans)
@@ -123,7 +147,7 @@ Dự án sử dụng duy nhất kiểu chữ **Plus Jakarta Sans** trên toàn b
 - **Organic Blobs (Backdrop Plates):** Các mảng hình dạng hữu cơ SVG mềm mại (`border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%`) đặt lệch góc 3px lót dưới các icon.
 
 ### 5.2. Hiệu Ứng Nén Xúc Giác Mochi (Mochi Tactile Press Depth)
-Mọi phần tử có thể tương tác (Buttons, Cards, Chips) đều tích hợp phản hồi nảy xúc giác mềm:
+Mọi phần tử có thể tương tác (Buttons, Cards, Chips) đều tích hợp phản hồi nảy xúc giác mềm. Trên mobile, hiệu ứng được hiện thực bằng `react-native-reanimated` (`withTiming`) kết hợp `expo-haptics` (xem `Button.tsx`, `Chip.tsx`, `TimestampChip.tsx`, `KawaiiCheckbox.tsx`):
 - **Trạng thái Active/Press:**
   - Thu phóng nhẹ: `transform: scale(0.97)`
   - Bóng đổ thu gọn: `box-shadow: 0 2px 6px rgba(38, 19, 51, 0.04)`
