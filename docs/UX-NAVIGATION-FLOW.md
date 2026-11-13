@@ -89,15 +89,13 @@ flowchart TD
     S01 -->|Unauthenticated (replace)| S05
     S01 -->|Authenticated (replace)| S08
 
-    S02 -->|Next| S03
-    S03 -.->|Back (Rollback)| S02
-    S02 -->|Skip| S05
+    S02 -->|Swipe Left / Continue| S03
+    S03 -.->|Swipe Right / Back| S02
 
-    S03 -->|Next| S04
-    S04 -.->|Back (Rollback)| S03
-    S03 -->|Skip| S05
+    S03 -->|Swipe Left / Continue| S04
+    S04 -.->|Swipe Right / Back| S03
 
-    S04 -->|Get Started| S05
+    S04 -->|Get started (replace)| S05
     S05 <-->|Toggle Sign In / Sign Up| S06
     S05 -->|Sign In Success (replace)| S08
     S06 -->|Offer Upgrade| S07
@@ -221,9 +219,9 @@ flowchart TD
 | ID | Tên Màn Hình & Tệp Mẫu | Đường Dẫn URL | Loại Giao Diện | Lối Vào (Ingress) | Tương Tác Chính (Egress) | Chính Sách Quay Lui (Rollback Guarantee) | Trạng Thái Âm Thanh (Capsule Audio) |
 | :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **01** | `01 - Splash - App Launch` | `/` | Bootstrap Fullscreen | Khởi động app lần đầu hoặc mở tab mới | Tự động kiểm tra auth & onboarding sau 1.2s | **Root Origin:** Không thể rollback; đóng app hoặc giữ nguyên. | Tắt |
-| **02** | `02 - Onboarding - Step 1` | `/onboarding/step-1` | Linear Wizard | Từ `[01]` Splash (lần đầu) | Bấm "Tiếp" -> `[03]`, Bấm "Bỏ qua" -> `[05]` | **Lock:** Không rollback về Splash; nhấn Back hiển thị thoát app. | Tắt |
-| **03** | `03 - Onboarding - Step 2` | `/onboarding/step-2` | Linear Wizard | Từ `[02]` Onboarding 1 | Bấm "Tiếp" -> `[04]`, Bấm "Bỏ qua" -> `[05]` | **Deterministic Pop:** Back -> về thẳng `[02]`. | Tắt |
-| **04** | `04 - Onboarding - Step 3` | `/onboarding/step-3` | Linear Wizard | Từ `[03]` Onboarding 2 | Bấm "Bắt đầu ngay" -> `[05]` Sign In | **Deterministic Pop:** Back -> về thẳng `[03]`. | Tắt |
+| **02** | `02 - Onboarding - Step 1` | `/(onboarding)/step-1` | Swipeable Carousel | Từ `[01]` Splash (lần đầu) | Lướt trái hoặc bấm `Continue` -> `[03]` (không có `Skip`) | **Lock:** Không rollback về Splash; nhấn Back hệ thống không tạo vòng lặp. | Tắt |
+| **03** | `03 - Onboarding - Step 2` | `/(onboarding)/step-2` | Swipeable Carousel | Từ `[02]` Onboarding 1 | Lướt trái / bấm `Continue` -> `[04]`, lướt phải -> `[02]` (không có `Skip`) | **Deterministic Pop:** Lướt phải / Back -> về `[02]`. | Tắt |
+| **04** | `04 - Onboarding - Step 3` | `/(onboarding)/step-3` | Swipeable Carousel | Từ `[03]` Onboarding 2 | Lướt phải -> `[03]`, bấm `Get started` -> `[05]` Sign In (hoặc `[08]` nếu đã đăng nhập) | **Deterministic Pop + Replace:** Lướt phải / Back -> về `[03]`; `Get started` dùng `replace`. | Tắt |
 | **05** | `05 - Auth - Sign In` | `/auth/sign-in` | Form Entry | Từ `[04]`, `[01]`, hoặc bấm Đăng nhập | Đăng nhập thành công -> `[08]`, Chuyển -> `[06]` | **Safe Fallback:** Back -> về `[04]` Onboarding hoặc giữ form. | Tắt |
 | **06** | `06 - Auth - Create Account` | `/auth/create-account` | Form Entry | Từ `[05]` Sign In | Đăng ký thành công -> `[07]` hoặc `[08]` | **Deterministic Pop:** Back -> về `[05]` Sign In. | Tắt |
 | **07** | `07 - Paywall - Kitsune Plus` | `modal:paywall` (`?sheet=paywall`) | Miruku Modal Sheet | Từ `[06]`, `[27]` Profile, hoặc chạm tính năng VIP | Bấm "Đăng ký gói", hoặc bấm "X" / "Để sau" | **Layered Pop:** Đóng sheet, rollback về màn hình gọi trước đó. | Không ngắt |

@@ -64,6 +64,8 @@ Mọi mã nguồn giao diện được sinh ra trong thư mục `mobile/` bắt 
    - **Tỷ lệ chuẩn (Target Viewport)**: Chiều rộng tham chiếu là `390px`.
    - **Native Safe Areas**: Luôn chừa khoảng cách an toàn cho Status Bar (tai thỏ / Dynamic Island) ở đỉnh màn hình và Home Indicator ở đáy màn hình bằng `react-native-safe-area-context`.
    - **Vùng chạm ngón tay (Touch Targets)**: Tất cả nút bấm, thanh điều hướng nổi (`FloatingIslandTabBar`), và `CapsuleAudioPlayer` phải được tối ưu cho ngón tay cái (Thumb Zone), chiều cao tối thiểu `44px` - `52px`.
+8. **Quy Chuẩn Ngôn Ngữ Giao Diện (UI Copy Language Invariant):**
+   - **Ngôn ngữ hiển thị trên UI là Tiếng Anh (English 100%)**: Mọi tiêu đề màn hình, nhãn điều hướng (tab bar, button, badge, chip, placeholder, thông báo hệ thống) trong `mobile/` bắt buộc dùng **Tiếng Anh**, khớp 1:1 với 28 tệp thiết kế mẫu tại `docs/design-assets/screens/`. Tài liệu hướng dẫn và bình luận kỹ thuật có thể dùng Tiếng Việt/Anh, nhưng văn bản hiển thị cho người dùng trên giao diện ứng dụng luôn là **Tiếng Anh** (không tự ý dịch ngược hoặc hỏi lại).
 
 ---
 

@@ -202,6 +202,9 @@ Mọi phần tử có thể tương tác (Buttons, Cards, Chips) đều tích h�
 
 ## 7. 📱 Danh Mục 28 Màn Hình Mẫu Chuẩn Hóa (Screen Assets Inventory)
 
+> [!NOTE]
+> **UI Display Language Invariant:** Toàn bộ nhãn hiển thị trên giao diện người dùng (headings, subtitles, buttons, tabs, badges, empty states) đều sử dụng **Tiếng Anh (English)** khớp 1:1 với bộ 28 màn hình mẫu bên dưới.
+
 Toàn bộ 28 màn hình mẫu đã được đồng bộ hóa tên gọi và chức năng chuẩn xác 1:1 giữa hai định dạng Vector (`docs/design-assets/screens/svg/`) và Raster (`docs/design-assets/screens/png/`):
 
 | STT | Nhóm Nghiệp Vụ | Tên Tệp Chuẩn Hóa (`.svg` / `.png`) | Chức Vụ & Ý Nghĩa Thiết Kế |
