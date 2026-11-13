@@ -1,0 +1,231 @@
+// Shared pure geometry and falling physics specs for FloatingPetals2D (Skia Native + Reanimated Web).
+// Keeps both platform implementations 100% consistent and unit-testable without native dependencies.
+
+export const SAKURA_PETAL_SVG_PATH =
+  'M 7 0.5 C 11 4.2 13.5 8.2 13.5 12 C 13.5 15.6 10.6 18 7 18 C 3.4 18 0.5 15.6 0.5 12 C 0.5 8.2 3 4.2 7 0.5 Z'
+
+export const SAKURA_SPARKLE_SVG_PATH =
+  'M 6 0 L 7.4 4.6 L 12 6 L 7.4 7.4 L 6 12 L 4.6 7.4 L 0 6 L 4.6 4.6 Z'
+
+export const SAKURA_PETAL_PALETTE = [
+  '#FDCBD1',
+  '#F47F72',
+  '#EBBAC0',
+  '#F5C3C9',
+] as const
+
+export type SakuraPetalColor = (typeof SAKURA_PETAL_PALETTE)[number]
+
+export interface SakuraPetalParticle {
+  id: string
+  xRatio: number
+  initialProgress: number
+  width: number
+  height: number
+  rotationBaseDeg: number
+  rotationAmplitudeDeg: number
+  swayAmplitudePx: number
+  speedMultiplier: number
+  color: SakuraPetalColor
+  opacity: number
+  parallaxFactor: number
+}
+
+export const SAKURA_PETALS: readonly SakuraPetalParticle[] = [
+  {
+    id: 'petal-1',
+    xRatio: 0.09,
+    initialProgress: 0.06,
+    width: 11,
+    height: 15,
+    rotationBaseDeg: -22,
+    rotationAmplitudeDeg: 28,
+    swayAmplitudePx: 14,
+    speedMultiplier: 1.0,
+    color: '#FDCBD1',
+    opacity: 0.76,
+    parallaxFactor: -22,
+  },
+  {
+    id: 'petal-2',
+    xRatio: 0.23,
+    initialProgress: 0.28,
+    width: 8,
+    height: 11,
+    rotationBaseDeg: 18,
+    rotationAmplitudeDeg: 24,
+    swayAmplitudePx: 11,
+    speedMultiplier: 0.84,
+    color: '#F47F72',
+    opacity: 0.62,
+    parallaxFactor: -14,
+  },
+  {
+    id: 'petal-3',
+    xRatio: 0.37,
+    initialProgress: 0.54,
+    width: 10,
+    height: 14,
+    rotationBaseDeg: 34,
+    rotationAmplitudeDeg: 32,
+    swayAmplitudePx: 16,
+    speedMultiplier: 1.18,
+    color: '#EBBAC0',
+    opacity: 0.68,
+    parallaxFactor: -28,
+  },
+  {
+    id: 'petal-4',
+    xRatio: 0.51,
+    initialProgress: 0.14,
+    width: 9,
+    height: 12,
+    rotationBaseDeg: -14,
+    rotationAmplitudeDeg: 22,
+    swayAmplitudePx: 10,
+    speedMultiplier: 0.78,
+    color: '#FDCBD1',
+    opacity: 0.72,
+    parallaxFactor: -12,
+  },
+  {
+    id: 'petal-5',
+    xRatio: 0.64,
+    initialProgress: 0.72,
+    width: 12,
+    height: 16,
+    rotationBaseDeg: 28,
+    rotationAmplitudeDeg: 30,
+    swayAmplitudePx: 18,
+    speedMultiplier: 1.12,
+    color: '#F5C3C9',
+    opacity: 0.74,
+    parallaxFactor: -26,
+  },
+  {
+    id: 'petal-6',
+    xRatio: 0.78,
+    initialProgress: 0.19,
+    width: 10,
+    height: 14,
+    rotationBaseDeg: -32,
+    rotationAmplitudeDeg: 26,
+    swayAmplitudePx: 15,
+    speedMultiplier: 0.95,
+    color: '#F47F72',
+    opacity: 0.66,
+    parallaxFactor: -20,
+  },
+  {
+    id: 'petal-7',
+    xRatio: 0.89,
+    initialProgress: 0.44,
+    width: 9,
+    height: 13,
+    rotationBaseDeg: 14,
+    rotationAmplitudeDeg: 25,
+    swayAmplitudePx: 12,
+    speedMultiplier: 1.24,
+    color: '#FDCBD1',
+    opacity: 0.78,
+    parallaxFactor: -30,
+  },
+  {
+    id: 'petal-8',
+    xRatio: 0.15,
+    initialProgress: 0.82,
+    width: 7,
+    height: 10,
+    rotationBaseDeg: 40,
+    rotationAmplitudeDeg: 20,
+    swayAmplitudePx: 9,
+    speedMultiplier: 0.74,
+    color: '#EBBAC0',
+    opacity: 0.56,
+    parallaxFactor: -10,
+  },
+  {
+    id: 'petal-9',
+    xRatio: 0.44,
+    initialProgress: 0.88,
+    width: 11,
+    height: 15,
+    rotationBaseDeg: -26,
+    rotationAmplitudeDeg: 29,
+    swayAmplitudePx: 14,
+    speedMultiplier: 1.06,
+    color: '#F47F72',
+    opacity: 0.58,
+    parallaxFactor: -18,
+  },
+  {
+    id: 'petal-10',
+    xRatio: 0.71,
+    initialProgress: 0.61,
+    width: 8,
+    height: 11,
+    rotationBaseDeg: 22,
+    rotationAmplitudeDeg: 24,
+    swayAmplitudePx: 13,
+    speedMultiplier: 0.9,
+    color: '#F5C3C9',
+    opacity: 0.64,
+    parallaxFactor: -16,
+  },
+  {
+    id: 'petal-11',
+    xRatio: 0.92,
+    initialProgress: 0.08,
+    width: 12,
+    height: 16,
+    rotationBaseDeg: -18,
+    rotationAmplitudeDeg: 32,
+    swayAmplitudePx: 16,
+    speedMultiplier: 1.04,
+    color: '#FDCBD1',
+    opacity: 0.72,
+    parallaxFactor: -24,
+  },
+  {
+    id: 'petal-12',
+    xRatio: 0.29,
+    initialProgress: 0.39,
+    width: 9,
+    height: 12,
+    rotationBaseDeg: 12,
+    rotationAmplitudeDeg: 22,
+    swayAmplitudePx: 11,
+    speedMultiplier: 0.86,
+    color: '#FDCBD1',
+    opacity: 0.68,
+    parallaxFactor: -14,
+  },
+  {
+    id: 'petal-13',
+    xRatio: 0.57,
+    initialProgress: 0.33,
+    width: 8,
+    height: 11,
+    rotationBaseDeg: -36,
+    rotationAmplitudeDeg: 26,
+    swayAmplitudePx: 12,
+    speedMultiplier: 1.14,
+    color: '#EBBAC0',
+    opacity: 0.6,
+    parallaxFactor: -22,
+  },
+  {
+    id: 'petal-14',
+    xRatio: 0.83,
+    initialProgress: 0.76,
+    width: 10,
+    height: 14,
+    rotationBaseDeg: 26,
+    rotationAmplitudeDeg: 27,
+    swayAmplitudePx: 15,
+    speedMultiplier: 0.96,
+    color: '#FDCBD1',
+    opacity: 0.74,
+    parallaxFactor: -20,
+  },
+]

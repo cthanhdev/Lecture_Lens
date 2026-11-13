@@ -10,16 +10,15 @@ import {
   useWindowDimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { LinearGradient } from 'expo-linear-gradient'
 import type {
   AuthTransitionDirection,
   PreviewOverrideState,
   ServiceAvailability,
 } from '../../modules/resilience'
 import { KITSUNE_COLORS, KITSUNE_RADII } from '../../theme/tokens'
-import { FloatingPetals2D } from '../canvas'
 import { AuthFormSkeleton, ServiceStateCard } from '../ui/feedback'
 import { Icon } from '../ui/icons'
+import { AuthAmbientBackdrop } from './AuthAmbientBackdrop'
 import { AuthTransitionStage } from './AuthTransitionStage'
 
 export interface AuthScreenChromeProps {
@@ -74,20 +73,10 @@ export const AuthScreenChrome: React.FC<AuthScreenChromeProps> = ({
         ]}
       >
         {!embeddedBackdrop && (
-          <View style={styles.standaloneBackdrop} pointerEvents="none">
-            <LinearGradient
-              colors={[
-                'rgba(245, 195, 201, 0.44)',
-                'rgba(244, 127, 114, 0.14)',
-                'rgba(255, 247, 253, 0)',
-              ]}
-              locations={[0, 0.42, 1]}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={styles.topGradientWash}
-            />
-            <FloatingPetals2D />
-          </View>
+          <AuthAmbientBackdrop
+            frameWidth={frameWidth}
+            staticStep={skeletonVariant === 'create-account' ? 1 : 0}
+          />
         )}
 
         {/* Seamless transparent top bar aligned directly on top of the Sakura gradient wash */}
@@ -201,21 +190,6 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  standaloneBackdrop: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    overflow: 'hidden',
-  },
-  topGradientWash: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 330,
   },
   topBar: {
     height: 52,

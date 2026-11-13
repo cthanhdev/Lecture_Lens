@@ -35,3 +35,18 @@ export {
   getAuthSeam,
   setAuthSeam,
 } from './infrastructure/authSeam.ts'
+export {
+  type AuthScreenKey,
+  type AuthScreenStep,
+  type AuthOrbInterpolationSpec,
+  type AuthParallaxElementSpec,
+  AUTH_PAGER_MAX_PROGRESS,
+  AUTH_REFERENCE_WIDTH,
+  AUTH_BASE_ORB_SIZE,
+  clampAuthProgress,
+  authStepFromKey,
+  authKeyFromStep,
+  resolveAuthScreenKey,
+  buildAuthOrbTracks,
+  buildAuthParallaxElements,
+} from './authPagerMotion.ts'
