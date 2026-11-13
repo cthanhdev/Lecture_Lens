@@ -1,55 +1,98 @@
 // FloatingPetals2D Component using @shopify/react-native-skia
-// Hiệu ứng cánh hoa anh đào Sakura bay nhẹ nhàng chuẩn 60-120fps
-import React, { useEffect } from 'react'
-import { StyleSheet, Dimensions } from 'react-native'
+// Hiệu ứng cánh hoa anh đào Sakura bay nhẹ nhàng chuẩn 60-120fps trên Native
+import React, { useEffect, useMemo } from 'react'
+import { StyleSheet, useWindowDimensions } from 'react-native'
 import { Canvas, Circle, Group } from '@shopify/react-native-skia'
 import {
+  Easing,
+  useDerivedValue,
   useSharedValue,
   withRepeat,
   withTiming,
-  Easing,
+  type SharedValue,
 } from 'react-native-reanimated'
 import { KITSUNE_COLORS } from '../../theme/tokens'
 
-const { width, height } = Dimensions.get('window')
-const PETAL_COUNT = 16
+const PETAL_COUNT = 14
 
-interface PetalState {
-  x: number
-  y: number
+interface PetalSeed {
+  xRatio: number
+  yRatio: number
   radius: number
   speed: number
+  opacity: number
+}
+
+const PETAL_SEEDS: readonly PetalSeed[] = Array.from({ length: PETAL_COUNT }).map(
+  (_, idx) => ({
+    xRatio: ((idx * 37 + 19) % 100) / 100,
+    yRatio: ((idx * 53 + 11) % 100) / 100,
+    radius: 3 + (idx % 3) * 1.2,
+    speed: 0.65 + (idx % 4) * 0.25,
+    opacity: idx % 2 === 0 ? 0.45 : 0.3,
+  })
+)
+
+function SkiaPetal({
+  seed,
+  viewportWidth,
+  viewportHeight,
+  progress,
+}: {
+  seed: PetalSeed
+  viewportWidth: number
+  viewportHeight: number
+  progress: SharedValue<number>
+}) {
+  const baseX = seed.xRatio * viewportWidth
+  const baseY = seed.yRatio * viewportHeight
+
+  const cy = useDerivedValue(() => {
+    const travel = progress.value * viewportHeight * seed.speed
+    return (baseY + travel) % Math.max(viewportHeight, 1)
+  })
+
+  const cx = useDerivedValue(() => {
+    return baseX + Math.sin(progress.value * Math.PI * 2 + seed.yRatio * 6) * 10
+  })
+
+  return (
+    <Circle
+      cx={cx}
+      cy={cy}
+      r={seed.radius}
+      color={KITSUNE_COLORS.sakuraPink}
+      opacity={seed.opacity}
+    />
+  )
 }
 
 export const FloatingPetals2D: React.FC = () => {
+  const { width, height } = useWindowDimensions()
   const progress = useSharedValue(0)
 
   useEffect(() => {
-    progress.value = withRepeat(
-      withTiming(1, { duration: 9000, easing: Easing.linear }),
-      -1,
-      false
+    progress.set(
+      withRepeat(
+        withTiming(1, { duration: 10000, easing: Easing.linear }),
+        -1,
+        false
+      )
     )
   }, [progress])
 
-  const petals: PetalState[] = Array.from({ length: PETAL_COUNT }).map((_, idx) => ({
-    x: (idx * 27 + 15) % width,
-    y: (idx * 53) % height,
-    radius: 3 + (idx % 3),
-    speed: 0.7 + (idx % 3) * 0.35,
-  }))
+  const seeds = useMemo(() => PETAL_SEEDS, [])
 
   return (
     <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
       <Group>
-        {petals.map((p, i) => (
-          <Circle
-            key={i}
-            cx={p.x}
-            cy={(p.y + progress.value * height * p.speed) % height}
-            r={p.radius}
-            color={KITSUNE_COLORS.sakuraPink}
-            opacity={0.50}
+        {seeds.map((seed, idx) => (
+          <SkiaPetal
+            key={idx}
+            seed={seed}
+            viewportWidth={width}
+            viewportHeight={height}
+            progress={progress}
           />
         ))}
       </Group>
