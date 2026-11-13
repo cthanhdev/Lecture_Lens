@@ -1,87 +1,262 @@
 import type {
-  StudentCredentials,
-  RegistrationPayload,
+  AuthAdapterMode,
+  AuthErrorCode,
   AuthResponse,
+  AuthUser,
+  PasswordResetResponse,
+  RegistrationPayload,
+  SocialAuthProvider,
+  StudentCredentials,
 } from '../domain/auth.types.ts'
 import type { KeyValueStorage } from '../../storage/types.ts'
 import { MemoryStorageAdapter } from '../../storage/MemoryStorageAdapter.ts'
 
-/**
- * AuthSeam: Deep Module Seam (Ranh giới xác thực theo Matt Pocock)
- * Small interface with extensive internal implementation
- */
 export interface AuthSeam {
+  readonly mode: AuthAdapterMode
   signIn(credentials: StudentCredentials): Promise<AuthResponse>
   createAccount(payload: RegistrationPayload): Promise<AuthResponse>
+  signInWithProvider(provider: SocialAuthProvider): Promise<AuthResponse>
+  requestPasswordReset(email: string): Promise<PasswordResetResponse>
   checkBackendHealth(): Promise<boolean>
   getCurrentSession(): Promise<AuthResponse | null>
   signOut(): Promise<void>
 }
 
-const STORAGE_KEY = 'lecturelens_auth_session'
+export const AUTH_SESSION_KEY = 'lecturelens_auth_session'
+export const AUTH_TOKEN_KEY = 'lecturelens_auth_token'
+export const MOCK_ACCOUNTS_KEY = 'lecturelens_mock_accounts'
+export const AUTH_MODE_KEY = 'lecturelens_auth_mode'
+
+export const DEMO_CREDENTIALS = {
+  fullName: 'Minh Tran',
+  email: 'minh.tran@university.edu',
+  password: 'KitsuneSecret99',
+} as const
+
+interface StoredMockAccount {
+  id: string
+  fullName: string
+  email: string
+  password: string
+  studentId: string
+  role: string
+}
+
+const SEEDED_MOCK_ACCOUNTS: readonly StoredMockAccount[] = [
+  {
+    id: 'usr_mock_minh',
+    fullName: DEMO_CREDENTIALS.fullName,
+    email: DEMO_CREDENTIALS.email,
+    password: DEMO_CREDENTIALS.password,
+    studentId: 'STU202509',
+    role: 'STUDENT',
+  },
+]
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase()
+}
+
+function toPublicUser(account: StoredMockAccount): AuthUser {
+  return {
+    id: account.id,
+    fullName: account.fullName,
+    email: account.email,
+    studentId: account.studentId,
+    role: account.role,
+  }
+}
+
+async function persistAuthSession(
+  storage: KeyValueStorage,
+  response: AuthResponse,
+): Promise<void> {
+  await storage.setItem(AUTH_SESSION_KEY, JSON.stringify(response))
+  if (response.token) {
+    await storage.setItem(AUTH_TOKEN_KEY, response.token)
+  }
+}
+
+async function readAuthSession(
+  storage: KeyValueStorage,
+): Promise<AuthResponse | null> {
+  try {
+    const raw = await storage.getItem(AUTH_SESSION_KEY)
+    return raw ? (JSON.parse(raw) as AuthResponse) : null
+  } catch {
+    return null
+  }
+}
+
+async function clearAuthSession(storage: KeyValueStorage): Promise<void> {
+  await storage.removeItem(AUTH_SESSION_KEY)
+  await storage.removeItem(AUTH_TOKEN_KEY)
+}
+
+function normalizeApiV1BaseUrl(rawUrl: string): string {
+  const trimmed = rawUrl.trim().replace(/\/+$/, '')
+  return trimmed.endsWith('/api/v1') ? trimmed : `${trimmed}/api/v1`
+}
+
+function mapHttpStatusToErrorCode(status: number): AuthErrorCode {
+  if (status === 401 || status === 403) return 'INVALID_CREDENTIALS'
+  if (status === 409) return 'EMAIL_ALREADY_EXISTS'
+  if (status === 400 || status === 422) return 'VALIDATION_ERROR'
+  if (status >= 500) return 'SERVER_UNREACHABLE'
+  return 'UNKNOWN_ERROR'
+}
 
 /**
- * 1. MockAuthAdapter: Cho phép trải nghiệm, kiểm thử và chạy ngoại tuyến
- * khi Spring Boot Backend chưa khởi động hoặc gặp sự cố mạng
+ * Persistent local MockAuthAdapter for instant offline testing & demos.
+ * Pre-seeds minh.tran@university.edu / KitsuneSecret99 and persists created accounts in KeyValueStorage.
  */
 export class MockAuthAdapter implements AuthSeam {
+  readonly mode: AuthAdapterMode = 'mock'
   private latencyMs: number
   private storage: KeyValueStorage
 
-  constructor(storage: KeyValueStorage = new MemoryStorageAdapter(), latencyMs = 200) {
+  constructor(
+    storage: KeyValueStorage = new MemoryStorageAdapter(),
+    latencyMs = 200,
+  ) {
     this.storage = storage
     this.latencyMs = latencyMs
   }
 
-  async signIn(credentials: StudentCredentials): Promise<AuthResponse> {
+  private async delayIfNeeded(): Promise<void> {
     if (this.latencyMs > 0) {
       await new Promise((r) => setTimeout(r, this.latencyMs))
     }
+  }
 
-    // Tự động tạo user từ email
-    const username = credentials.email.split('@')[0] || 'Minh Tran'
-    const formattedName = username
-      .split('.')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ')
+  private async loadAccounts(): Promise<StoredMockAccount[]> {
+    try {
+      const raw = await this.storage.getItem(MOCK_ACCOUNTS_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as StoredMockAccount[]
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed
+        }
+      }
+    } catch {
+      // Fall through to seed reset on corrupted payload
+    }
+    const seeded = [...SEEDED_MOCK_ACCOUNTS]
+    await this.storage.setItem(MOCK_ACCOUNTS_KEY, JSON.stringify(seeded))
+    return seeded
+  }
+
+  async signIn(credentials: StudentCredentials): Promise<AuthResponse> {
+    await this.delayIfNeeded()
+
+    const email = normalizeEmail(credentials.email)
+    const accounts = await this.loadAccounts()
+    const match = accounts.find((acc) => normalizeEmail(acc.email) === email)
+
+    if (!match || match.password !== credentials.password) {
+      return {
+        success: false,
+        errorCode: 'INVALID_CREDENTIALS',
+        message:
+          'Invalid university email or password. Demo: minh.tran@university.edu / KitsuneSecret99.',
+        isMock: true,
+      }
+    }
 
     const response: AuthResponse = {
       success: true,
-      user: {
-        id: 'usr_mock_01',
-        fullName: formattedName,
-        email: credentials.email,
-        studentId: 'STU202509',
-      },
-      token: 'jwt_mock_token_kitsune_2025',
-      message: 'Đăng nhập thành công (Chế độ Ngoại tuyến Native)',
+      user: toPublicUser(match),
+      token: `jwt_mock_${match.id}_${Date.now()}`,
+      message: 'Signed in successfully (Mock Mode).',
       isMock: true,
     }
-
-    await this.storage.setItem(STORAGE_KEY, JSON.stringify(response))
+    await persistAuthSession(this.storage, response)
     return response
   }
 
   async createAccount(payload: RegistrationPayload): Promise<AuthResponse> {
-    if (this.latencyMs > 0) {
-      await new Promise((r) => setTimeout(r, this.latencyMs))
+    await this.delayIfNeeded()
+
+    const email = normalizeEmail(payload.email)
+    const accounts = await this.loadAccounts()
+    const duplicate = accounts.some((acc) => normalizeEmail(acc.email) === email)
+
+    if (duplicate) {
+      return {
+        success: false,
+        errorCode: 'EMAIL_ALREADY_EXISTS',
+        message: 'An account with this university email already exists.',
+        isMock: true,
+      }
     }
+
+    const newAccount: StoredMockAccount = {
+      id: `usr_mock_${Date.now()}`,
+      fullName: payload.fullName.trim(),
+      email,
+      password: payload.password,
+      studentId: `STU${Math.floor(100000 + Math.random() * 900000)}`,
+      role: 'STUDENT',
+    }
+
+    await this.storage.setItem(
+      MOCK_ACCOUNTS_KEY,
+      JSON.stringify([...accounts, newAccount]),
+    )
 
     const response: AuthResponse = {
       success: true,
+      user: toPublicUser(newAccount),
+      token: `jwt_mock_${newAccount.id}`,
+      message: 'Account created successfully (Mock Mode).',
+      isMock: true,
+    }
+    await persistAuthSession(this.storage, response)
+    return response
+  }
+
+  async signInWithProvider(provider: SocialAuthProvider): Promise<AuthResponse> {
+    await this.delayIfNeeded()
+
+    const isApple = provider === 'apple'
+    const response: AuthResponse = {
+      success: true,
       user: {
-        id: 'usr_mock_new',
-        fullName: payload.fullName,
-        email: payload.email,
-        studentId: 'STU' + Math.floor(100000 + Math.random() * 900000),
+        id: isApple ? 'usr_mock_apple' : 'usr_mock_google',
+        fullName: DEMO_CREDENTIALS.fullName,
+        email: isApple
+          ? 'minh.apple@university.edu'
+          : 'minh.google@university.edu',
+        studentId: 'STU202509',
+        role: 'STUDENT',
       },
-      token: 'jwt_mock_token_new_user',
-      message: 'Tạo tài khoản học tập thành công (Offline Mode)',
+      token: `jwt_mock_${provider}_${Date.now()}`,
+      message: `Signed in with ${isApple ? 'Apple' : 'Google'} (Mock Mode).`,
       isMock: true,
     }
 
-    await this.storage.setItem(STORAGE_KEY, JSON.stringify(response))
+    await persistAuthSession(this.storage, response)
     return response
+  }
+
+  async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
+    await this.delayIfNeeded()
+
+    const cleanEmail = normalizeEmail(email)
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return {
+        success: false,
+        errorCode: 'VALIDATION_ERROR',
+        message: 'Please enter a valid university email address.',
+        isMock: true,
+      }
+    }
+
+    return {
+      success: true,
+      message: `Reset link sent to ${cleanEmail}. Demo password: ${DEMO_CREDENTIALS.password}`,
+      isMock: true,
+    }
   }
 
   async checkBackendHealth(): Promise<boolean> {
@@ -89,125 +264,216 @@ export class MockAuthAdapter implements AuthSeam {
   }
 
   async getCurrentSession(): Promise<AuthResponse | null> {
-    try {
-      const data = await this.storage.getItem(STORAGE_KEY)
-      return data ? JSON.parse(data) : null
-    } catch {
-      return null
-    }
+    return readAuthSession(this.storage)
   }
 
   async signOut(): Promise<void> {
-    await this.storage.removeItem(STORAGE_KEY)
+    await clearAuthSession(this.storage)
   }
 }
 
+export interface SpringBootAuthConfig {
+  baseUrl?: string
+  storage?: KeyValueStorage
+  fetchFn?: typeof fetch
+  timeoutMs?: number
+}
+
 /**
- * 2. BackendAuthAdapter: Kết nối tới API Gateway Spring Boot (Cổng công khai 8080)
+ * Spring Boot API Gateway Adapter (/api/v1/auth/*)
+ * Strictly handles backend JWT responses & HTTP/network error codes without silent mock bypasses.
  */
-export class BackendAuthAdapter implements AuthSeam {
-  private baseUrl: string
-  private fallbackMock: MockAuthAdapter
-  private storage: KeyValueStorage
+export class SpringBootAuthAdapter implements AuthSeam {
+  readonly mode: AuthAdapterMode = 'spring'
+  private readonly apiBaseUrl: string
+  private readonly storage: KeyValueStorage
+  private readonly fetchFn: typeof fetch
+  private readonly timeoutMs: number
 
   constructor(
-    baseUrl = 'http://localhost:8080',
-    storage: KeyValueStorage = new MemoryStorageAdapter(),
-    fallbackMock?: MockAuthAdapter
+    configOrBaseUrl: SpringBootAuthConfig | string = 'http://localhost:8080/api/v1',
+    storageArg?: KeyValueStorage,
   ) {
-    this.baseUrl = baseUrl
-    this.storage = storage
-    this.fallbackMock = fallbackMock || new MockAuthAdapter(storage)
+    const config: SpringBootAuthConfig =
+      typeof configOrBaseUrl === 'string'
+        ? { baseUrl: configOrBaseUrl, storage: storageArg }
+        : configOrBaseUrl
+
+    this.apiBaseUrl = normalizeApiV1BaseUrl(
+      config.baseUrl ?? 'http://localhost:8080/api/v1',
+    )
+    this.storage = config.storage ?? new MemoryStorageAdapter()
+    this.fetchFn =
+      config.fetchFn ??
+      (typeof fetch !== 'undefined'
+        ? fetch.bind(globalThis)
+        : ((async () => {
+            throw new TypeError('Fetch API unavailable')
+          }) as unknown as typeof fetch))
+    this.timeoutMs = config.timeoutMs ?? 8000
+  }
+
+  private async fetchWithTimeout(
+    url: string,
+    init: RequestInit,
+  ): Promise<Response> {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs)
+    try {
+      return await this.fetchFn(url, { ...init, signal: controller.signal })
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  private async postAuthEndpoint(
+    endpointPath: string,
+    body: unknown,
+  ): Promise<AuthResponse> {
+    try {
+      const res = await this.fetchWithTimeout(`${this.apiBaseUrl}${endpointPath}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+
+      let data: Record<string, unknown> = {}
+      try {
+        data = (await res.json()) as Record<string, unknown>
+      } catch {
+        // Non-JSON response body
+      }
+
+      if (!res.ok) {
+        const errorCode = mapHttpStatusToErrorCode(res.status)
+        const serverMessage =
+          typeof data.message === 'string' ? data.message : undefined
+        const fallbackMsg =
+          errorCode === 'INVALID_CREDENTIALS'
+            ? 'Invalid university email or password.'
+            : errorCode === 'EMAIL_ALREADY_EXISTS'
+              ? 'An account with this university email already exists.'
+              : errorCode === 'SERVER_UNREACHABLE'
+                ? 'LectureLens server is temporarily unavailable. Please try again.'
+                : `Authentication failed (HTTP ${res.status}).`
+
+        return {
+          success: false,
+          statusCode: res.status,
+          errorCode,
+          message: serverMessage ?? fallbackMsg,
+          isMock: false,
+        }
+      }
+
+      const token =
+        (typeof data.accessToken === 'string' && data.accessToken) ||
+        (typeof data.token === 'string' && data.token) ||
+        undefined
+      const user = data.user as AuthUser | undefined
+
+      const response: AuthResponse = {
+        success: true,
+        user,
+        token,
+        isMock: false,
+      }
+
+      await persistAuthSession(this.storage, response)
+      return response
+    } catch {
+      return {
+        success: false,
+        errorCode: 'SERVER_UNREACHABLE',
+        message:
+          'Unable to connect to the LectureLens Spring Boot server. Check your connection or switch to Demo Mode.',
+        isMock: false,
+      }
+    }
   }
 
   async checkBackendHealth(): Promise<boolean> {
     try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 2000)
-      const res = await fetch(`${this.baseUrl}/api/v1/health`, {
+      const res = await this.fetchWithTimeout(`${this.apiBaseUrl}/health`, {
         method: 'GET',
-        signal: controller.signal,
-      }).catch(() => null)
-      clearTimeout(timeoutId)
-      return res !== null && res.ok
+      })
+      return res.ok
     } catch {
       return false
     }
   }
 
   async signIn(credentials: StudentCredentials): Promise<AuthResponse> {
-    const isHealthy = await this.checkBackendHealth()
-    if (!isHealthy) {
-      return this.fallbackMock.signIn(credentials)
-    }
-
-    try {
-      const res = await fetch(`${this.baseUrl}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-      })
-      if (!res.ok) {
-        throw new Error(`Đăng nhập thất bại: HTTP ${res.status}`)
-      }
-      const data = await res.json()
-      const response: AuthResponse = {
-        success: true,
-        user: data.user,
-        token: data.token,
-        isMock: false,
-      }
-      await this.storage.setItem(STORAGE_KEY, JSON.stringify(response))
-      return response
-    } catch {
-      return this.fallbackMock.signIn(credentials)
-    }
+    return this.postAuthEndpoint('/auth/login', {
+      email: normalizeEmail(credentials.email),
+      password: credentials.password,
+    })
   }
 
   async createAccount(payload: RegistrationPayload): Promise<AuthResponse> {
-    const isHealthy = await this.checkBackendHealth()
-    if (!isHealthy) {
-      return this.fallbackMock.createAccount(payload)
-    }
+    return this.postAuthEndpoint('/auth/register', {
+      fullName: payload.fullName.trim(),
+      email: normalizeEmail(payload.email),
+      password: payload.password,
+      agreeTerms: payload.agreeTerms,
+    })
+  }
 
+  async signInWithProvider(provider: SocialAuthProvider): Promise<AuthResponse> {
+    return this.postAuthEndpoint('/auth/oauth', { provider })
+  }
+
+  async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
     try {
-      const res = await fetch(`${this.baseUrl}/api/v1/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+      const res = await this.fetchWithTimeout(
+        `${this.apiBaseUrl}/auth/forgot-password`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({ email: normalizeEmail(email) }),
+        },
+      )
       if (!res.ok) {
-        throw new Error(`Đăng ký thất bại: HTTP ${res.status}`)
+        return {
+          success: false,
+          errorCode: mapHttpStatusToErrorCode(res.status),
+          message: 'Could not start password reset. Please try again later.',
+          isMock: false,
+        }
       }
-      const data = await res.json()
-      const response: AuthResponse = {
+      return {
         success: true,
-        user: data.user,
-        token: data.token,
+        message: `If an account exists for ${normalizeEmail(email)}, reset instructions have been sent.`,
         isMock: false,
       }
-      await this.storage.setItem(STORAGE_KEY, JSON.stringify(response))
-      return response
     } catch {
-      return this.fallbackMock.createAccount(payload)
+      return {
+        success: false,
+        errorCode: 'SERVER_UNREACHABLE',
+        message: 'Unable to reach LectureLens server for password reset.',
+        isMock: false,
+      }
     }
   }
 
   async getCurrentSession(): Promise<AuthResponse | null> {
-    try {
-      const data = await this.storage.getItem(STORAGE_KEY)
-      return data ? JSON.parse(data) : null
-    } catch {
-      return null
-    }
+    return readAuthSession(this.storage)
   }
 
   async signOut(): Promise<void> {
-    await this.storage.removeItem(STORAGE_KEY)
+    await clearAuthSession(this.storage)
   }
 }
 
-// Singleton Auth Seam instance
+export const BackendAuthAdapter = SpringBootAuthAdapter
+
+// Active Auth Seam singleton
 let activeAuthSeam: AuthSeam = new MockAuthAdapter()
 
 export function getAuthSeam(): AuthSeam {

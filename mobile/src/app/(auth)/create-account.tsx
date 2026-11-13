@@ -1,15 +1,10 @@
-// [S06] Auth - Create Account
 import React from 'react'
-import { RouteSlot } from '../../components/navigation/RouteSlot'
+import { AuthCarousel } from '../../components/auth'
 
+/**
+ * Screen 06 — Auth - Create Account route entrypoint.
+ * Hosts unified swipeable AuthCarousel anchored initially at Create Account (step 1).
+ */
 export default function CreateAccountScreen() {
-  return (
-    <RouteSlot
-      id="S06"
-      number="06"
-      name="Auth - Create Account"
-      category="Authentication"
-      description="Tạo tài khoản học tập LectureLens mới."
-    />
-  )
+  return <AuthCarousel initialScreen="create-account" />
 }

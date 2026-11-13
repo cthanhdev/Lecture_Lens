@@ -1,8 +1,8 @@
 // FloatingPetals2D Component using @shopify/react-native-skia
-// Hiệu ứng cánh hoa anh đào Sakura bay nhẹ nhàng chuẩn 60-120fps trên Native
-import React, { useEffect, useMemo } from 'react'
-import { StyleSheet, useWindowDimensions } from 'react-native'
-import { Canvas, Circle, Group } from '@shopify/react-native-skia'
+// Renders curved teardrop falling Sakura petals matching Kitsune Soft screens with optional swipe parallax.
+import React, { useEffect, useMemo, useState } from 'react'
+import { StyleSheet, View, useWindowDimensions } from 'react-native'
+import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia'
 import {
   Easing,
   useDerivedValue,
@@ -11,91 +11,128 @@ import {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated'
-import { KITSUNE_COLORS } from '../../theme/tokens'
+import {
+  SAKURA_PETALS,
+  SAKURA_PETAL_SVG_PATH,
+  type SakuraPetalParticle,
+} from '../../modules/canvas/sakuraPetals'
 
-const PETAL_COUNT = 14
-
-interface PetalSeed {
-  xRatio: number
-  yRatio: number
-  radius: number
-  speed: number
-  opacity: number
+export interface FloatingPetals2DProps {
+  scrollProgress?: SharedValue<number>
 }
 
-const PETAL_SEEDS: readonly PetalSeed[] = Array.from({ length: PETAL_COUNT }).map(
-  (_, idx) => ({
-    xRatio: ((idx * 37 + 19) % 100) / 100,
-    yRatio: ((idx * 53 + 11) % 100) / 100,
-    radius: 3 + (idx % 3) * 1.2,
-    speed: 0.65 + (idx % 4) * 0.25,
-    opacity: idx % 2 === 0 ? 0.45 : 0.3,
-  })
-)
+const PETAL_ORIGIN = { x: 7, y: 9 }
 
-function SkiaPetal({
-  seed,
-  viewportWidth,
-  viewportHeight,
-  progress,
-}: {
-  seed: PetalSeed
-  viewportWidth: number
-  viewportHeight: number
-  progress: SharedValue<number>
-}) {
-  const baseX = seed.xRatio * viewportWidth
-  const baseY = seed.yRatio * viewportHeight
-
-  const cy = useDerivedValue(() => {
-    const travel = progress.value * viewportHeight * seed.speed
-    return (baseY + travel) % Math.max(viewportHeight, 1)
-  })
-
-  const cx = useDerivedValue(() => {
-    return baseX + Math.sin(progress.value * Math.PI * 2 + seed.yRatio * 6) * 10
-  })
-
-  return (
-    <Circle
-      cx={cx}
-      cy={cy}
-      r={seed.radius}
-      color={KITSUNE_COLORS.sakuraPink}
-      opacity={seed.opacity}
-    />
-  )
+interface SkiaPetalNodeProps {
+  petal: SakuraPetalParticle
+  petalIndex: number
+  containerWidth: number
+  containerHeight: number
+  petalPath: NonNullable<ReturnType<typeof Skia.Path.MakeFromSVGString>>
+  scrollProgress?: SharedValue<number>
 }
 
-export const FloatingPetals2D: React.FC = () => {
-  const { width, height } = useWindowDimensions()
-  const progress = useSharedValue(0)
+const SkiaPetalNode: React.FC<SkiaPetalNodeProps> = ({
+  petal,
+  petalIndex,
+  containerWidth,
+  containerHeight,
+  petalPath,
+  scrollProgress,
+}) => {
+  const cycle = useSharedValue(0)
 
   useEffect(() => {
-    progress.set(
+    const durationMs = Math.round(13500 / petal.speedMultiplier)
+    cycle.set(
       withRepeat(
-        withTiming(1, { duration: 10000, easing: Easing.linear }),
+        withTiming(1, { duration: durationMs, easing: Easing.linear }),
         -1,
         false
       )
     )
-  }, [progress])
+  }, [cycle, petal.speedMultiplier])
 
-  const seeds = useMemo(() => PETAL_SEEDS, [])
+  const translateTransform = useDerivedValue(() => {
+    const wrapped = (cycle.value + petal.initialProgress) % 1
+    const y = wrapped * (containerHeight + 56) - 28
+    const sway =
+      Math.sin(wrapped * Math.PI * 2 + petalIndex * 1.15) *
+      petal.swayAmplitudePx
+    const parallax = scrollProgress
+      ? (scrollProgress.value - 0.5) * petal.parallaxFactor
+      : 0
+    const x = petal.xRatio * containerWidth + sway + parallax - 7
+    return [{ translateX: x }, { translateY: y }]
+  })
+
+  const spinTransform = useDerivedValue(() => {
+    const wrapped = (cycle.value + petal.initialProgress) % 1
+    const deg =
+      petal.rotationBaseDeg +
+      Math.sin(wrapped * Math.PI * 2 + petalIndex * 0.9) *
+        petal.rotationAmplitudeDeg
+    const rad = (deg * Math.PI) / 180
+    const scale = petal.width / 14
+    return [{ rotate: rad }, { scale }]
+  })
 
   return (
-    <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Group>
-        {seeds.map((seed, idx) => (
-          <SkiaPetal
-            key={idx}
-            seed={seed}
-            viewportWidth={width}
-            viewportHeight={height}
-            progress={progress}
-          />
-        ))}
+    <Group transform={translateTransform}>
+      <Group origin={PETAL_ORIGIN} transform={spinTransform}>
+        <Path
+          path={petalPath}
+          color={petal.color}
+          opacity={petal.opacity}
+        />
       </Group>
-    </Canvas>
+    </Group>
+  )
+}
+
+export const FloatingPetals2D: React.FC<FloatingPetals2DProps> = ({
+  scrollProgress,
+}) => {
+  const windowDims = useWindowDimensions()
+  const [containerSize, setContainerSize] = useState({
+    width: windowDims.width,
+    height: windowDims.height,
+  })
+  const petalPath = useMemo(
+    () => Skia.Path.MakeFromSVGString(SAKURA_PETAL_SVG_PATH),
+    []
+  )
+
+  return (
+    <View
+      style={StyleSheet.absoluteFill}
+      pointerEvents="none"
+      onLayout={(event) => {
+        const { width, height } = event.nativeEvent.layout
+        if (width > 0 && height > 0) {
+          setContainerSize((prev) =>
+            prev.width === width && prev.height === height
+              ? prev
+              : { width, height }
+          )
+        }
+      }}
+    >
+      {petalPath && containerSize.width > 0 && containerSize.height > 0 ? (
+        <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
+          {SAKURA_PETALS.map((petal, index) => (
+            <SkiaPetalNode
+              key={petal.id}
+              petal={petal}
+              petalIndex={index}
+              containerWidth={containerSize.width}
+              containerHeight={containerSize.height}
+              petalPath={petalPath}
+              scrollProgress={scrollProgress}
+            />
+          ))}
+        </Canvas>
+      ) : null}
+    </View>
   )
 }

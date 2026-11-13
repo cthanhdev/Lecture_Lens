@@ -88,9 +88,11 @@ describe('Launch Preflight Pipeline Seam (Screen 01)', () => {
     const storage = new MemoryStorageAdapter()
     await storage.setItem('lecturelens.onboarding.completed', 'true')
     const authSeam = new MockAuthAdapter(new MemoryStorageAdapter(), 0)
-    await authSeam.signIn({
+    await authSeam.createAccount({
+      fullName: 'Linh Le',
       email: 'linh.le@university.edu',
       password: 'Password123',
+      agreeTerms: true,
     })
 
     const preparers: StartupPreparer[] = [

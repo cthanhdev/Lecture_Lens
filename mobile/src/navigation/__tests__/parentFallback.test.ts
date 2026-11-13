@@ -55,9 +55,12 @@ test('Định luật 1: Hierarchy Fallback Matrix cho các route con sâu trên 
   assert.strictEqual(getParentFallback('/audio/record'), '/home')
   assert.strictEqual(getParentFallback('/(guarded)/audio/record'), '/home')
 
-  // 7. Tạo tài khoản phải fallback về /auth/sign-in
+  // 7. Create Account -> Sign In; Sign In -> Onboarding (never loops unauthenticated users to /home)
   assert.strictEqual(getParentFallback('/auth/create-account'), '/auth/sign-in')
   assert.strictEqual(getParentFallback('/(auth)/create-account'), '/(auth)/sign-in')
+  assert.strictEqual(getParentFallback('/create-account'), '/(auth)/sign-in')
+  assert.strictEqual(getParentFallback('/sign-in'), '/(onboarding)/step-1')
+  assert.strictEqual(getParentFallback('/(auth)/sign-in'), '/(onboarding)/step-1')
 
   // 8. Các tab chính phải fallback về /home
   assert.strictEqual(getParentFallback('/library'), '/home')

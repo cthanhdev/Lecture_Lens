@@ -1,15 +1,10 @@
-// [S05] Auth - Sign In
 import React from 'react'
-import { RouteSlot } from '../../components/navigation/RouteSlot'
+import { AuthCarousel } from '../../components/auth'
 
+/**
+ * Screen 05 — Auth - Sign In route entrypoint.
+ * Hosts unified swipeable AuthCarousel anchored initially at Sign In (step 0).
+ */
 export default function SignInScreen() {
-  return (
-    <RouteSlot
-      id="S05"
-      number="05"
-      name="Auth - Sign In"
-      category="Authentication"
-      description="Đăng nhập tài khoản sinh viên với email và mật khẩu."
-    />
-  )
+  return <AuthCarousel initialScreen="sign-in" />
 }

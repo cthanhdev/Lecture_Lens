@@ -13,6 +13,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans'
 import { NavigationProvider } from '../navigation/NavigationContext'
 import { AudioProvider } from '../modules/audio/AudioContext'
+import { initAuthRuntime } from '../modules/auth/infrastructure/authRuntime'
 import { KITSUNE_COLORS } from '../theme/tokens'
 
 // Giữ màn hình khởi động cho đến khi nạp xong phông chữ
@@ -26,6 +27,10 @@ export default function RootLayout() {
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
   })
+
+  useEffect(() => {
+    void initAuthRuntime().catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
@@ -51,7 +56,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
           <Stack.Screen name="(onboarding)" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="(auth)" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
           <Stack.Screen name="lectures/[id]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="subjects/[courseId]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="settings" options={{ animation: 'slide_from_right' }} />

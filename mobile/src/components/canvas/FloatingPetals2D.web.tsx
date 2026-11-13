@@ -1,6 +1,6 @@
-// Web fallback for FloatingPetals2D using react-native-reanimated
-// Tránh phụ thuộc CanvasKit WASM khi xem trước trên Expo Web
-import React, { useEffect } from 'react'
+// Web fallback for FloatingPetals2D using react-native-reanimated + react-native-svg
+// Renders crisp falling teardrop Sakura petals matching Kitsune Soft SVGs with optional swipe parallax.
+import React, { useEffect, useState } from 'react'
 import { StyleSheet, View, useWindowDimensions } from 'react-native'
 import Animated, {
   Easing,
@@ -10,89 +10,133 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated'
-import { KITSUNE_COLORS } from '../../theme/tokens'
+import Svg, { Path } from 'react-native-svg'
+import {
+  SAKURA_PETALS,
+  SAKURA_PETAL_SVG_PATH,
+  type SakuraPetalParticle,
+} from '../../modules/canvas/sakuraPetals'
 
-const WEB_PETALS = [
-  { left: 0.16, top: 0.24, size: 8, opacity: 0.5 },
-  { left: 0.78, top: 0.27, size: 7, opacity: 0.45 },
-  { left: 0.14, top: 0.39, size: 6, opacity: 0.4 },
-  { left: 0.8, top: 0.49, size: 8, opacity: 0.5 },
-  { left: 0.21, top: 0.52, size: 7, opacity: 0.42 },
-  { left: 0.72, top: 0.19, size: 6, opacity: 0.38 },
-] as const
+export interface FloatingPetals2DProps {
+  scrollProgress?: SharedValue<number>
+}
 
-function WebPetalDot({
-  left,
-  top,
-  size,
-  opacity,
-  viewportHeight,
-  progress,
-  phase,
-}: {
-  left: number
-  top: number
-  size: number
-  opacity: number
-  viewportHeight: number
-  progress: SharedValue<number>
-  phase: number
-}) {
+interface WebFallingPetalProps {
+  petal: SakuraPetalParticle
+  petalIndex: number
+  containerHeight: number
+  scrollProgress?: SharedValue<number>
+}
+
+const WebFallingPetal: React.FC<WebFallingPetalProps> = ({
+  petal,
+  petalIndex,
+  containerHeight,
+  scrollProgress,
+}) => {
+  const cycle = useSharedValue(0)
+
+  useEffect(() => {
+    const durationMs = Math.round(13500 / petal.speedMultiplier)
+    cycle.set(
+      withRepeat(
+        withTiming(1, { duration: durationMs, easing: Easing.linear }),
+        -1,
+        false
+      )
+    )
+  }, [cycle, petal.speedMultiplier])
+
   const animatedStyle = useAnimatedStyle(() => {
-    const yDrift = Math.sin(progress.value * Math.PI * 2 + phase) * 14
-    const xDrift = Math.cos(progress.value * Math.PI * 2 + phase) * 8
+    const wrapped = (cycle.value + petal.initialProgress) % 1
+    const y = wrapped * (containerHeight + 56) - 28
+    const sway =
+      Math.sin(wrapped * Math.PI * 2 + petalIndex * 1.15) *
+      petal.swayAmplitudePx
+    const parallax = scrollProgress
+      ? (scrollProgress.value - 0.5) * petal.parallaxFactor
+      : 0
+    const deg =
+      petal.rotationBaseDeg +
+      Math.sin(wrapped * Math.PI * 2 + petalIndex * 0.9) *
+        petal.rotationAmplitudeDeg
+
+    const edgeFade =
+      wrapped < 0.08
+        ? wrapped / 0.08
+        : wrapped > 0.88
+          ? Math.max(0, (1 - wrapped) / 0.12)
+          : 1
+
     return {
-      transform: [{ translateX: xDrift }, { translateY: yDrift }],
+      opacity: petal.opacity * edgeFade,
+      transform: [
+        { translateX: sway + parallax },
+        { translateY: y },
+        { rotate: `${deg}deg` },
+      ],
     }
-  })
+  }, [containerHeight, petal, petalIndex, scrollProgress])
 
   return (
     <Animated.View
       style={[
+        styles.petalWrapper,
         {
-          position: 'absolute',
-          left: `${left * 100}%`,
-          top: top * viewportHeight,
-          width: size,
-          height: size * 1.25,
-          borderRadius: size,
-          backgroundColor: KITSUNE_COLORS.sakuraPink,
-          opacity,
+          left: `${petal.xRatio * 100}%`,
+          width: petal.width,
+          height: petal.height,
         },
         animatedStyle,
       ]}
-    />
+    >
+      <Svg
+        width={petal.width}
+        height={petal.height}
+        viewBox="0 0 14 18"
+        fill="none"
+      >
+        <Path d={SAKURA_PETAL_SVG_PATH} fill={petal.color} />
+      </Svg>
+    </Animated.View>
   )
 }
 
-export const FloatingPetals2D: React.FC = () => {
-  const { height } = useWindowDimensions()
-  const progress = useSharedValue(0)
-
-  useEffect(() => {
-    progress.set(
-      withRepeat(
-        withTiming(1, { duration: 6000, easing: Easing.inOut(Easing.sin) }),
-        -1,
-        true
-      )
-    )
-  }, [progress])
+export const FloatingPetals2D: React.FC<FloatingPetals2DProps> = ({
+  scrollProgress,
+}) => {
+  const windowDims = useWindowDimensions()
+  const [containerHeight, setContainerHeight] = useState(windowDims.height)
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {WEB_PETALS.map((petal, idx) => (
-        <WebPetalDot
-          key={idx}
-          left={petal.left}
-          top={petal.top}
-          size={petal.size}
-          opacity={petal.opacity}
-          viewportHeight={height}
-          progress={progress}
-          phase={idx * 1.1}
-        />
-      ))}
+    <View
+      style={StyleSheet.absoluteFill}
+      pointerEvents="none"
+      onLayout={(event) => {
+        const { height } = event.nativeEvent.layout
+        if (height > 0 && height !== containerHeight) {
+          setContainerHeight(height)
+        }
+      }}
+    >
+      {containerHeight > 0
+        ? SAKURA_PETALS.map((petal, index) => (
+            <WebFallingPetal
+              key={petal.id}
+              petal={petal}
+              petalIndex={index}
+              containerHeight={containerHeight}
+              scrollProgress={scrollProgress}
+            />
+          ))
+        : null}
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  petalWrapper: {
+    position: 'absolute',
+    top: 0,
+  },
+})
