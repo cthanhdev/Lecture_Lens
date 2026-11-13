@@ -18,9 +18,10 @@ export default function TabsLayout() {
       >
         <Tabs.Screen name="home" />
         <Tabs.Screen name="library" />
-        <Tabs.Screen name="subjects" />
         <Tabs.Screen name="review" />
-        <Tabs.Screen name="profile" />
+        <Tabs.Screen name="search" />
+        <Tabs.Screen name="subjects" options={{ href: null }} />
+        <Tabs.Screen name="profile" options={{ href: null }} />
       </Tabs>
       <CapsuleAudioPlayer />
     </View>

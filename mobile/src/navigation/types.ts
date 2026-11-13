@@ -3,7 +3,7 @@
  * Tuân thủ Hiến chương điều hướng tại docs/UX-NAVIGATION-FLOW.md
  */
 
-export type TabRoute = '/(tabs)/home' | '/(tabs)/library' | '/(tabs)/subjects' | '/(tabs)/review' | '/(tabs)/profile'
+export type TabRoute = '/(tabs)/home' | '/(tabs)/library' | '/(tabs)/review' | '/(tabs)/search'
 
 export type AppRoute =
   | '/'
@@ -13,6 +13,8 @@ export type AppRoute =
   | '/(auth)/sign-in'
   | '/(auth)/create-account'
   | TabRoute
+  | '/(tabs)/subjects'
+  | '/(tabs)/profile'
   | '/home'
   | '/library'
   | '/subjects'
@@ -62,7 +64,7 @@ export interface GuardConfig {
 export interface AppNavigator {
   /** Đường dẫn hiện tại */
   readonly currentRoute: string
-  /** Tab gốc hiện tại (nếu đang ở một trong 5 tab chính) */
+  /** Tab gốc hiện tại (nếu đang ở một trong 4 tab chính) */
   readonly activeTab: TabRoute | null
   /** Modal sheet đang mở trên cùng (nếu có) */
   readonly activeSheet: ModalSheetType
