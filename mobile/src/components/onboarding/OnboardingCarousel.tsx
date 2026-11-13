@@ -1,26 +1,32 @@
 // OnboardingCarousel: Unified Horizontal Swipeable Wizard for Screens 02-04
-// Không dùng Skip — hỗ trợ thao tác lướt ngang mượt mà + Continue / Get started
-import React, { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react'
+// Syncs scrollProgress across 3 continuous morphing backdrop orbs at 60-120 FPS
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   BackHandler,
   ScrollView,
   StyleSheet,
   View,
   useWindowDimensions,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from 'react-native'
+import Animated, {
+  clamp,
+  useAnimatedRef,
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import * as Haptics from 'expo-haptics'
 import { Button } from '../ui/button/Button'
 import { Icon } from '../ui/icons/Icon'
-import { AmbientPastelBackdrop, type BackdropPreset } from './AmbientPastelBackdrop'
+import { AmbientPastelBackdrop } from './AmbientPastelBackdrop'
 import { PaginationDots } from './PaginationDots'
 import { Step1SlideContent } from './Step1SlideContent'
 import { Step2SlideContent } from './Step2SlideContent'
 import { Step3SlideContent } from './Step3SlideContent'
 import {
+  ONBOARDING_MAX_PROGRESS,
   ONBOARDING_SLIDES,
   clampOnboardingStep,
   completeOnboarding,
@@ -29,8 +35,6 @@ import {
 import { appStorage } from '../../modules/storage'
 import { getAuthSeam } from '../../modules/auth'
 import { KITSUNE_COLORS } from '../../theme/tokens'
-
-const BACKDROP_PRESETS: readonly BackdropPreset[] = ['step1', 'step2', 'step3']
 
 interface OnboardingCarouselProps {
   initialStep?: OnboardingStepIndex
@@ -41,29 +45,60 @@ export const OnboardingCarousel: React.FC<OnboardingCarouselProps> = ({
 }) => {
   const router = useRouter()
   const { width, height } = useWindowDimensions()
-  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null)
+  const scrollRef = useAnimatedRef<ScrollView>()
   const programmaticTargetRef = useRef<OnboardingStepIndex | null>(null)
   const didApplyInitialScrollRef = useRef(false)
 
   const [currentStep, setCurrentStep] = useState<OnboardingStepIndex>(initialStep)
   const [isCompleting, setIsCompleting] = useState(false)
 
+  const scrollProgress = useSharedValue<number>(initialStep)
+  const lastWorkletStep = useSharedValue<number>(initialStep)
+
   // Khung tham chiếu di động 390px (AGENTS.md) trên màn hình lớn, tràn viền trên điện thoại
   const frameWidth = width <= 440 ? width : 390
+  const stageOffsetX = width <= 440 ? 0 : Math.round((width - frameWidth) / 2)
   const compactScale = height < 740 ? 0.84 : width < 370 ? 0.9 : 1
+
+  const clearProgrammaticTarget = useCallback(() => {
+    programmaticTargetRef.current = null
+  }, [])
+
+  const handleStepThresholdCrossed = useCallback((nextStep: number) => {
+    const clamped = clampOnboardingStep(nextStep)
+    if (programmaticTargetRef.current !== null) {
+      if (clamped === programmaticTargetRef.current) {
+        programmaticTargetRef.current = null
+      }
+      return
+    }
+
+    setCurrentStep((prev) => (prev === clamped ? prev : clamped))
+    Haptics.selectionAsync().catch(() => {})
+  }, [])
+
+  const handleMomentumSettled = useCallback((settledStep: number) => {
+    programmaticTargetRef.current = null
+    const clamped = clampOnboardingStep(settledStep)
+    setCurrentStep((prev) => (prev === clamped ? prev : clamped))
+  }, [])
 
   const scrollToStep = useCallback(
     (targetStep: OnboardingStepIndex, animated = true) => {
       const clamped = clampOnboardingStep(targetStep)
       programmaticTargetRef.current = animated ? clamped : null
       setCurrentStep(clamped)
+      if (!animated) {
+        scrollProgress.set(clamped)
+        lastWorkletStep.set(clamped)
+      }
       scrollRef.current?.scrollTo({
         x: clamped * frameWidth,
         y: 0,
         animated,
       })
     },
-    [frameWidth]
+    [frameWidth, lastWorkletStep, scrollProgress, scrollRef]
   )
 
   // Chặn Back hệ thống rớt về Splash tại Step 1; lùi trang mượt ở Step 2 & 3
@@ -82,6 +117,8 @@ export const OnboardingCarousel: React.FC<OnboardingCarouselProps> = ({
     if (didApplyInitialScrollRef.current) return
     didApplyInitialScrollRef.current = true
     if (initialStep > 0) {
+      scrollProgress.set(initialStep)
+      lastWorkletStep.set(initialStep)
       scrollRef.current?.scrollTo({
         x: initialStep * frameWidth,
         y: 0,
@@ -90,36 +127,49 @@ export const OnboardingCarousel: React.FC<OnboardingCarouselProps> = ({
     }
   }
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetX = event.nativeEvent.contentOffset.x
-    if (frameWidth <= 0) return
-    const nextStep = clampOnboardingStep(Math.round(offsetX / frameWidth))
+  const scrollHandler = useAnimatedScrollHandler(
+    {
+      onBeginDrag: () => {
+        scheduleOnRN(clearProgrammaticTarget)
+      },
+      onScroll: (event) => {
+        if (frameWidth <= 0) return
+        const progress = clamp(
+          event.contentOffset.x / frameWidth,
+          0,
+          ONBOARDING_MAX_PROGRESS
+        )
+        scrollProgress.set(progress)
 
-    if (programmaticTargetRef.current !== null) {
-      if (nextStep === programmaticTargetRef.current) {
-        programmaticTargetRef.current = null
-      }
-      return
-    }
+        const roundedStep = Math.round(progress)
+        if (roundedStep !== lastWorkletStep.get()) {
+          lastWorkletStep.set(roundedStep)
+          scheduleOnRN(handleStepThresholdCrossed, roundedStep)
+        }
+      },
+      onMomentumEnd: (event) => {
+        if (frameWidth <= 0) return
+        const progress = clamp(
+          event.contentOffset.x / frameWidth,
+          0,
+          ONBOARDING_MAX_PROGRESS
+        )
+        scrollProgress.set(progress)
 
-    if (nextStep !== currentStep) {
-      setCurrentStep(nextStep)
-      Haptics.selectionAsync().catch(() => {})
-    }
-  }
-
-  const handleMomentumScrollEnd = (
-    event: NativeSyntheticEvent<NativeScrollEvent>
-  ) => {
-    programmaticTargetRef.current = null
-    if (frameWidth <= 0) return
-    const settled = clampOnboardingStep(
-      Math.round(event.nativeEvent.contentOffset.x / frameWidth)
-    )
-    if (settled !== currentStep) {
-      setCurrentStep(settled)
-    }
-  }
+        const settledStep = Math.round(progress)
+        lastWorkletStep.set(settledStep)
+        scheduleOnRN(handleMomentumSettled, settledStep)
+      },
+    },
+    [
+      frameWidth,
+      scrollProgress,
+      lastWorkletStep,
+      clearProgrammaticTarget,
+      handleStepThresholdCrossed,
+      handleMomentumSettled,
+    ]
+  )
 
   const handleCtaPress = async () => {
     if (currentStep < 2) {
@@ -141,18 +191,21 @@ export const OnboardingCarousel: React.FC<OnboardingCarouselProps> = ({
   }
 
   const activeSlide = ONBOARDING_SLIDES[currentStep]
-  const activePreset = BACKDROP_PRESETS[currentStep]
 
   return (
     <View style={styles.root}>
-      <AmbientPastelBackdrop preset={activePreset} />
+      <AmbientPastelBackdrop
+        scrollProgress={scrollProgress}
+        frameWidth={frameWidth}
+        stageOffsetX={stageOffsetX}
+      />
 
       <SafeAreaView
         edges={['top', 'bottom']}
         style={[styles.safeContainer, { width: frameWidth }]}
       >
         <View style={styles.pagerContainer} onLayout={handleLayout}>
-          <ScrollView
+          <Animated.ScrollView
             ref={scrollRef}
             horizontal
             pagingEnabled
@@ -160,11 +213,7 @@ export const OnboardingCarousel: React.FC<OnboardingCarouselProps> = ({
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast"
             scrollEventThrottle={16}
-            onScrollBeginDrag={() => {
-              programmaticTargetRef.current = null
-            }}
-            onScroll={handleScroll}
-            onMomentumScrollEnd={handleMomentumScrollEnd}
+            onScroll={scrollHandler}
             style={styles.scrollView}
           >
             <View style={{ width: frameWidth, flex: 1 }}>
@@ -176,7 +225,7 @@ export const OnboardingCarousel: React.FC<OnboardingCarouselProps> = ({
             <View style={{ width: frameWidth, flex: 1 }}>
               <Step3SlideContent />
             </View>
-          </ScrollView>
+          </Animated.ScrollView>
         </View>
 
         {/* Bottom Anchor (Thumb Zone) */}

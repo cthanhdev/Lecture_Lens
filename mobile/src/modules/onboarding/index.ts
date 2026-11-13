@@ -19,3 +19,11 @@ export {
   completeOnboarding,
 } from './launchOrchestrator.ts'
 export { runLaunchBootstrap } from './launchPreflight.ts'
+export type { OnboardingOrbInterpolationSpec } from './backdropMotion.ts'
+export {
+  BACKDROP_BASE_ORB_SIZE,
+  BACKDROP_REFERENCE_WIDTH,
+  ONBOARDING_MAX_PROGRESS,
+  clampOnboardingProgress,
+  buildOnboardingOrbTracks,
+} from './backdropMotion.ts'
