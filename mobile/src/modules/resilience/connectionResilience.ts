@@ -11,6 +11,8 @@ export type PreviewOverrideState =
   | 'offline'
   | 'server_error'
 
+export type AuthTransitionDirection = 'forward' | 'back' | 'neutral'
+
 export type ServiceAvailability =
   | { status: 'ready' }
   | { status: 'loading' }
@@ -144,4 +146,60 @@ export function sanitizeReturnTo(
   }
 
   return trimmed
+}
+
+const VALID_PREVIEW_OVERRIDES = new Set<PreviewOverrideState>([
+  'auto',
+  'skeleton',
+  'offline',
+  'server_error',
+])
+
+/**
+ * Parse ?preview= query string safely for QA testing of Skeleton / Offline / Server Error states.
+ */
+export function parsePreviewOverrideParam(
+  rawPreview?: string | string[] | null,
+): PreviewOverrideState {
+  const candidate = Array.isArray(rawPreview) ? rawPreview[0] : rawPreview
+  if (!candidate) {
+    return 'auto'
+  }
+  const normalized = candidate.trim().toLowerCase() as PreviewOverrideState
+  return VALID_PREVIEW_OVERRIDES.has(normalized) ? normalized : 'auto'
+}
+
+/**
+ * Resolve synchronized transition direction between Screen 05 (Sign In) & Screen 06 (Create Account).
+ */
+export function resolveAuthTransitionDirection(
+  rawDirection?: string | string[] | null,
+): AuthTransitionDirection {
+  const candidate = Array.isArray(rawDirection) ? rawDirection[0] : rawDirection
+  if (!candidate) {
+    return 'neutral'
+  }
+  const normalized = candidate.trim().toLowerCase()
+  if (normalized === 'forward' || normalized === 'back') {
+    return normalized
+  }
+  return 'neutral'
+}
+
+/**
+ * Construct an Auth route preserving optional returnTo and directional transition metadata.
+ */
+export function buildAuthRoute(
+  pathname: '/(auth)/sign-in' | '/(auth)/create-account',
+  options?: { dir?: AuthTransitionDirection; returnTo?: string },
+): string {
+  const search = new URLSearchParams()
+  if (options?.dir && options.dir !== 'neutral') {
+    search.set('dir', options.dir)
+  }
+  if (options?.returnTo && options.returnTo.trim().length > 0) {
+    search.set('returnTo', options.returnTo)
+  }
+  const query = search.toString()
+  return query ? `${pathname}?${query}` : pathname
 }

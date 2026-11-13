@@ -12,23 +12,25 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import type {
+  AuthTransitionDirection,
   PreviewOverrideState,
   ServiceAvailability,
 } from '../../modules/resilience'
-import { KITSUNE_COLORS, KITSUNE_RADII, KITSUNE_SHADOWS } from '../../theme/tokens'
+import { KITSUNE_COLORS, KITSUNE_RADII } from '../../theme/tokens'
 import { FloatingPetals2D } from '../canvas'
 import { AuthFormSkeleton, ServiceStateCard } from '../ui/feedback'
 import { Icon } from '../ui/icons'
+import { AuthTransitionStage } from './AuthTransitionStage'
 
 export interface AuthScreenChromeProps {
   title: string
   skeletonVariant: 'sign-in' | 'create-account'
   availability: ServiceAvailability
   previewOverride: PreviewOverrideState
+  transitionDirection?: AuthTransitionDirection
   isRetrying: boolean
-  hasWarningDot?: boolean
+  embeddedBackdrop?: boolean
   onPressBack: () => void
-  onPressInspector: () => void
   onResetPreview: () => void
   onRetry: () => void
   onContinueDemo: () => void
@@ -37,9 +39,9 @@ export interface AuthScreenChromeProps {
 
 /**
  * Shared mobile frame chrome for Screens 05 & 06:
- * - 390px centered canvas on Washi Cream (#FFF7FD)
- * - Soft ambient orbs + FloatingPetals2D
- * - Frosted Top Navigation Bar (< back, centered title, #A03F36 inspector profile badge)
+ * - Seamless transparent borderless header (< back, centered title) blended directly into the Sakura top wash
+ * - Zero top-right user icon on Auth or Skeleton/Resilience screens
+ * - Smooth synchronized Reanimated directional transition stage
  * - Automatic Skeleton / No Internet / Server Error fallback rendering
  */
 export const AuthScreenChrome: React.FC<AuthScreenChromeProps> = ({
@@ -47,10 +49,10 @@ export const AuthScreenChrome: React.FC<AuthScreenChromeProps> = ({
   skeletonVariant,
   availability,
   previewOverride,
+  transitionDirection = 'neutral',
   isRetrying,
-  hasWarningDot = false,
+  embeddedBackdrop = true,
   onPressBack,
-  onPressInspector,
   onResetPreview,
   onRetry,
   onContinueDemo,
@@ -60,25 +62,35 @@ export const AuthScreenChrome: React.FC<AuthScreenChromeProps> = ({
   const frameWidth = width <= 440 ? width : 390
 
   return (
-    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
-      <View style={[styles.mobileFrame, { width: frameWidth }]}>
-        {/* Soft Sakura blush radial wash + FloatingPetals2D matching SVGs 05 & 06 */}
-        <View style={styles.backdropLayer} pointerEvents="none">
-          <LinearGradient
-            colors={[
-              'rgba(245, 195, 201, 0.44)',
-              'rgba(244, 127, 114, 0.14)',
-              'rgba(255, 247, 253, 0)',
-            ]}
-            locations={[0, 0.42, 1]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={styles.topGradientWash}
-          />
-          <FloatingPetals2D />
-        </View>
+    <SafeAreaView
+      style={[styles.root, embeddedBackdrop && styles.rootTransparent]}
+      edges={['top', 'bottom']}
+    >
+      <View
+        style={[
+          styles.mobileFrame,
+          { width: frameWidth },
+          embeddedBackdrop && styles.rootTransparent,
+        ]}
+      >
+        {!embeddedBackdrop && (
+          <View style={styles.standaloneBackdrop} pointerEvents="none">
+            <LinearGradient
+              colors={[
+                'rgba(245, 195, 201, 0.44)',
+                'rgba(244, 127, 114, 0.14)',
+                'rgba(255, 247, 253, 0)',
+              ]}
+              locations={[0, 0.42, 1]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={styles.topGradientWash}
+            />
+            <FloatingPetals2D />
+          </View>
+        )}
 
-        {/* Top Navigation Bar */}
+        {/* Seamless transparent top bar aligned directly on top of the Sakura gradient wash */}
         <View style={styles.topBar}>
           <Pressable
             onPress={onPressBack}
@@ -102,20 +114,7 @@ export const AuthScreenChrome: React.FC<AuthScreenChromeProps> = ({
             {title}
           </Text>
 
-          <Pressable
-            onPress={onPressInspector}
-            accessibilityRole="button"
-            accessibilityLabel="Open connection and demo settings"
-            style={({ pressed }) => [
-              styles.profileHitArea,
-              pressed && styles.pressedFade,
-            ]}
-          >
-            <View style={styles.profileCircle}>
-              <Icon name="profile" size={16} strokeColor="#FFFFFF" />
-              {hasWarningDot && <View style={styles.warningDot} />}
-            </View>
-          </Pressable>
+          <View style={styles.headerBalanceSpacer} />
         </View>
 
         {/* Keyboard-safe scrollable viewport */}
@@ -170,7 +169,14 @@ export const AuthScreenChrome: React.FC<AuthScreenChromeProps> = ({
               />
             )}
 
-            {availability.status === 'ready' && children}
+            {availability.status === 'ready' && (
+              <AuthTransitionStage
+                direction={transitionDirection}
+                transitionKey={skeletonVariant}
+              >
+                {children}
+              </AuthTransitionStage>
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
@@ -184,6 +190,9 @@ const styles = StyleSheet.create({
     backgroundColor: KITSUNE_COLORS.washiCream,
     alignItems: 'center',
   },
+  rootTransparent: {
+    backgroundColor: 'transparent',
+  },
   mobileFrame: {
     flex: 1,
     backgroundColor: KITSUNE_COLORS.washiCream,
@@ -193,7 +202,7 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  backdropLayer: {
+  standaloneBackdrop: {
     position: 'absolute',
     top: 0,
     right: 0,
@@ -206,17 +215,15 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 300,
+    height: 330,
   },
   topBar: {
-    height: 56,
+    height: 52,
     paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 247, 252, 0.88)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(38, 19, 51, 0.04)',
+    backgroundColor: 'transparent',
     zIndex: 10,
   },
   backHitArea: {
@@ -235,39 +242,16 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_700Bold',
     letterSpacing: -0.2,
   },
-  profileHitArea: {
+  headerBalanceSpacer: {
     width: 44,
     height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#A03F36',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    ...KITSUNE_SHADOWS.miruku,
-  },
-  warningDot: {
-    position: 'absolute',
-    top: -1,
-    right: -1,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: KITSUNE_COLORS.mochiYellow,
-    borderWidth: 1.5,
-    borderColor: KITSUNE_COLORS.washiCream,
   },
   pressedFade: {
     opacity: 0.65,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 14,
+    paddingTop: 10,
     paddingBottom: 32,
     flexGrow: 1,
   },

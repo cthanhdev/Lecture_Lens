@@ -20,9 +20,11 @@ import {
   getAuthSeam,
   validateSignInForm,
   validateUniversityEmail,
+  type LegalDocumentTab,
   type SignInFormErrors,
   type SocialAuthProvider,
 } from '../../modules/auth'
+import { buildAuthRoute } from '../../modules/resilience'
 import { useAppNavigation } from '../../navigation'
 import {
   KITSUNE_COLORS,
@@ -50,7 +52,7 @@ export default function SignInScreen() {
   >(null)
 
   const [forgotModalOpen, setForgotModalOpen] = useState(false)
-  const [termsModalOpen, setTermsModalOpen] = useState(false)
+  const [legalTab, setLegalTab] = useState<LegalDocumentTab | null>(null)
   const [inspectorOpen, setInspectorOpen] = useState(false)
 
   const isEmailValid = useMemo(
@@ -139,8 +141,11 @@ export default function SignInScreen() {
 
   const handleOpenCreateAccount = () => {
     nav.goTo(
-      '/(auth)/create-account',
-      rawReturnTo ? { returnTo: rawReturnTo } : undefined,
+      buildAuthRoute('/(auth)/create-account', {
+        dir: 'forward',
+        returnTo: rawReturnTo,
+      }),
+      { replace: true },
     )
   }
 
@@ -158,20 +163,22 @@ export default function SignInScreen() {
         skeletonVariant="sign-in"
         availability={auth.availability}
         previewOverride={auth.previewOverride}
+        transitionDirection={auth.transitionDirection}
         isRetrying={auth.isRetrying}
-        hasWarningDot={
-          !auth.isOnline ||
-          auth.authMode === 'spring' ||
-          auth.previewOverride !== 'auto'
-        }
         onPressBack={() => nav.goBack()}
-        onPressInspector={() => setInspectorOpen(true)}
         onResetPreview={() => auth.setPreviewOverride('auto')}
         onRetry={auth.handleRetry}
         onContinueDemo={auth.handleContinueInDemo}
       >
         <View style={styles.heroBlock}>
-          <FramedBrandLogo variant="auth" />
+          <Pressable
+            onLongPress={() => setInspectorOpen(true)}
+            delayLongPress={450}
+            accessibilityRole="imagebutton"
+            accessibilityLabel="LectureLens Kitsune mascot"
+          >
+            <FramedBrandLogo variant="auth" />
+          </Pressable>
           <Text style={styles.heroTitle}>Welcome back</Text>
           <Text style={styles.heroSubtitle}>
             Pick up your lectures where you left off.
@@ -322,14 +329,14 @@ export default function SignInScreen() {
             By continuing you agree to our{' '}
             <Text
               style={styles.legalLink}
-              onPress={() => setTermsModalOpen(true)}
+              onPress={() => setLegalTab('terms')}
             >
               Terms
             </Text>{' '}
             and{' '}
             <Text
               style={styles.legalLink}
-              onPress={() => setTermsModalOpen(true)}
+              onPress={() => setLegalTab('privacy')}
             >
               Privacy Policy
             </Text>
@@ -345,8 +352,9 @@ export default function SignInScreen() {
       />
 
       <TermsPrivacyModal
-        visible={termsModalOpen}
-        onClose={() => setTermsModalOpen(false)}
+        visible={legalTab !== null}
+        initialTab={legalTab ?? 'terms'}
+        onClose={() => setLegalTab(null)}
       />
 
       <ConnectionInspectorModal

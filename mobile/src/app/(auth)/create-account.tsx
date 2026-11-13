@@ -20,9 +20,11 @@ import {
   getAuthSeam,
   validateRegistrationForm,
   validateUniversityEmail,
+  type LegalDocumentTab,
   type RegistrationFormErrors,
   type SocialAuthProvider,
 } from '../../modules/auth'
+import { buildAuthRoute } from '../../modules/resilience'
 import { useAppNavigation } from '../../navigation'
 import {
   KITSUNE_COLORS,
@@ -52,7 +54,7 @@ export default function CreateAccountScreen() {
     'email' | SocialAuthProvider | null
   >(null)
 
-  const [termsModalOpen, setTermsModalOpen] = useState(false)
+  const [legalTab, setLegalTab] = useState<LegalDocumentTab | null>(null)
   const [inspectorOpen, setInspectorOpen] = useState(false)
 
   const isEmailValid = useMemo(
@@ -149,10 +151,13 @@ export default function CreateAccountScreen() {
   }
 
   const handleOpenSignIn = () => {
-    nav.goTo('/(auth)/sign-in', {
-      replace: true,
-      ...(rawReturnTo ? { returnTo: rawReturnTo } : {}),
-    })
+    nav.goTo(
+      buildAuthRoute('/(auth)/sign-in', {
+        dir: 'back',
+        returnTo: rawReturnTo,
+      }),
+      { replace: true },
+    )
   }
 
   const handleFillSampleStudent = () => {
@@ -171,20 +176,22 @@ export default function CreateAccountScreen() {
         skeletonVariant="create-account"
         availability={auth.availability}
         previewOverride={auth.previewOverride}
+        transitionDirection={auth.transitionDirection}
         isRetrying={auth.isRetrying}
-        hasWarningDot={
-          !auth.isOnline ||
-          auth.authMode === 'spring' ||
-          auth.previewOverride !== 'auto'
-        }
         onPressBack={() => nav.goBack()}
-        onPressInspector={() => setInspectorOpen(true)}
         onResetPreview={() => auth.setPreviewOverride('auto')}
         onRetry={auth.handleRetry}
         onContinueDemo={auth.handleContinueInDemo}
       >
         <View style={styles.heroBlock}>
-          <FramedBrandLogo variant="auth" scale={0.96} />
+          <Pressable
+            onLongPress={() => setInspectorOpen(true)}
+            delayLongPress={450}
+            accessibilityRole="imagebutton"
+            accessibilityLabel="LectureLens Kitsune mascot"
+          >
+            <FramedBrandLogo variant="auth" />
+          </Pressable>
           <Text style={styles.heroTitle}>Create your account</Text>
           <Text style={styles.heroSubtitle}>
             Turn every lecture into something you can search.
@@ -302,14 +309,14 @@ export default function CreateAccountScreen() {
                   I agree to the{' '}
                   <Text
                     style={styles.termsLink}
-                    onPress={() => setTermsModalOpen(true)}
+                    onPress={() => setLegalTab('terms')}
                   >
                     Terms
                   </Text>{' '}
                   and{' '}
                   <Text
                     style={styles.termsLink}
-                    onPress={() => setTermsModalOpen(true)}
+                    onPress={() => setLegalTab('privacy')}
                   >
                     Privacy Policy
                   </Text>
@@ -379,8 +386,9 @@ export default function CreateAccountScreen() {
       </AuthScreenChrome>
 
       <TermsPrivacyModal
-        visible={termsModalOpen}
-        onClose={() => setTermsModalOpen(false)}
+        visible={legalTab !== null}
+        initialTab={legalTab ?? 'terms'}
+        onClose={() => setLegalTab(null)}
       />
 
       <ConnectionInspectorModal

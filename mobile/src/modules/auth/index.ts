@@ -1,6 +1,16 @@
 export type * from './domain/auth.types.ts'
 export { calculatePasswordStrength } from './domain/passwordEntropy.ts'
 export {
+  type LegalDocumentTab,
+  type LegalSection,
+  type LegalDocumentView,
+  LEGAL_LAST_UPDATED,
+  LEGAL_PRODUCT_SUBTITLE,
+  TERMS_SECTIONS,
+  PRIVACY_SECTIONS,
+  getLegalDocument,
+} from './domain/legalDocuments.ts'
+export {
   type ValidationResult,
   type SignInFormErrors,
   type RegistrationFormErrors,

@@ -56,7 +56,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
           <Stack.Screen name="(onboarding)" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="(auth)" options={{ animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
           <Stack.Screen name="lectures/[id]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="subjects/[courseId]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="settings" options={{ animation: 'slide_from_right' }} />

@@ -5,5 +5,9 @@ export {
   ConnectionInspectorModal,
 } from './AuthSupportModals'
 export { AuthScreenChrome, type AuthScreenChromeProps } from './AuthScreenChrome'
+export {
+  AuthTransitionStage,
+  type AuthTransitionStageProps,
+} from './AuthTransitionStage'
 export { useAuthScreenState } from './useAuthScreenState'
 export { AuthOrDivider, AuthErrorBanner } from './AuthFormPrimitives'

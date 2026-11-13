@@ -1,6 +1,9 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  buildAuthRoute,
+  parsePreviewOverrideParam,
+  resolveAuthTransitionDirection,
   resolveServiceAvailability,
   sanitizeReturnTo,
   SERVICE_ISSUE_COPY,
@@ -121,5 +124,35 @@ describe('Connection Resilience & Auth Return Sanitization Seam', () => {
     assert.equal(sanitizeReturnTo('/'), '/(tabs)/home')
     assert.equal(sanitizeReturnTo(['/(tabs)/library', '/other']), '/(tabs)/library')
     assert.equal(sanitizeReturnTo('/(tabs)/ask-ai'), '/(tabs)/ask-ai')
+  })
+
+  it('parses URL ?preview query parameters cleanly with safe auto fallback', () => {
+    assert.equal(parsePreviewOverrideParam(undefined), 'auto')
+    assert.equal(parsePreviewOverrideParam('unknown'), 'auto')
+    assert.equal(parsePreviewOverrideParam('skeleton'), 'skeleton')
+    assert.equal(parsePreviewOverrideParam(['offline', 'skeleton']), 'offline')
+    assert.equal(parsePreviewOverrideParam('server_error'), 'server_error')
+  })
+
+  it('resolves synchronized Auth transition direction safely', () => {
+    assert.equal(resolveAuthTransitionDirection(undefined), 'neutral')
+    assert.equal(resolveAuthTransitionDirection('forward'), 'forward')
+    assert.equal(resolveAuthTransitionDirection(['back']), 'back')
+    assert.equal(resolveAuthTransitionDirection('other'), 'neutral')
+  })
+
+  it('builds Auth route hrefs preserving direction and returnTo without dropping params', () => {
+    assert.equal(buildAuthRoute('/(auth)/create-account'), '/(auth)/create-account')
+    assert.equal(
+      buildAuthRoute('/(auth)/create-account', {
+        dir: 'forward',
+        returnTo: '/(tabs)/review',
+      }),
+      '/(auth)/create-account?dir=forward&returnTo=%2F%28tabs%29%2Freview',
+    )
+    assert.equal(
+      buildAuthRoute('/(auth)/sign-in', { dir: 'back' }),
+      '/(auth)/sign-in?dir=back',
+    )
   })
 })

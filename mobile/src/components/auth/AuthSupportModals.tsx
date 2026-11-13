@@ -9,9 +9,13 @@ import {
 } from 'react-native'
 import {
   DEMO_CREDENTIALS,
+  LEGAL_LAST_UPDATED,
+  LEGAL_PRODUCT_SUBTITLE,
   getAuthSeam,
+  getLegalDocument,
   validateUniversityEmail,
   type AuthAdapterMode,
+  type LegalDocumentTab,
 } from '../../modules/auth'
 import type { PreviewOverrideState } from '../../modules/resilience'
 import { KITSUNE_COLORS, KITSUNE_RADII, KITSUNE_SHADOWS } from '../../theme/tokens'
@@ -155,11 +159,96 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
 export interface TermsPrivacyModalProps {
   visible: boolean
+  initialTab?: LegalDocumentTab
   onClose: () => void
+}
+
+const TermsPrivacyModalContent: React.FC<{
+  initialTab: LegalDocumentTab
+  onClose: () => void
+}> = ({ initialTab, onClose }) => {
+  const [activeTab, setActiveTab] = useState<LegalDocumentTab>(initialTab)
+  const doc = getLegalDocument(activeTab)
+
+  return (
+    <View style={styles.backdrop}>
+      <View style={styles.modalCard}>
+        <View style={styles.modalHeader}>
+          <View style={styles.headerBadge}>
+            <Icon
+              name="lock-check"
+              size={18}
+              strokeColor={KITSUNE_COLORS.kitsuneCoralDark}
+            />
+          </View>
+          <View style={styles.legalHeaderCopy}>
+            <Text style={styles.modalTitle}>{doc.heading}</Text>
+            <Text style={styles.legalMeta} numberOfLines={1}>
+              Updated {LEGAL_LAST_UPDATED}
+            </Text>
+          </View>
+          <Pressable
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close legal modal"
+            style={styles.closeBtn}
+          >
+            <Icon name="close" size={18} strokeColor={KITSUNE_COLORS.plumInk} />
+          </Pressable>
+        </View>
+
+        <View style={styles.legalTabBar}>
+          {(
+            [
+              { id: 'terms', label: 'Terms of Service' },
+              { id: 'privacy', label: 'Privacy Policy' },
+            ] as const
+          ).map((tab) => {
+            const isSelected = activeTab === tab.id
+            return (
+              <Pressable
+                key={tab.id}
+                onPress={() => setActiveTab(tab.id)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isSelected }}
+                style={[styles.legalTab, isSelected && styles.legalTabActive]}
+              >
+                <Text
+                  style={[
+                    styles.legalTabText,
+                    isSelected && styles.legalTabTextActive,
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+
+        <Text style={styles.legalProductLine}>{LEGAL_PRODUCT_SUBTITLE}</Text>
+
+        <ScrollView style={styles.termsScroll} showsVerticalScrollIndicator={false}>
+          <Text style={styles.legalLead}>{doc.subtitle}</Text>
+          {doc.sections.map((section) => (
+            <View key={section.id} style={styles.legalSectionCard}>
+              <Text style={styles.termsHeading}>{section.title}</Text>
+              <Text style={styles.termsBody}>{section.body}</Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        <Button variant="primary" size="lg" fullWidth onPress={onClose}>
+          I understand
+        </Button>
+      </View>
+    </View>
+  )
 }
 
 export const TermsPrivacyModal: React.FC<TermsPrivacyModalProps> = ({
   visible,
+  initialTab = 'terms',
   onClose,
 }) => (
   <Modal
@@ -168,49 +257,13 @@ export const TermsPrivacyModal: React.FC<TermsPrivacyModalProps> = ({
     animationType="fade"
     onRequestClose={onClose}
   >
-    <View style={styles.backdrop}>
-      <View style={styles.modalCard}>
-        <View style={styles.modalHeader}>
-          <View style={styles.headerBadge}>
-            <Icon
-              name="sparkles"
-              size={18}
-              strokeColor={KITSUNE_COLORS.kitsuneCoralDark}
-            />
-          </View>
-          <Text style={styles.modalTitle}>Terms & Privacy Policy</Text>
-          <Pressable
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel="Close terms modal"
-            style={styles.closeBtn}
-          >
-            <Icon name="close" size={18} strokeColor={KITSUNE_COLORS.plumInk} />
-          </Pressable>
-        </View>
-
-        <ScrollView style={styles.termsScroll} showsVerticalScrollIndicator={false}>
-          <Text style={styles.termsHeading}>1. Privacy-First Local AI</Text>
-          <Text style={styles.termsBody}>
-            LectureLens processes your lecture audio, transcripts, Cornell notes,
-            and RAG flashcards on your on-premise campus or local gateway
-            (PhoWhisper + BGE-M3 + Gemma 4). No third-party cloud LLM receives
-            your recordings.
-          </Text>
-
-          <Text style={styles.termsHeading}>2. Student Account Data</Text>
-          <Text style={styles.termsBody}>
-            In Mock Mode, test accounts and sessions remain stored locally on this
-            device via AsyncStorage. When connected to Spring Boot Gateway,
-            requests authenticate with a signed Bearer JWT over `/api/v1/auth/*`.
-          </Text>
-        </ScrollView>
-
-        <Button variant="primary" size="lg" fullWidth onPress={onClose}>
-          Got it
-        </Button>
-      </View>
-    </View>
+    {visible ? (
+      <TermsPrivacyModalContent
+        key={initialTab}
+        initialTab={initialTab}
+        onClose={onClose}
+      />
+    ) : null}
   </Modal>
 )
 
@@ -259,7 +312,7 @@ export const ConnectionInspectorModal: React.FC<
         <View style={styles.modalHeader}>
           <View style={styles.headerBadge}>
             <Icon
-              name="profile"
+              name="settings"
               size={18}
               strokeColor={KITSUNE_COLORS.kitsuneCoralDark}
             />
@@ -463,21 +516,75 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   termsScroll: {
-    maxHeight: 220,
+    maxHeight: 280,
+  },
+  legalHeaderCopy: {
+    flex: 1,
+  },
+  legalMeta: {
+    fontSize: 11,
+    color: KITSUNE_COLORS.plumInkMuted,
+    fontFamily: 'PlusJakartaSans_500Medium',
+  },
+  legalTabBar: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(38, 19, 51, 0.05)',
+    borderRadius: KITSUNE_RADII.pill,
+    padding: 4,
+    gap: 4,
+  },
+  legalTab: {
+    flex: 1,
+    minHeight: 36,
+    borderRadius: KITSUNE_RADII.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
+  legalTabActive: {
+    backgroundColor: '#FFFFFF',
+    ...KITSUNE_SHADOWS.miruku,
+  },
+  legalTabText: {
+    fontSize: 12,
+    color: KITSUNE_COLORS.plumInkMuted,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+  legalTabTextActive: {
+    color: KITSUNE_COLORS.kitsuneCoralDark,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  legalProductLine: {
+    fontSize: 11.5,
+    color: KITSUNE_COLORS.kitsuneCoralDark,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+  legalLead: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: KITSUNE_COLORS.plumInk,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    marginBottom: 8,
+  },
+  legalSectionCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.78)',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(38, 19, 51, 0.06)',
   },
   termsHeading: {
-    fontSize: 13.5,
+    fontSize: 13,
     color: KITSUNE_COLORS.plumInk,
     fontFamily: 'PlusJakartaSans_700Bold',
-    marginTop: 6,
     marginBottom: 4,
   },
   termsBody: {
-    fontSize: 12.5,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 18,
     color: KITSUNE_COLORS.plumInkMuted,
     fontFamily: 'PlusJakartaSans_500Medium',
-    marginBottom: 8,
   },
   telemetryBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
