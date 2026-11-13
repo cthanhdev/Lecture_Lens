@@ -1,6 +1,7 @@
 // Step1SlideContent: Screen 02 - Onboarding Step 1 (Record or Upload)
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
+import { FloatingPetals2D } from '../canvas/FloatingPetals2D'
 import { Icon } from '../ui/icons/Icon'
 import { FramedBrandLogo } from './FramedBrandLogo'
 import { OnboardingSlideHeader } from './OnboardingSlideHeader'
@@ -21,6 +22,7 @@ export const Step1SlideContent: React.FC<Step1SlideContentProps> = ({
 
   return (
     <View style={styles.container}>
+      <FloatingPetals2D />
       <OnboardingSlideHeader pillLabel={slide.headerPill} variant="sakura" />
 
       <View style={styles.body}>

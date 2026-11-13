@@ -145,7 +145,7 @@ export const OnboardingCarousel: React.FC<OnboardingCarouselProps> = ({
 
   return (
     <View style={styles.root}>
-      <AmbientPastelBackdrop preset={activePreset} showPetals={currentStep === 0} />
+      <AmbientPastelBackdrop preset={activePreset} />
 
       <SafeAreaView
         edges={['top', 'bottom']}

@@ -14,10 +14,10 @@ interface OrbSpec {
   bottom?: number
   left?: number
   right?: number
-  rotationDeg?: number
 }
 
 // Lookup table matching exact SVG ambient circle positions/colors (Screens 01-04)
+// Circular orbs require no rotation transform, preventing Fabric processTransform(null) diffs.
 const AMBIENT_ORBS_BY_PRESET: Record<BackdropPreset, readonly OrbSpec[]> = {
   splash: [
     { size: 300, color: 'rgba(244, 127, 114, 0.14)', top: -60, left: -70 },
@@ -29,7 +29,7 @@ const AMBIENT_ORBS_BY_PRESET: Record<BackdropPreset, readonly OrbSpec[]> = {
     { size: 240, color: 'rgba(253, 203, 209, 0.28)', top: 176, right: -64 },
   ],
   step2: [
-    { size: 208, color: 'rgba(253, 203, 209, 0.42)', top: 92, left: -58, rotationDeg: -12 },
+    { size: 208, color: 'rgba(253, 203, 209, 0.42)', top: 92, left: -58 },
     { size: 224, color: 'rgba(190, 233, 253, 0.55)', top: 224, right: -48 },
     { size: 192, color: 'rgba(255, 180, 170, 0.30)', top: 178, left: 96 },
   ],
@@ -68,7 +68,7 @@ export const AmbientPastelBackdrop: React.FC<AmbientPastelBackdropProps> = ({
 
       {orbs.map((orb, index) => (
         <View
-          key={index}
+          key={`${preset}-${index}`}
           style={[
             styles.orbBase,
             {
@@ -80,7 +80,6 @@ export const AmbientPastelBackdrop: React.FC<AmbientPastelBackdropProps> = ({
               bottom: orb.bottom,
               left: orb.left,
               right: orb.right,
-              transform: orb.rotationDeg ? [{ rotate: `${orb.rotationDeg}deg` }] : undefined,
             },
           ]}
         />

@@ -55,3 +55,43 @@ export interface OnboardingSlideSpec {
   ctaLabel: string
   showArrowRightIcon: boolean
 }
+
+export type PreflightStageId = 'network' | 'server' | 'prepare' | 'session'
+
+export interface PreflightProgressEvent {
+  stage: PreflightStageId
+  progress: number
+  statusText: string
+}
+
+export interface StartupPreparer {
+  id: string
+  label: string
+  run: () => Promise<void>
+}
+
+export interface StartupDiagnostics {
+  networkConnected: boolean
+  serverReachable: boolean
+  serverLatencyMs: number | null
+  completedPreparers: string[]
+  failedPreparers: string[]
+}
+
+export interface LaunchBootstrapResult {
+  targetRoute: LaunchTargetRoute
+  diagnostics: StartupDiagnostics
+}
+
+export interface LaunchBootstrapDeps {
+  storage: KeyValueStorage
+  authSeam: SessionReader
+  checkNetwork?: () => Promise<boolean>
+  checkServerHealth?: () => Promise<boolean>
+  preparers?: readonly StartupPreparer[]
+  onProgress?: (event: PreflightProgressEvent) => void
+  stepTimeoutMs?: number
+  minDisplayMs?: number
+  delayFn?: (ms: number) => Promise<void>
+  nowFn?: () => number
+}

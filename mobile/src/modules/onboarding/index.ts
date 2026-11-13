@@ -18,3 +18,4 @@ export {
   hydrateLaunchRoute,
   completeOnboarding,
 } from './launchOrchestrator.ts'
+export { runLaunchBootstrap } from './launchPreflight.ts'
