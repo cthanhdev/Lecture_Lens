@@ -1,14 +1,27 @@
-export type * from './domain/auth.types'
-export { calculatePasswordStrength } from './domain/passwordEntropy'
+export type * from './domain/auth.types.ts'
+export { calculatePasswordStrength } from './domain/passwordEntropy.ts'
 export {
+  type ValidationResult,
+  type SignInFormErrors,
+  type RegistrationFormErrors,
+  type FormValidationResult,
   validateUniversityEmail,
   validateFullName,
   validatePassword,
-} from './domain/validation'
+  validateSignInForm,
+  validateRegistrationForm,
+} from './domain/validation.ts'
 export {
   type AuthSeam,
+  type SpringBootAuthConfig,
+  AUTH_SESSION_KEY,
+  AUTH_TOKEN_KEY,
+  MOCK_ACCOUNTS_KEY,
+  AUTH_MODE_KEY,
+  DEMO_CREDENTIALS,
   MockAuthAdapter,
+  SpringBootAuthAdapter,
   BackendAuthAdapter,
   getAuthSeam,
   setAuthSeam,
-} from './infrastructure/authSeam'
+} from './infrastructure/authSeam.ts'

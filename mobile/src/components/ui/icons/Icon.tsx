@@ -1,6 +1,6 @@
 // Polymorphic, Accessible Icon Component (Matt Pocock Deep Module for React Native)
 import React from 'react'
-import { View, StyleSheet } from 'react-native'
+import { View } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import type { IconProps, IconSize, BlobColor } from './types'
 import { ICON_REGISTRY } from './registry'
@@ -68,9 +68,13 @@ export const Icon: React.FC<IconProps> = ({
       {activeBlob && <SoftBlob color={activeBlob} size={px} />}
       <Svg viewBox="0 0 24 24" width={px} height={px} fill="none">
         {def.paths.map((p, idx) => {
-          const fill = p.fill && p.fill !== 'none' ? p.fill : 'none'
-          const stroke = p.stroke || (fill !== 'none' ? 'none' : strokeColor)
-          const width = p.strokeWidth || (stroke !== 'none' ? strokeWidth : undefined)
+          const rawFill = p.fill && p.fill !== 'none' ? p.fill : 'none'
+          const fill = rawFill === 'currentColor' ? strokeColor : rawFill
+          const rawStroke = p.stroke || (fill !== 'none' ? 'none' : strokeColor)
+          const stroke =
+            rawStroke === 'currentColor' ? strokeColor : rawStroke
+          const width =
+            p.strokeWidth || (stroke !== 'none' ? strokeWidth : undefined)
 
           return (
             <Path

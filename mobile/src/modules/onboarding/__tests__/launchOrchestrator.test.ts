@@ -83,7 +83,7 @@ describe('Onboarding & Launch Orchestrator Seam', () => {
     // 3. Đã qua onboarding và đã có session -> /(tabs)/home
     await authSeam.signIn({
       email: 'minh.tran@university.edu',
-      password: 'Password123',
+      password: 'KitsuneSecret99',
     })
     assert.equal(
       await hydrateLaunchRoute({ storage, authSeam }),
@@ -115,9 +115,11 @@ describe('Onboarding & Launch Orchestrator Seam', () => {
     assert.equal(nextUnauth, '/(auth)/sign-in')
     assert.equal(await isOnboardingCompleted(storage), true)
 
-    await authSeam.signIn({
+    await authSeam.createAccount({
+      fullName: 'Anh Nguyen',
       email: 'anh.nguyen@university.edu',
       password: 'Password123',
+      agreeTerms: true,
     })
     const nextAuth = await completeOnboarding({ storage, authSeam })
     assert.equal(nextAuth, '/(tabs)/home')

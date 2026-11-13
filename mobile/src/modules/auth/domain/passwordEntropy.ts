@@ -1,55 +1,54 @@
 import type { PasswordStrength, PasswordStrengthLevel } from './auth.types.ts'
 
 /**
- * Thuật toán tính toán độ mạnh mật khẩu thuần túy (Pure Function)
- * Đáp ứng thiết kế 3 nấc (3-segment meter) của màn hình Create Account (SVG 06)
+ * Pure 3-segment password strength calculator matching Screen 06 (Create Account).
  */
 export function calculatePasswordStrength(password: string): PasswordStrength {
   if (!password || password.length === 0) {
     return {
       score: 0,
       level: 'weak',
-      label: 'Chưa nhập mật khẩu',
-      feedback: 'Sử dụng ít nhất 8 ký tự kèm chữ số.',
+      label: 'Enter a password',
+      feedback: 'Use 8+ characters with a number.',
       isAcceptable: false,
     }
   }
 
   let score = 0
 
-  // 1. Kiểm tra độ dài
+  // 1. Check baseline length
   if (password.length >= 8) {
     score += 1
   }
 
-  // 2. Chứa chữ số hoặc ký tự đặc biệt
+  // 2. Contains number or special symbol
   const hasNumberOrSymbol = /[\d!@#$%^&*(),.?":{}|<>]/.test(password)
   if (hasNumberOrSymbol) {
     score += 1
   }
 
-  // 3. Kết hợp cả chữ hoa lẫn chữ thường hoặc độ dài >= 12
+  // 3. Mixed case or extended length >= 12
   const hasMixedCase = /[a-z]/.test(password) && /[A-Z]/.test(password)
   if (hasMixedCase || password.length >= 12) {
     score += 1
   }
 
   let level: PasswordStrengthLevel = 'weak'
-  let label = 'Mật khẩu yếu'
-  let feedback = 'Nên có ít nhất 8 ký tự gồm chữ và số.'
+  let label = 'Weak password'
+  let feedback = 'Use 8+ characters with a number.'
 
-  if (score === 1) {
+  if (score <= 1) {
     level = 'weak'
-    label = 'Mật khẩu yếu'
-    feedback = 'Thêm chữ số hoặc ký tự đặc biệt để an toàn hơn.'
+    label = 'Weak password'
+    feedback = 'Use 8+ characters with a number.'
   } else if (score === 2) {
     level = 'fair'
-    label = 'Mật khẩu tạm ổn'
-    feedback = 'Thêm chữ in hoa hoặc tăng độ dài mật khẩu.'
+    label = 'Fair password'
+    feedback = 'Add uppercase letters for stronger security.'
   } else if (score >= 3) {
     level = 'good'
-    label = 'Mật khẩu tốt'
-    feedback = 'Mật khẩu đủ an toàn cho tài khoản học tập.'
+    label = 'Good password'
+    feedback = 'Use 8+ characters with a number.'
   }
 
   return {

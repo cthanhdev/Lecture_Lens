@@ -8,7 +8,7 @@ import { KITSUNE_COLORS, KITSUNE_SHADOWS } from '../../theme/tokens'
 const BRAND_LOGO = require('../../../assets/images/logo-LectureLens.png')
 
 interface FramedBrandLogoProps {
-  variant: 'splash' | 'step1'
+  variant: 'splash' | 'step1' | 'auth'
   scale?: number
 }
 
@@ -132,6 +132,41 @@ export const FramedBrandLogo: React.FC<FramedBrandLogoProps> = ({
     )
   }
 
+  if (variant === 'auth') {
+    const outerSize = Math.round(96 * scale)
+    const innerSize = Math.round(72 * scale)
+    return (
+      <View
+        style={[
+          styles.authGlassCard,
+          {
+            width: outerSize,
+            height: outerSize,
+            borderRadius: Math.round(28 * scale),
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.authCreamFrame,
+            {
+              width: innerSize,
+              height: innerSize,
+              borderRadius: Math.round(20 * scale),
+            },
+          ]}
+        >
+          <Image
+            source={BRAND_LOGO}
+            style={styles.logoImage}
+            resizeMode="cover"
+            accessibilityLabel="LectureLens Kitsune mascot logo"
+          />
+        </View>
+      </View>
+    )
+  }
+
   // Step 1 Onboarding preset (Tilted Mist Sky layer + Miruku Glass frame + top-right sparkles badge)
   const cardSize = Math.round(236 * scale)
   const backingSize = Math.round(268 * scale)
@@ -203,6 +238,20 @@ export const FramedBrandLogo: React.FC<FramedBrandLogoProps> = ({
 }
 
 const styles = StyleSheet.create({
+  authGlassCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.82)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...KITSUNE_SHADOWS.miruku,
+  },
+  authCreamFrame: {
+    backgroundColor: '#FFF8F3',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   splashStage: {
     alignItems: 'center',
     justifyContent: 'center',

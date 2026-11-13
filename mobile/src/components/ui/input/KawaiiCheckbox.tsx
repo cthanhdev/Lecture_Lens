@@ -3,6 +3,7 @@ import React from 'react'
 import {
   Pressable,
   Text,
+  View,
   StyleSheet,
   ViewStyle,
   StyleProp,
@@ -16,7 +17,6 @@ import * as Haptics from 'expo-haptics'
 import { Icon } from '../icons/Icon'
 import {
   KITSUNE_COLORS,
-  KITSUNE_RADII,
   KITSUNE_SHADOWS,
 } from '../../../theme/tokens'
 
@@ -25,7 +25,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 export interface KawaiiCheckboxProps {
   checked: boolean
   onChange: (next: boolean) => void
-  label?: string
+  label?: React.ReactNode
   disabled?: boolean
   style?: StyleProp<ViewStyle>
 }
@@ -44,11 +44,11 @@ export const KawaiiCheckbox: React.FC<KawaiiCheckboxProps> = ({
   }))
 
   const handlePressIn = () => {
-    scale.value = withTiming(0.92, { duration: 120 })
+    scale.set(withTiming(0.92, { duration: 120 }))
   }
 
   const handlePressOut = () => {
-    scale.value = withTiming(1, { duration: 120 })
+    scale.set(withTiming(1, { duration: 120 }))
   }
 
   const handlePress = () => {
@@ -78,7 +78,14 @@ export const KawaiiCheckbox: React.FC<KawaiiCheckboxProps> = ({
           <Icon name="check" size="xs" strokeColor="#FFFFFF" strokeWidth={2.5} />
         )}
       </Animated.View>
-      {label && <Text style={[styles.label, disabled && styles.disabledText]}>{label}</Text>}
+      {label != null &&
+        (typeof label === 'string' || typeof label === 'number' ? (
+          <Text style={[styles.label, disabled && styles.disabledText]}>
+            {label}
+          </Text>
+        ) : (
+          <View style={styles.customLabelWrapper}>{label}</View>
+        ))}
     </AnimatedPressable>
   )
 }
@@ -89,6 +96,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     alignSelf: 'flex-start',
+    maxWidth: '100%',
   },
   box: {
     width: 22,
@@ -117,5 +125,9 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: KITSUNE_COLORS.plumInkSubtle,
+  },
+  customLabelWrapper: {
+    flexShrink: 1,
+    justifyContent: 'center',
   },
 })

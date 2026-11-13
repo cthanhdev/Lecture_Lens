@@ -32,6 +32,8 @@ export type ButtonVariant =
   | 'ghost'
   | 'danger'
   | 'fab'
+  | 'dark'
+  | 'surface'
 
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
 
@@ -43,6 +45,7 @@ export interface ButtonProps {
   rightIcon?: React.ReactNode
   isLoading?: boolean
   disabled?: boolean
+  fullWidth?: boolean
   onPress?: () => void
   style?: StyleProp<ViewStyle>
   textStyle?: StyleProp<TextStyle>
@@ -57,6 +60,7 @@ export const Button: React.FC<ButtonProps> = ({
   rightIcon,
   isLoading = false,
   disabled = false,
+  fullWidth = false,
   onPress,
   style,
   textStyle,
@@ -69,16 +73,19 @@ export const Button: React.FC<ButtonProps> = ({
   }))
 
   const handlePressIn = () => {
-    scale.value = withTiming(0.97, { duration: 150 })
+    scale.set(withTiming(0.97, { duration: 150 }))
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
   }
 
   const handlePressOut = () => {
-    scale.value = withTiming(1, { duration: 150 })
+    scale.set(withTiming(1, { duration: 150 }))
   }
 
   const isLightTextVariant =
-    variant === 'primary' || variant === 'danger' || variant === 'fab'
+    variant === 'primary' ||
+    variant === 'danger' ||
+    variant === 'fab' ||
+    variant === 'dark'
 
   return (
     <AnimatedPressable
@@ -93,6 +100,7 @@ export const Button: React.FC<ButtonProps> = ({
         styles.base,
         styles[variant],
         styles[size],
+        fullWidth && styles.fullWidth,
         disabled && styles.disabled,
         animatedStyle,
         style,
@@ -162,6 +170,20 @@ const styles = StyleSheet.create({
     backgroundColor: KITSUNE_COLORS.kitsuneCoral,
     ...KITSUNE_SHADOWS.plumModal,
   },
+  dark: {
+    backgroundColor: '#211829',
+    ...KITSUNE_SHADOWS.miruku,
+  },
+  surface: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(38, 19, 51, 0.08)',
+    ...KITSUNE_SHADOWS.miruku,
+  },
+  fullWidth: {
+    alignSelf: 'stretch',
+    width: '100%',
+  },
   sm: { height: 36, paddingHorizontal: 16 },
   md: { height: 44, paddingHorizontal: 20 },
   lg: { height: 52, paddingHorizontal: 28 },
@@ -177,6 +199,8 @@ const styles = StyleSheet.create({
   ghostText: { color: KITSUNE_COLORS.plumInkMuted },
   dangerText: { color: '#FFFFFF' },
   fabText: { color: '#FFFFFF' },
+  darkText: { color: '#FFFFFF' },
+  surfaceText: { color: KITSUNE_COLORS.plumInk },
   smText: { fontSize: 12 },
   mdText: { fontSize: 14 },
   lgText: { fontSize: 16 },
