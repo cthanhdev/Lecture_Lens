@@ -19,14 +19,17 @@ import type {
 } from './types'
 import { getParentFallback } from './parentFallback'
 import { MochiConfirmDialog } from './MochiConfirmDialog'
+import {
+  resolveTabBarState,
+  type FloatingTabId,
+} from '../components/navigation/tabBarModel'
 
-const TAB_ROUTES: TabRoute[] = [
-  '/(tabs)/home',
-  '/(tabs)/library',
-  '/(tabs)/subjects',
-  '/(tabs)/review',
-  '/(tabs)/profile',
-]
+const TAB_ROUTE_BY_ID: Record<FloatingTabId, TabRoute> = {
+  home: '/(tabs)/home',
+  library: '/(tabs)/library',
+  review: '/(tabs)/review',
+  search: '/(tabs)/search',
+}
 
 const NavigationContext = createContext<AppNavigator | null>(null)
 
@@ -67,10 +70,9 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     setHistoryDepth((prev) => prev + 1)
   }, [pathname])
 
-  // Xác định active Tab nếu đang ở một trong 5 tab chính
-  const activeTab: TabRoute | null = TAB_ROUTES.includes(pathname as TabRoute)
-    ? (pathname as TabRoute)
-    : null
+  // Xác định active Tab qua seam tabBarModel (chuẩn hóa grouped/stripped pathname của Expo Router)
+  const { activeTabId } = resolveTabBarState(pathname)
+  const activeTab: TabRoute | null = activeTabId ? TAB_ROUTE_BY_ID[activeTabId] : null
 
   const canGoBack = historyDepth > 0
 

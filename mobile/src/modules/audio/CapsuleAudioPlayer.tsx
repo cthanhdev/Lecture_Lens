@@ -5,8 +5,7 @@ import {
   Text,
   Pressable,
   StyleSheet,
-  Dimensions,
-  Platform,
+  useWindowDimensions,
 } from 'react-native'
 import { BlurView } from 'expo-blur'
 import Animated, {
@@ -15,16 +14,22 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAudioPlayer } from './useAudioPlayer'
 import { useAppNavigation } from '../../navigation/NavigationContext'
 import { Icon } from '../../components/ui/icons/Icon'
+import {
+  getFloatingPillWidth,
+  getFloatingTabBarBottomOffset,
+  getFloatingTabBarClearance,
+  resolveTabBarState,
+} from '../../components/navigation/tabBarModel'
 import {
   KITSUNE_COLORS,
   KITSUNE_RADII,
   KITSUNE_SHADOWS,
 } from '../../theme/tokens'
 
-const { width } = Dimensions.get('window')
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 function formatTime(seconds: number): string {
@@ -34,6 +39,8 @@ function formatTime(seconds: number): string {
 }
 
 export function CapsuleAudioPlayer() {
+  const insets = useSafeAreaInsets()
+  const { width: windowWidth } = useWindowDimensions()
   const {
     currentTrack,
     isPlaying,
@@ -87,6 +94,11 @@ export function CapsuleAudioPlayer() {
     }
   }
 
+  const playerWidth = getFloatingPillWidth(windowWidth, 400)
+  const bottomOffset = resolveTabBarState(route).isVisible
+    ? getFloatingTabBarClearance(insets.bottom)
+    : getFloatingTabBarBottomOffset(insets.bottom)
+
   return (
     <AnimatedPressable
       accessibilityRole="button"
@@ -98,9 +110,9 @@ export function CapsuleAudioPlayer() {
       onPressOut={() => {
         scale.value = withTiming(1, { duration: 120 })
       }}
-      style={[styles.container, animatedStyle]}
+      style={[styles.container, { bottom: bottomOffset }, animatedStyle]}
     >
-      <BlurView intensity={28} tint="light" style={styles.blurBar}>
+      <BlurView intensity={28} tint="light" style={[styles.blurBar, { width: playerWidth }]}>
         {/* Progress bar line ở đáy viên thuốc */}
         <View
           style={[
@@ -150,14 +162,12 @@ export function CapsuleAudioPlayer() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 96 : 88,
-    left: 20,
-    right: 20,
+    left: 0,
+    right: 0,
     alignItems: 'center',
     zIndex: 45,
   },
   blurBar: {
-    width: Math.min(width - 40, 400),
     height: 52,
     borderRadius: KITSUNE_RADII.pill,
     flexDirection: 'row',
