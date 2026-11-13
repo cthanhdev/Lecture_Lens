@@ -16,7 +16,6 @@ export const SPLASH_COPY = {
 export const ONBOARDING_SLIDES: readonly OnboardingSlideSpec[] = [
   {
     index: 0,
-    headerPill: 'KITSUNE NOTE',
     contextPill: {
       icon: 'mic',
       label: 'Step 1 of 3 · Audio & Lectures',
@@ -29,7 +28,6 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlideSpec[] = [
   },
   {
     index: 1,
-    headerPill: 'STEP 02 OF 03',
     contextPill: {
       icon: 'sparkles',
       label: 'EFFORTLESS CLARITY',

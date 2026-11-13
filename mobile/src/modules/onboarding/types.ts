@@ -45,7 +45,6 @@ export interface KeywordChipSpec {
 
 export interface OnboardingSlideSpec {
   index: OnboardingStepIndex
-  headerPill?: string
   contextPill?: {
     icon: 'mic' | 'sparkles'
     label: string

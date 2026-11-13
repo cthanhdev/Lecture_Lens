@@ -142,9 +142,12 @@ describe('Onboarding & Launch Orchestrator Seam', () => {
     )
     assert.equal(ONBOARDING_SLIDES[2].ctaLabel, 'Get started')
 
-    // Đảm bảo không có nút/nhãn Skip nào trong metadata onboarding
+    // Đảm bảo không có nút/nhãn Skip hoặc top headerPill nào trong metadata onboarding
     const serialized = JSON.stringify(ONBOARDING_SLIDES).toLowerCase()
     assert.equal(serialized.includes('"skip"'), false)
+    for (const slide of ONBOARDING_SLIDES) {
+      assert.equal('headerPill' in slide, false)
+    }
 
     assert.equal(clampOnboardingStep(-2), 0)
     assert.equal(clampOnboardingStep(0), 0)

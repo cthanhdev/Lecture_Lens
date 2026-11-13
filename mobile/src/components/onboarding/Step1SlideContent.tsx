@@ -23,7 +23,7 @@ export const Step1SlideContent: React.FC<Step1SlideContentProps> = ({
   return (
     <View style={styles.container}>
       <FloatingPetals2D />
-      <OnboardingSlideHeader pillLabel={slide.headerPill} variant="sakura" />
+      <OnboardingSlideHeader />
 
       <View style={styles.body}>
         <View style={styles.heroWrapper}>

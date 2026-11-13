@@ -23,7 +23,7 @@ export const Step2SlideContent: React.FC<Step2SlideContentProps> = ({
 
   return (
     <View style={styles.container}>
-      <OnboardingSlideHeader pillLabel={slide.headerPill} variant="lavender" />
+      <OnboardingSlideHeader />
 
       <View style={styles.body}>
         {/* Interactive Miruku Glass Collage */}
