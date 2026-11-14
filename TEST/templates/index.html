@@ -3,14 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LectureLens - Audio Ingest & Transcript Lab</title>
-  <!-- Tailwind CSS CDN -->
+  <title>LectureLens - Stage 1 ASR & Stage 2 RAG Verification Studio</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Plus Jakarta Sans Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  
+
   <script>
     tailwind.config = {
       theme: {
@@ -38,13 +36,17 @@
     body {
       background-color: #FFF7FD;
       color: #261333;
+      background-image:
+        radial-gradient(circle at 10% 10%, rgba(245, 195, 201, 0.25), transparent 42%),
+        radial-gradient(circle at 90% 15%, rgba(169, 212, 232, 0.25), transparent 40%),
+        radial-gradient(circle at 80% 85%, rgba(190, 225, 208, 0.22), transparent 45%);
     }
     .miruku-glass {
-      background: rgba(255, 255, 255, 0.82);
+      background: rgba(255, 255, 255, 0.80);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 8px 32px rgba(38, 19, 51, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.92);
+      box-shadow: 0 10px 34px rgba(38, 19, 51, 0.06);
     }
     .mochi-press {
       transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -52,56 +54,73 @@
     .mochi-press:active {
       transform: scale(0.97);
     }
+    .chunk-highlight {
+      outline: 2px solid #F47F72;
+      box-shadow: 0 0 0 6px rgba(244, 127, 114, 0.15);
+    }
   </style>
 </head>
-<body class="min-h-screen font-sans p-4 md:p-8">
+<body class="min-h-screen font-sans p-4 md:p-8 text-plum-ink">
 
-  <!-- Header -->
-  <header class="max-w-5xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4 pb-6 border-b border-sakura-pink/40">
-    <div class="flex items-center gap-3">
-      <div class="w-12 h-12 rounded-2xl bg-kitsune-coral/15 flex items-center justify-center text-2xl shadow-sm border border-kitsune-coral/30">
-        🦊
-      </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-2xl font-extrabold text-plum-ink tracking-tight">LectureLens</h1>
-          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-kitsune-coral text-white shadow-xs">TEST LAB</span>
+  <!-- Header & System Diagnostics -->
+  <header class="max-w-6xl mx-auto mb-8 flex flex-col gap-4 pb-6 border-b border-sakura-pink/50">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-kitsune-coral/15 flex items-center justify-center text-2xl shadow-sm border border-kitsune-coral/30">
+          🦊
         </div>
-        <p class="text-xs text-plum-muted font-medium">Audio Ingest Pipeline & Transcript Verification Studio (PhoWhisper-Medium + VAD)</p>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-2xl font-extrabold text-plum-ink tracking-tight">LectureLens</h1>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-kitsune-coral text-white shadow-xs">TEST STUDIO</span>
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-matcha-mint/70 text-plum-ink border border-matcha-mint">Stage 1 ASR + Stage 2 [I5]/[I6]</span>
+          </div>
+          <p class="text-xs text-plum-muted font-medium mt-0.5">PhoWhisper ASR ➔ [I5] Recursive Chunking (≤512 tok) ➔ [I6] BGE-M3 halfvec(1024) + Lexical Weights ➔ 3-Stream Hybrid RRF</p>
+        </div>
       </div>
+
+      <button onclick="loadDiagnostics()" class="self-start md:self-auto px-3.5 py-1.5 rounded-full bg-white/85 hover:bg-white border border-sakura-pink/60 text-xs font-semibold text-plum-ink mochi-press shadow-xs">
+        🔄 Quét lại hệ thống
+      </button>
     </div>
-    
-    <!-- System Diagnostics Bar -->
+
+    <!-- 5 Diagnostics Pills -->
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>🎬 FFmpeg:</span> <span id="ffmpegStatus" class="font-bold text-emerald-600">Đang quét...</span>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
+        <span>🎬 FFmpeg:</span> <span id="ffmpegStatus" class="font-bold text-plum-muted">Đang quét...</span>
       </div>
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>⚡ Thiết Bị:</span> <span id="aiDeviceStatus" class="font-bold text-emerald-600">Đang quét...</span>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
+        <span>⚡ Thiết Bị:</span> <span id="aiDeviceStatus" class="font-bold text-plum-muted">Đang quét...</span>
       </div>
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>🎙️ Model:</span> <span id="aiModelStatus" class="font-bold text-emerald-600">PhoWhisper-medium</span>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
+        <span>🎙️ PhoWhisper:</span> <span id="aiModelStatus" class="font-bold text-plum-muted">Đang quét...</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
+        <span>🧠 BGE-M3:</span> <span id="bgeM3Status" class="font-bold text-plum-muted">Đang quét...</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
+        <span>🐘 PgVector DB:</span> <span id="dbStatus" class="font-bold text-plum-muted">Đang quét...</span>
       </div>
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto space-y-8">
+  <main class="max-w-6xl mx-auto space-y-8">
 
-    <!-- Step 1: Upload Box & Options -->
+    <!-- Step 1: Audio Upload & Quick Stage 2 Controls -->
     <section class="miruku-glass rounded-3xl p-6 md:p-8">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h2 class="text-lg font-bold text-plum-ink flex items-center gap-2">
             <span class="w-7 h-7 rounded-full bg-kitsune-coral text-white text-xs font-bold flex items-center justify-center">1</span>
-            Tải Lên File Âm Thanh Bài Giảng
+            Khởi Chạy Pipeline (Stage 1 ASR + Stage 2 BGE-M3)
           </h2>
-          <p class="text-xs text-plum-muted mt-0.5">Hỗ trợ các định dạng: .mp3, .wav, .m4a, .aac, .flac</p>
+          <p class="text-xs text-plum-muted mt-0.5">Tải audio bài giảng để chạy full pipeline hoặc bấm Test Nhanh Stage 2 để kiểm tra Chunking [I5] + BGE-M3 [I6] ngay lập tức</p>
         </div>
 
         <!-- Mode Toggle -->
-        <div class="flex items-center p-1 bg-white/60 rounded-full border border-sakura-pink/60 text-xs font-medium">
+        <div class="flex items-center p-1 bg-white/70 rounded-full border border-sakura-pink/60 text-xs font-medium self-start md:self-auto">
           <button id="modeRealBtn" class="px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press" onclick="setMode('real')">
-            🎙️ PhoWhisper ASR Thật
+            🎙️ Real Models (PhoWhisper + BGE-M3)
           </button>
           <button id="modeMockBtn" class="px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press" onclick="setMode('mock')">
             ⚡ Fast Mock (&lt;1s)
@@ -109,18 +128,37 @@
         </div>
       </div>
 
+      <!-- Fast Stage 2 Banner -->
+      <div class="p-4 rounded-2xl bg-gradient-to-r from-mochi-yellow/35 via-sakura-pink/25 to-mist-sky/30 border border-kitsune-coral/35 mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <div class="text-xs font-extrabold uppercase tracking-wider text-plum-ink flex items-center gap-1.5">
+            <span>⚡</span> Kiểm Thử Nhanh Stage 2 Không Cần Chờ ASR Audio
+          </div>
+          <p class="text-xs text-plum-muted mt-1">
+            Sinh sẵn <code>transcript.json</code> bài giảng Đại học Tiếng Việt đa chủ đề (Mạng Máy Tính, Active Directory, Đại Số Tuyến Tính, Gradient Descent) và chạy <strong>RecursiveTokenChunker [I5]</strong> + <strong>BgeM3Embedder [I6]</strong> + <strong>ChunkStore</strong>.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
+          <button id="fastStage2RealBtn" onclick="runFastStage2('real')" class="px-5 py-2.5 rounded-full bg-plum-ink hover:bg-plum-muted text-white text-xs font-bold mochi-press shadow-md flex items-center gap-2">
+            <span>⚡ Test Nhanh Stage 2 (Chunking [I5] + BGE-M3 [I6] Thật)</span>
+          </button>
+          <button id="fastStage2MockBtn" onclick="runFastStage2('mock')" class="px-3.5 py-2.5 rounded-full bg-white/90 hover:bg-white border border-sakura-pink text-plum-ink text-xs font-semibold mochi-press shadow-xs">
+            🧪 Mock (&lt;50ms)
+          </button>
+        </div>
+      </div>
+
       <!-- Advanced Pipeline Settings Card -->
       <div class="p-4 rounded-2xl bg-white/60 border border-sakura-pink/40 mb-6 space-y-3">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between flex-wrap gap-2">
           <span class="text-xs font-bold uppercase tracking-wider text-plum-ink flex items-center gap-1.5">
-            <span>⚙️</span> Cấu Hình Bộ Lọc & Model ASR
+            <span>⚙️</span> Cấu Hình Bộ Lọc & Model ASR (Stage 1)
           </span>
-          <span class="text-[11px] text-plum-muted">Đã bật khử nhiễu & cắt VAD chống lặp từ</span>
+          <span class="text-[11px] text-plum-muted">LOW_VRAM_MODE tự động unload PhoWhisper trước khi nạp BGE-M3</span>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-          <!-- Model Selection -->
-          <div class="p-3 rounded-xl bg-white/80 border border-sakura-pink/40">
+          <div class="p-3 rounded-xl bg-white/85 border border-sakura-pink/40">
             <label class="block text-xs font-bold text-plum-ink mb-1">Mô Hình ASR</label>
             <select id="modelSelect" class="w-full text-xs font-semibold p-2 rounded-lg border border-sakura-pink/60 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral">
               <option value="medium" selected>PhoWhisper-Medium (769M - Độ chuẩn cao)</option>
@@ -128,8 +166,7 @@
             </select>
           </div>
 
-          <!-- DSP Denoise Toggle -->
-          <div class="p-3 rounded-xl bg-white/80 border border-sakura-pink/40 flex items-center gap-2">
+          <div class="p-3 rounded-xl bg-white/85 border border-sakura-pink/40 flex items-center gap-2">
             <input type="checkbox" id="dspToggle" checked class="w-4 h-4 accent-kitsune-coral cursor-pointer">
             <div>
               <label for="dspToggle" class="text-xs font-bold text-plum-ink cursor-pointer block">Khử Nhiễu DSP (afftdn + loudnorm)</label>
@@ -137,8 +174,7 @@
             </div>
           </div>
 
-          <!-- VAD Silence Cut Toggle -->
-          <div class="p-3 rounded-xl bg-white/80 border border-sakura-pink/40 flex items-center gap-2">
+          <div class="p-3 rounded-xl bg-white/85 border border-sakura-pink/40 flex items-center gap-2">
             <input type="checkbox" id="vadToggle" checked class="w-4 h-4 accent-kitsune-coral cursor-pointer">
             <div>
               <label for="vadToggle" class="text-xs font-bold text-plum-ink cursor-pointer block">Cắt Khoảng Nghỉ Tự Nhiên (VAD)</label>
@@ -147,24 +183,23 @@
           </div>
         </div>
 
-        <!-- Custom Vocabulary Prompting -->
         <div class="pt-2">
           <label class="block text-xs font-bold text-plum-ink mb-1 flex items-center justify-between">
-            <span>📚 Gợi Ý Từ Điển Ngữ Cảnh (Vocabulary Prompting - Chống dịch sai từ tiếng Anh):</span>
-            <button onclick="resetPrompt()" class="text-[10px] text-kitsune-coral hover:underline">Khôi phục mặc định CNTT</button>
+            <span>📚 Gợi Ý Từ Điển Ngữ Cảnh (Vocabulary Prompting):</span>
+            <button onclick="resetPrompt()" class="text-[10px] text-kitsune-coral hover:underline font-semibold">Khôi phục mặc định CNTT</button>
           </label>
           <input type="text" id="promptInput" class="w-full text-xs font-mono p-2.5 rounded-xl border border-sakura-pink/60 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral" value="Bài giảng Đại học, Công nghệ thông tin, Quản trị mạng, Windows Server 2016, Active Directory, Users, Groups, Domain Controller, Password, OU, Member Of, Properties, Administrator, Log on, DNS, DHCP, Permissions.">
         </div>
       </div>
 
       <!-- Dropzone -->
-      <div id="dropzone" class="border-2 border-dashed border-sakura-pink hover:border-kitsune-coral transition-colors rounded-2xl p-8 text-center cursor-pointer bg-white/40 group">
+      <div id="dropzone" class="border-2 border-dashed border-sakura-pink hover:border-kitsune-coral transition-colors rounded-2xl p-8 text-center cursor-pointer bg-white/45 group">
         <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac" class="hidden">
-        <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-sakura-pink/20 text-kitsune-coral flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+        <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-sakura-pink/25 text-kitsune-coral flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
           🎵
         </div>
         <p class="text-sm font-semibold text-plum-ink" id="fileNameDisplay">Kéo thả tệp âm thanh vào đây hoặc <span class="text-kitsune-coral underline">chọn từ máy tính</span></p>
-        <p class="text-xs text-plum-muted mt-1" id="fileSizeDisplay">Dung lượng tối đa đề xuất: 500MB</p>
+        <p class="text-xs text-plum-muted mt-1" id="fileSizeDisplay">Hỗ trợ .mp3, .wav, .m4a, .aac, .flac — tối đa đề xuất 500MB</p>
       </div>
 
       <!-- Quick Actions -->
@@ -174,22 +209,28 @@
         </button>
 
         <button id="startProcessBtn" disabled class="px-6 py-2.5 rounded-full bg-kitsune-coral hover:bg-kitsune-hover text-white text-xs font-bold mochi-press shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-          <span>🚀</span> Bắt Đầu Ingest & Chuyển Thành Text
+          <span>🚀</span> Chạy Full Pipeline (Stage 1 ASR + Stage 2 BGE-M3)
         </button>
       </div>
     </section>
 
-    <!-- Step 2: Live Pipeline Tracker -->
+    <!-- Step 2: 6-Step Live Pipeline Tracker -->
     <section id="trackerSection" class="miruku-glass rounded-3xl p-6 md:p-8 hidden">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-bold text-plum-ink flex items-center gap-2">
-          <span class="w-7 h-7 rounded-full bg-mist-sky text-plum-ink text-xs font-bold flex items-center justify-center">2</span>
-          Tiến Độ Xử Lý Thời Gian Thực
-        </h2>
-        <span id="percentBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-mist-sky text-plum-ink">0%</span>
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-plum-ink flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-mist-sky text-plum-ink text-xs font-bold flex items-center justify-center">2</span>
+            Tiến Độ Pipeline 6 Bước Thời Gian Thực
+          </h2>
+          <p id="trackerMessage" class="text-xs text-plum-muted mt-0.5">Đang chờ khởi tạo...</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="statusBadge" class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-sakura-pink/40 text-plum-ink">QUEUED</span>
+          <span id="percentBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-mist-sky text-plum-ink">0%</span>
+        </div>
       </div>
 
-      <!-- Error Card (if pipeline fails) -->
+      <!-- Error Card -->
       <div id="errorCard" class="hidden p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs mb-4">
         <div class="font-bold flex items-center gap-1.5 text-sm text-rose-700 mb-1">
           <span>⚠️</span> Pipeline Gặp Sự Cố
@@ -198,111 +239,190 @@
       </div>
 
       <!-- Progress bar -->
-      <div class="w-full bg-white/70 h-3.5 rounded-full overflow-hidden p-0.5 border border-sakura-pink/40 mb-6">
-        <div id="progressBar" class="bg-gradient-to-r from-kitsune-coral to-sakura-pink h-full rounded-full transition-all duration-300 w-0"></div>
+      <div class="w-full bg-white/75 h-3.5 rounded-full overflow-hidden p-0.5 border border-sakura-pink/40 mb-6">
+        <div id="progressBar" class="bg-gradient-to-r from-kitsune-coral via-sakura-pink to-matcha-mint h-full rounded-full transition-all duration-300 w-0"></div>
       </div>
 
-      <!-- Step items -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3" id="stepList">
+      <!-- 6 Step Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" id="stepList">
         <div id="step-staged" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
           <div class="font-bold flex items-center gap-1.5 text-plum-ink">
             <span class="step-icon">⚪</span> 1. Tiếp nhận
           </div>
-          <span class="text-[11px]">Ghi vào incoming</span>
+          <span class="text-[11px]">Incoming + Manifest</span>
         </div>
         <div id="step-normalize" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
           <div class="font-bold flex items-center gap-1.5 text-plum-ink">
             <span class="step-icon">⚪</span> 2. Khử Nhiễu DSP
           </div>
-          <span class="text-[11px]">16kHz Mono Clean WAV</span>
+          <span class="text-[11px]">16kHz Mono WAV</span>
         </div>
         <div id="step-asr" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
           <div class="font-bold flex items-center gap-1.5 text-plum-ink">
-            <span class="step-icon">⚪</span> 3. PhoWhisper
-          </div>
-          <span class="text-[11px]">VAD + Gợi ý từ vựng</span>
-        </div>
-        <div id="step-artifact" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
-          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
-            <span class="step-icon">⚪</span> 4. Lưu Artifact
+            <span class="step-icon">⚪</span> 3. PhoWhisper ASR
           </div>
           <span class="text-[11px]">transcript.json</span>
         </div>
+        <div id="step-chunking" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
+          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
+            <span class="step-icon">⚪</span> 4. Chunking [I5]
+          </div>
+          <span class="text-[11px]">≤512 tok / 64 ovlp</span>
+        </div>
+        <div id="step-embedding" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
+          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
+            <span class="step-icon">⚪</span> 5. BGE-M3 [I6]
+          </div>
+          <span class="text-[11px]">halfvec + Lexical</span>
+        </div>
         <div id="step-db" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
           <div class="font-bold flex items-center gap-1.5 text-plum-ink">
-            <span class="step-icon">⚪</span> 5. Database
+            <span class="step-icon">⚪</span> 6. DB &amp; READY
           </div>
-          <span class="text-[11px]">Cập nhật app.jobs</span>
+          <span class="text-[11px]">ChunkStore + Ready</span>
         </div>
       </div>
     </section>
 
-    <!-- Step 3: Artifacts & DB Viewer -->
+    <!-- Step 3: 6 Inspection Tabs -->
     <section id="resultSection" class="miruku-glass rounded-3xl p-6 md:p-8 hidden">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h2 class="text-lg font-bold text-plum-ink flex items-center gap-2">
             <span class="w-7 h-7 rounded-full bg-matcha-mint text-plum-ink text-xs font-bold flex items-center justify-center">3</span>
-            Kết Quả Bản Ghi & Kiểm Tra Database
+            Kiểm Tra Artifacts Stage 1 &amp; Stage 2 + Hybrid Search RRF
           </h2>
-          <p class="text-xs text-plum-muted mt-0.5">Kiểm tra transcript sinh ra, mốc thời gian và dữ liệu lưu trữ</p>
+          <p id="resultMetaSummary" class="text-xs text-plum-muted mt-0.5">Kiểm tra transcript, chunks [I5], embeddings [I6] và tìm kiếm 3 luồng</p>
         </div>
 
-        <!-- Audio Player Capsule -->
-        <div class="flex items-center gap-2 bg-white/80 px-4 py-2 rounded-full border border-sakura-pink/60 shadow-xs">
+        <!-- Capsule Audio Player -->
+        <div id="audioPlayerContainer" class="flex items-center gap-2 bg-white/85 px-4 py-2 rounded-full border border-sakura-pink/60 shadow-xs">
+          <span id="audioPlayerNote" class="text-[11px] font-semibold text-plum-muted hidden">Sample Stage 2 (No Audio)</span>
           <audio id="audioPlayer" controls class="h-8 max-w-[260px]"></audio>
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
+      <!-- 6 Navigation Tabs -->
       <div class="flex items-center gap-2 border-b border-sakura-pink/40 pb-3 mb-6 overflow-x-auto text-xs font-semibold">
-        <button class="tab-btn px-4 py-2 rounded-full bg-kitsune-coral text-white shadow-xs mochi-press" onclick="switchTab('tab-transcript')">
-          📜 Lời Thoại Phân Đoạn (Segments)
+        <button id="tabBtn-tab-transcript" class="tab-btn px-4 py-2 rounded-full bg-kitsune-coral text-white shadow-xs mochi-press whitespace-nowrap" onclick="switchTab('tab-transcript', this)">
+          📜 Lời Thoại ASR (Segments)
         </button>
-        <button class="tab-btn px-4 py-2 rounded-full bg-white/70 text-plum-muted hover:text-plum-ink mochi-press" onclick="switchTab('tab-json')">
-          📄 File transcript.json
+        <button id="tabBtn-tab-chunks" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-chunks', this)">
+          🧩 Chunks [I5] &amp; BGE-M3 [I6]
         </button>
-        <button class="tab-btn px-4 py-2 rounded-full bg-white/70 text-plum-muted hover:text-plum-ink mochi-press" onclick="switchTab('tab-manifest')">
+        <button id="tabBtn-tab-search" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-search', this)">
+          🔍 Tìm Kiếm 3-Stream Hybrid RRF
+        </button>
+        <button id="tabBtn-tab-json" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-json', this)">
+          📄 JSON Artifacts
+        </button>
+        <button id="tabBtn-tab-manifest" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-manifest', this)">
           🏷️ File manifest.json
         </button>
-        <button class="tab-btn px-4 py-2 rounded-full bg-white/70 text-plum-muted hover:text-plum-ink mochi-press" onclick="switchTab('tab-db')">
-          🐘 Dữ Liệu Lưu Vào DB (app.jobs & rag)
+        <button id="tabBtn-tab-db" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-db', this)">
+          🐘 Database (app.jobs &amp; rag.lecture_chunks)
         </button>
       </div>
 
-      <!-- Tab Content 1: Spoken Segments -->
+      <!-- Tab 1: Spoken Segments -->
       <div id="tab-transcript" class="tab-pane space-y-3">
-        <div id="segmentsContainer" class="space-y-2.5 max-h-[420px] overflow-y-auto pr-2">
-          <!-- Populated by JS -->
+        <div id="segmentsContainer" class="space-y-2.5 max-h-[460px] overflow-y-auto pr-2"></div>
+      </div>
+
+      <!-- Tab 2: Chunks [I5] & BGE-M3 [I6] -->
+      <div id="tab-chunks" class="tab-pane hidden space-y-4">
+        <div id="chunksSummaryBar" class="p-3.5 rounded-2xl bg-white/75 border border-sakura-pink/40 flex flex-wrap items-center gap-3 text-xs"></div>
+        <div id="chunksContainer" class="space-y-4 max-h-[560px] overflow-y-auto pr-2"></div>
+      </div>
+
+      <!-- Tab 3: 3-Stream Hybrid RRF Search -->
+      <div id="tab-search" class="tab-pane hidden space-y-4">
+        <div class="p-4 rounded-2xl bg-white/75 border border-sakura-pink/50 space-y-3">
+          <div class="flex flex-col md:flex-row gap-2">
+            <input id="searchQueryInput" type="text" placeholder="Nhập câu hỏi có dấu hoặc KHÔNG DẤU (vd: khong gian vector doc lap tuyen tinh)..."
+              class="flex-1 text-xs p-3 rounded-full border border-sakura-pink/70 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral"
+              onkeydown="if(event.key==='Enter') runHybridSearch()">
+            <select id="searchModeSelect" class="text-xs font-semibold px-3 py-2 rounded-full border border-sakura-pink/70 bg-white text-plum-ink focus:outline-none">
+              <option value="real" selected>🧠 Real BGE-M3</option>
+              <option value="mock">⚡ Mock Embedder</option>
+            </select>
+            <select id="searchTopKSelect" class="text-xs font-semibold px-3 py-2 rounded-full border border-sakura-pink/70 bg-white text-plum-ink focus:outline-none">
+              <option value="3">Top 3</option>
+              <option value="5" selected>Top 5</option>
+              <option value="10">Top 10</option>
+            </select>
+            <button id="runSearchBtn" onclick="runHybridSearch()" class="px-5 py-2.5 rounded-full bg-kitsune-coral hover:bg-kitsune-hover text-white text-xs font-bold mochi-press shadow-sm">
+              🔍 Tìm Kiếm RRF
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span class="font-bold text-plum-muted">Thử nhanh (không dấu / có dấu):</span>
+            <button onclick="setSearchQuery('khong gian vector doc lap tuyen tinh')" class="px-2.5 py-1 rounded-full bg-sakura-pink/25 hover:bg-sakura-pink/45 text-plum-ink font-medium mochi-press">khong gian vector doc lap tuyen tinh</button>
+            <button onclick="setSearchQuery('Active Directory Domain Controller')" class="px-2.5 py-1 rounded-full bg-mist-sky/35 hover:bg-mist-sky/60 text-plum-ink font-medium mochi-press">Active Directory Domain Controller</button>
+            <button onclick="setSearchQuery('thuat toan gradient descent va learning rate')" class="px-2.5 py-1 rounded-full bg-matcha-mint/45 hover:bg-matcha-mint/70 text-plum-ink font-medium mochi-press">thuat toan gradient descent va learning rate</button>
+            <button onclick="setSearchQuery('giao thuc TCP IP va chia mang con subnet')" class="px-2.5 py-1 rounded-full bg-mochi-yellow/45 hover:bg-mochi-yellow/75 text-plum-ink font-medium mochi-press">giao thuc TCP IP va chia mang con subnet</button>
+          </div>
+        </div>
+
+        <div id="searchStatusBanner" class="hidden text-xs font-semibold px-4 py-2 rounded-full bg-white/80 border border-sakura-pink/40 text-plum-ink"></div>
+        <div id="searchResultsContainer" class="space-y-4 max-h-[560px] overflow-y-auto pr-2">
+          <div class="p-6 rounded-2xl bg-white/60 border border-sakura-pink/30 text-center text-xs text-plum-muted">
+            Nhập truy vấn ở trên để thử nghiệm tìm kiếm lai 3 luồng (Dense Vector HNSW + Lexical TSVECTOR + Fuzzy Trigram RRF) và mở rộng ngữ cảnh 3 chiều (PREVIOUS / CURRENT / NEXT).
+          </div>
         </div>
       </div>
 
-      <!-- Tab Content 2: Raw transcript.json -->
-      <div id="tab-json" class="tab-pane hidden">
-        <div class="flex items-center justify-end gap-2 mb-2">
-          <button onclick="copyContent('transcriptJsonCode')" class="px-3 py-1 rounded-full bg-white border border-sakura-pink text-xs font-medium text-plum-ink hover:bg-sakura-pink/20 mochi-press">
-            📋 Sao chép JSON
-          </button>
-          <a id="downloadTranscriptLink" download="transcript.json" class="px-3 py-1 rounded-full bg-kitsune-coral text-white text-xs font-medium hover:bg-kitsune-hover mochi-press">
-            ⬇️ Tải file về
-          </a>
+      <!-- Tab 4: JSON Artifacts (transcript.json + chunks.json) -->
+      <div id="tab-json" class="tab-pane hidden space-y-5">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-plum-ink">📜 transcript.json</span>
+              <div class="flex items-center gap-2">
+                <button onclick="copyContent('transcriptJsonCode')" class="px-3 py-1 rounded-full bg-white border border-sakura-pink text-xs font-medium text-plum-ink hover:bg-sakura-pink/20 mochi-press">
+                  📋 Copy
+                </button>
+                <a id="downloadTranscriptLink" download="transcript.json" class="px-3 py-1 rounded-full bg-kitsune-coral text-white text-xs font-medium hover:bg-kitsune-hover mochi-press">
+                  ⬇️ Tải về
+                </a>
+              </div>
+            </div>
+            <pre class="bg-plum-ink text-emerald-300 font-mono text-[11px] p-4 rounded-2xl overflow-auto max-h-[440px]"><code id="transcriptJsonCode"></code></pre>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-plum-ink">🧩 chunks.json (preview tối đa 16 dims/vector để giữ nhẹ UI, tải về file đầy đủ)</span>
+              <div class="flex items-center gap-2">
+                <button onclick="copyChunksJson()" class="px-3 py-1 rounded-full bg-white border border-sakura-pink text-xs font-medium text-plum-ink hover:bg-sakura-pink/20 mochi-press">
+                  📋 Copy Full
+                </button>
+                <a id="downloadChunksLink" download="chunks.json" class="px-3 py-1 rounded-full bg-kitsune-coral text-white text-xs font-medium hover:bg-kitsune-hover mochi-press">
+                  ⬇️ Tải về
+                </a>
+              </div>
+            </div>
+            <pre class="bg-plum-ink text-sky-200 font-mono text-[11px] p-4 rounded-2xl overflow-auto max-h-[440px]"><code id="chunksJsonCode"></code></pre>
+          </div>
         </div>
-        <pre class="bg-plum-ink text-emerald-300 font-mono text-xs p-4 rounded-2xl overflow-x-auto max-h-[420px]"><code id="transcriptJsonCode"></code></pre>
       </div>
 
-      <!-- Tab Content 3: Raw manifest.json -->
+      <!-- Tab 5: Raw manifest.json -->
       <div id="tab-manifest" class="tab-pane hidden">
         <div class="flex items-center justify-end gap-2 mb-2">
           <button onclick="copyContent('manifestJsonCode')" class="px-3 py-1 rounded-full bg-white border border-sakura-pink text-xs font-medium text-plum-ink hover:bg-sakura-pink/20 mochi-press">
             📋 Sao chép JSON
           </button>
         </div>
-        <pre class="bg-plum-ink text-amber-200 font-mono text-xs p-4 rounded-2xl overflow-x-auto max-h-[420px]"><code id="manifestJsonCode"></code></pre>
+        <pre class="bg-plum-ink text-amber-200 font-mono text-xs p-4 rounded-2xl overflow-x-auto max-h-[460px]"><code id="manifestJsonCode"></code></pre>
       </div>
 
-      <!-- Tab Content 4: Database Simulation & Query -->
+      <!-- Tab 6: Database (app.jobs & rag.lecture_chunks) -->
       <div id="tab-db" class="tab-pane hidden space-y-4">
-        <div class="p-4 rounded-2xl bg-white/70 border border-sakura-pink/40">
+        <div id="dbConnectionSummary" class="p-3.5 rounded-2xl bg-white/80 border border-sakura-pink/40 flex flex-wrap items-center justify-between gap-2 text-xs"></div>
+
+        <div class="p-4 rounded-2xl bg-white/75 border border-sakura-pink/40">
           <h3 class="text-xs font-bold text-plum-ink uppercase tracking-wider mb-2">1. Trạng thái bản ghi tại bảng <code>app.jobs</code></h3>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs font-mono">
@@ -315,30 +435,27 @@
                   <th class="p-2 rounded-r-lg">updated_at</th>
                 </tr>
               </thead>
-              <tbody id="dbJobsTableBody" class="divide-y divide-sakura-pink/20">
-                <!-- Populated by JS -->
-              </tbody>
+              <tbody id="dbJobsTableBody" class="divide-y divide-sakura-pink/20"></tbody>
             </table>
           </div>
         </div>
 
-        <div class="p-4 rounded-2xl bg-white/70 border border-sakura-pink/40">
-          <h3 class="text-xs font-bold text-plum-ink uppercase tracking-wider mb-2">2. Cấu trúc sẽ được ghi vào <code>rag.lecture_chunks</code> (Giai đoạn 2 BGE-M3)</h3>
-          <p class="text-xs text-plum-muted mb-2 font-sans">Dữ liệu từ <code>transcript.json</code> sẽ được chia đoạn đệ quy (Recursive Chunking) và lưu trữ kèm vector 1024-d:</p>
-          <div class="overflow-x-auto max-h-[220px]">
+        <div class="p-4 rounded-2xl bg-white/75 border border-sakura-pink/40">
+          <h3 class="text-xs font-bold text-plum-ink uppercase tracking-wider mb-2">2. Bản ghi thực tế trong <code>rag.lecture_chunks</code> (Stage 2 [I5] + [I6])</h3>
+          <div class="overflow-x-auto max-h-[300px]">
             <table class="w-full text-left text-xs font-mono">
-              <thead class="bg-mist-sky/30 text-plum-ink">
+              <thead class="bg-mist-sky/35 text-plum-ink">
                 <tr>
-                  <th class="p-2 rounded-l-lg">chunk_idx</th>
-                  <th class="p-2">start_time</th>
-                  <th class="p-2">end_time</th>
-                  <th class="p-2">label [MM:SS]</th>
+                  <th class="p-2 rounded-l-lg">idx</th>
+                  <th class="p-2">time [MM:SS]</th>
+                  <th class="p-2">tokens</th>
+                  <th class="p-2">halfvec</th>
+                  <th class="p-2">lexical_keys</th>
+                  <th class="p-2">prev / next</th>
                   <th class="p-2 rounded-r-lg">content_preview</th>
                 </tr>
               </thead>
-              <tbody id="dbChunksTableBody" class="divide-y divide-sakura-pink/20">
-                <!-- Populated by JS -->
-              </tbody>
+              <tbody id="dbChunksTableBody" class="divide-y divide-sakura-pink/20"></tbody>
             </table>
           </div>
         </div>
@@ -347,13 +464,14 @@
 
   </main>
 
-  <!-- JS Logic -->
   <script>
     let currentMode = 'real';
     let selectedFile = null;
     let currentJobId = null;
     let currentLectureId = null;
     let pollInterval = null;
+    let fullChunksPayload = null;
+    let hasAudioSource = false;
 
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('fileInput');
@@ -365,7 +483,10 @@
     const resultSection = document.getElementById('resultSection');
     const progressBar = document.getElementById('progressBar');
     const percentBadge = document.getElementById('percentBadge');
+    const statusBadge = document.getElementById('statusBadge');
+    const trackerMessage = document.getElementById('trackerMessage');
     const audioPlayer = document.getElementById('audioPlayer');
+    const audioPlayerNote = document.getElementById('audioPlayerNote');
     const errorCard = document.getElementById('errorCard');
     const errorMessageText = document.getElementById('errorMessageText');
     const promptInput = document.getElementById('promptInput');
@@ -374,6 +495,16 @@
     const vadToggle = document.getElementById('vadToggle');
 
     let defaultPromptText = "Bài giảng Đại học, Công nghệ thông tin, Quản trị mạng, Windows Server 2016, Active Directory, Users, Groups, Domain Controller, Password, OU, Member Of, Properties, Administrator, Log on, DNS, DHCP, Permissions.";
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
 
     function resetPrompt() {
       promptInput.value = defaultPromptText;
@@ -384,40 +515,63 @@
         const res = await fetch('/api/system-diagnostics');
         if (!res.ok) return;
         const diag = await res.json();
-        
+
         const ffmpegEl = document.getElementById('ffmpegStatus');
         const deviceEl = document.getElementById('aiDeviceStatus');
         const modelEl = document.getElementById('aiModelStatus');
+        const bgeEl = document.getElementById('bgeM3Status');
+        const dbEl = document.getElementById('dbStatus');
 
-        if (diag.ffmpeg.available) {
-          ffmpegEl.innerHTML = diag.ffmpeg.is_bundled ? "✅ Tự Động (imageio)" : "✅ System PATH";
+        if (diag.ffmpeg && diag.ffmpeg.available) {
+          ffmpegEl.textContent = diag.ffmpeg.is_bundled ? "✅ Tự Động (imageio)" : "✅ System PATH";
           ffmpegEl.className = "font-bold text-emerald-600";
         } else {
-          ffmpegEl.innerHTML = "❌ Thiếu Binary";
+          ffmpegEl.textContent = "❌ Thiếu Binary";
           ffmpegEl.className = "font-bold text-rose-500";
         }
 
-        if (diag.ai_runtime.torch_installed) {
+        if (diag.ai_runtime && diag.ai_runtime.torch_installed) {
+          const lowVram = diag.ai_runtime.low_vram_mode ? " • LOW_VRAM" : "";
           if (diag.ai_runtime.cuda_available) {
-            deviceEl.innerHTML = `✅ GPU (${diag.ai_runtime.device_name} - ${diag.ai_runtime.vram_mb}MB)`;
+            deviceEl.textContent = `✅ GPU (${diag.ai_runtime.device_name} - ${diag.ai_runtime.vram_mb}MB${lowVram})`;
             deviceEl.className = "font-bold text-emerald-600";
           } else {
-            deviceEl.innerHTML = `✅ CPU (${diag.ai_runtime.device_name})`;
-            deviceEl.className = "font-bold text-sky-600";
+            deviceEl.textContent = `✅ CPU (${diag.ai_runtime.device_name}${lowVram})`;
+            deviceEl.className = "font-bold text-sky-700";
           }
         } else {
-          deviceEl.innerHTML = "⚠️ Chưa cài Torch";
-          deviceEl.className = "font-bold text-amber-500";
+          deviceEl.textContent = "⚠️ Chưa cài Torch";
+          deviceEl.className = "font-bold text-amber-600";
         }
 
-        if (diag.models.medium_exists) {
-          modelEl.innerHTML = "✅ PhoWhisper-Medium (Sẵn sàng)";
+        if (diag.models && diag.models.medium_exists) {
+          modelEl.textContent = "✅ Medium + Base";
           modelEl.className = "font-bold text-emerald-600";
           modelSelect.value = "medium";
-        } else if (diag.models.base_exists) {
-          modelEl.innerHTML = "⚠️ PhoWhisper-Base";
-          modelEl.className = "font-bold text-amber-500";
+        } else if (diag.models && diag.models.base_exists) {
+          modelEl.textContent = "⚠️ PhoWhisper-Base";
+          modelEl.className = "font-bold text-amber-600";
           modelSelect.value = "base";
+        } else {
+          modelEl.textContent = "❌ Chưa có weights";
+          modelEl.className = "font-bold text-rose-500";
+        }
+
+        if (diag.models && diag.models.bge_m3_exists) {
+          const sparseOk = diag.models.bge_m3_sparse_linear_exists ? " + sparse_linear.pt" : " (thiếu sparse)";
+          bgeEl.textContent = `✅ BGE-M3${sparseOk}`;
+          bgeEl.className = "font-bold text-emerald-600";
+        } else {
+          bgeEl.textContent = "❌ Thiếu bge-m3";
+          bgeEl.className = "font-bold text-rose-500";
+        }
+
+        if (diag.database && diag.database.postgres_pgvector_connected) {
+          dbEl.textContent = `✅ Postgres pgvector (${diag.database.host}:${diag.database.port})`;
+          dbEl.className = "font-bold text-emerald-600";
+        } else {
+          dbEl.textContent = "🟡 InMemory Fallback (DB Offline)";
+          dbEl.className = "font-bold text-amber-600";
         }
 
         if (diag.default_prompt) {
@@ -436,13 +590,14 @@
       if (mode === 'mock') {
         mockBtn.className = "px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press";
         realBtn.className = "px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press";
+        document.getElementById('searchModeSelect').value = 'mock';
       } else {
         realBtn.className = "px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press";
         mockBtn.className = "px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press";
+        document.getElementById('searchModeSelect').value = 'real';
       }
     }
 
-    // Drag and Drop
     dropzone.addEventListener('click', () => fileInput.click());
     dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-kitsune-coral'); });
     dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-kitsune-coral'));
@@ -462,7 +617,6 @@
       startProcessBtn.disabled = false;
     }
 
-    // Sample audio loader
     sampleAudioBtn.addEventListener('click', async () => {
       try {
         sampleAudioBtn.textContent = "⏳ Đang nạp file mẫu...";
@@ -478,7 +632,51 @@
       }
     });
 
-    // Start Process
+    async function runFastStage2(mode) {
+      const realBtn = document.getElementById('fastStage2RealBtn');
+      const mockBtn = document.getElementById('fastStage2MockBtn');
+      realBtn.disabled = true;
+      mockBtn.disabled = true;
+
+      trackerSection.classList.remove('hidden');
+      resultSection.classList.add('hidden');
+      errorCard.classList.add('hidden');
+      resetSteps();
+      markStepDone('step-staged');
+      markStepDone('step-normalize');
+      markStepDone('step-asr');
+      markStepActive('step-chunking');
+      updateProgress(80, mode === 'real' ? "Đang chạy [I5] RecursiveTokenChunker + [I6] BgeM3Embedder thật..." : "Đang chạy Stage 2 Mock...", "CHUNKING");
+
+      try {
+        const res = await fetch(`/api/test-stage2-sample?mode=${mode}`, { method: 'POST' });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        currentJobId = data.jobId;
+        currentLectureId = data.lectureId;
+        hasAudioSource = false;
+
+        markStepDone('step-chunking');
+        markStepDone('step-embedding');
+        markStepDone('step-db');
+        updateProgress(100, data.message || `Hoàn tất Stage 2 (${data.total_chunks} chunks trong ${data.processing_seconds}s)`, "READY");
+
+        document.getElementById('searchModeSelect').value = mode;
+        await fetchFinalResults(currentJobId, false);
+        switchTab('tab-chunks', document.getElementById('tabBtn-tab-chunks'));
+        loadDiagnostics();
+      } catch (err) {
+        showError("Lỗi Test Nhanh Stage 2: " + err.message);
+        updateProgress(0, "Stage 2 gặp lỗi.", "FAILED");
+      } finally {
+        realBtn.disabled = false;
+        mockBtn.disabled = false;
+      }
+    }
+
     startProcessBtn.addEventListener('click', async () => {
       if (!selectedFile) return;
 
@@ -487,23 +685,22 @@
       resultSection.classList.add('hidden');
       errorCard.classList.add('hidden');
       resetSteps();
-      updateProgress(5, "Đang tải tệp lên server...");
+      updateProgress(5, "Đang tải tệp lên server...", "QUEUED");
 
       try {
-        // 1. Upload file
         const formData = new FormData();
         formData.append("file", selectedFile);
 
         const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
         if (!uploadRes.ok) throw new Error("Upload thất bại");
         const uploadData = await uploadRes.json();
-        
+
         currentJobId = uploadData.jobId;
         currentLectureId = uploadData.lectureId;
+        hasAudioSource = true;
         markStepDone('step-staged');
 
-        // 2. Trigger pipeline with query params
-        updateProgress(15, "Khử nhiễu & chuẩn hóa âm thanh...");
+        updateProgress(15, "Khử nhiễu & chuẩn hóa âm thanh...", "PROCESSING_STT");
         const selectedModel = modelSelect.value;
         const enableDsp = dspToggle.checked;
         const enableVad = vadToggle.checked;
@@ -513,9 +710,8 @@
         const procRes = await fetch(procUrl, { method: 'POST' });
         if (!procRes.ok) throw new Error("Kích hoạt pipeline thất bại");
 
-        // 3. Poll for progress
+        document.getElementById('searchModeSelect').value = currentMode;
         startPolling(currentJobId);
-
       } catch (err) {
         showError("Lỗi khởi tạo: " + err.message);
         startProcessBtn.disabled = false;
@@ -530,15 +726,21 @@
           if (!res.ok) return;
           const data = await res.json();
 
-          updateProgress(data.progress, data.message);
+          updateProgress(data.progress, data.message || data.status, data.status);
 
           if (data.progress >= 15) markStepDone('step-normalize');
-          if (data.progress >= 25 && data.progress < 90) markStepActive('step-asr');
-          if (data.progress >= 90) { markStepDone('step-asr'); markStepDone('step-artifact'); }
-          if (data.progress >= 100 || data.status === 'STT_COMPLETED') {
+          if (data.progress >= 25 && data.progress < 75 && data.status === 'PROCESSING_STT') markStepActive('step-asr');
+          if (data.progress >= 75 || ['STT_COMPLETED', 'CHUNKING', 'EMBEDDING', 'READY'].includes(data.status)) markStepDone('step-asr');
+          if (data.status === 'CHUNKING') markStepActive('step-chunking');
+          if (data.progress >= 88 || ['EMBEDDING', 'READY'].includes(data.status)) markStepDone('step-chunking');
+          if (data.status === 'EMBEDDING') markStepActive('step-embedding');
+          if (data.progress >= 96 || data.status === 'READY') markStepDone('step-embedding');
+
+          if (data.progress >= 100 || data.status === 'READY') {
             markStepDone('step-db');
             clearInterval(pollInterval);
-            fetchFinalResults(jobId);
+            await fetchFinalResults(jobId, true);
+            loadDiagnostics();
           } else if (data.status === 'FAILED') {
             clearInterval(pollInterval);
             showError(data.errorMessage || "Pipeline xử lý gặp sự cố.");
@@ -547,7 +749,7 @@
         } catch (e) {
           console.error("Polling error", e);
         }
-      }, 500);
+      }, 450);
     }
 
     function showError(msg) {
@@ -555,91 +757,371 @@
       errorMessageText.textContent = msg;
     }
 
-    async function fetchFinalResults(jobId) {
+    function vectorNorm(vec) {
+      if (!Array.isArray(vec) || vec.length === 0) return 0;
+      let sumSq = 0;
+      for (let i = 0; i < vec.length; i++) sumSq += vec[i] * vec[i];
+      return Math.sqrt(sumSq);
+    }
+
+    async function fetchFinalResults(jobId, withAudio) {
       try {
         const res = await fetch(`/api/result/${jobId}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const result = await res.json();
+        currentLectureId = result.manifest.lecture_id;
+        fullChunksPayload = result.chunks;
 
         // Setup audio player
-        audioPlayer.src = `/api/audio/${jobId}`;
+        if (withAudio) {
+          audioPlayer.src = `/api/audio/${jobId}`;
+          audioPlayer.classList.remove('hidden');
+          audioPlayerNote.classList.add('hidden');
+        } else {
+          audioPlayer.removeAttribute('src');
+          audioPlayer.classList.add('hidden');
+          audioPlayerNote.classList.remove('hidden');
+        }
 
-        // Populate Tab 1: Segments
-        const container = document.getElementById('segmentsContainer');
-        container.innerHTML = '';
+        const totalSegs = result.transcript && result.transcript.segments ? result.transcript.segments.length : 0;
+        const totalChunks = result.chunks && result.chunks.chunks ? result.chunks.chunks.length : 0;
+        document.getElementById('resultMetaSummary').textContent =
+          `Job ${jobId.slice(0, 8)}... • Lecture ${currentLectureId.slice(0, 8)}... • ${totalSegs} segments • ${totalChunks} chunks • DB: ${result.db_backend} (${result.db_chunks_count} rows)`;
+
+        // Tab 1: Segments
+        const segContainer = document.getElementById('segmentsContainer');
+        segContainer.innerHTML = '';
         if (result.transcript && result.transcript.segments) {
           result.transcript.segments.forEach(seg => {
             const div = document.createElement('div');
-            div.className = "p-3 rounded-2xl bg-white/75 hover:bg-white border border-sakura-pink/50 transition-colors flex items-start gap-3 shadow-2xs";
+            div.className = "p-3 rounded-2xl bg-white/80 hover:bg-white border border-sakura-pink/50 transition-colors flex items-start gap-3 shadow-2xs";
             div.innerHTML = `
-              <button onclick="seekAudio(${seg.start_time_seconds})" class="px-2.5 py-1 rounded-full bg-matcha-mint/60 hover:bg-matcha-mint text-plum-ink font-mono text-xs font-bold mochi-press flex-shrink-0">
-                ${seg.timestamp_label}
+              <button onclick="seekAudio(${Number(seg.start_time_seconds)})" class="px-2.5 py-1 rounded-full bg-matcha-mint/65 hover:bg-matcha-mint text-plum-ink font-mono text-xs font-bold mochi-press flex-shrink-0">
+                ${escapeHtml(seg.timestamp_label)}
               </button>
-              <p class="text-xs text-plum-ink leading-relaxed pt-0.5">${seg.text}</p>
+              <div class="flex-1">
+                <span class="text-[10px] font-mono text-plum-muted">#${seg.id} (${seg.start_time_seconds}s → ${seg.end_time_seconds}s)</span>
+                <p class="text-xs text-plum-ink leading-relaxed mt-0.5">${escapeHtml(seg.text)}</p>
+              </div>
             `;
-            container.appendChild(div);
+            segContainer.appendChild(div);
           });
         }
 
-        // Populate Tab 2: Raw transcript.json
+        // Tab 2: Chunks [I5] & BGE-M3 [I6]
+        renderChunksTab(result.chunks);
+
+        // Tab 4: JSON Artifacts
         const jsonCode = document.getElementById('transcriptJsonCode');
         const jsonStr = JSON.stringify(result.transcript, null, 2);
         jsonCode.textContent = jsonStr;
-        const dlLink = document.getElementById('downloadTranscriptLink');
-        dlLink.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonStr);
+        document.getElementById('downloadTranscriptLink').href =
+          'data:application/json;charset=utf-8,' + encodeURIComponent(jsonStr);
 
-        // Populate Tab 3: Raw manifest.json
-        document.getElementById('manifestJsonCode').textContent = JSON.stringify(result.manifest, null, 2);
-
-        // Populate Tab 4: DB
-        const tbodyJobs = document.getElementById('dbJobsTableBody');
-        tbodyJobs.innerHTML = `
-          <tr>
-            <td class="p-2 text-kitsune-coral font-bold">${result.manifest.job_id.substring(0, 13)}...</td>
-            <td class="p-2 text-plum-muted">${result.manifest.lecture_id.substring(0, 13)}...</td>
-            <td class="p-2"><span class="px-2 py-0.5 rounded-full bg-matcha-mint text-plum-ink font-semibold">STT_COMPLETED</span></td>
-            <td class="p-2 font-bold text-emerald-600">100%</td>
-            <td class="p-2 text-plum-muted">${new Date().toLocaleTimeString()}</td>
-          </tr>
-        `;
-
-        const tbodyChunks = document.getElementById('dbChunksTableBody');
-        tbodyChunks.innerHTML = '';
-        if (result.transcript && result.transcript.segments) {
-          result.transcript.segments.forEach((seg, i) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td class="p-2 text-plum-muted">${i}</td>
-              <td class="p-2">${seg.start_time_seconds}s</td>
-              <td class="p-2">${seg.end_time_seconds}s</td>
-              <td class="p-2 font-bold text-kitsune-coral">${seg.timestamp_label}</td>
-              <td class="p-2 text-plum-ink truncate max-w-[280px]">${seg.text}</td>
-            `;
-            tbodyChunks.appendChild(tr);
-          });
+        const chunksCode = document.getElementById('chunksJsonCode');
+        if (result.chunks) {
+          const previewChunks = {
+            ...result.chunks,
+            chunks: (result.chunks.chunks || []).map(c => ({
+              ...c,
+              embedding_half: Array.isArray(c.embedding_half)
+                ? [...c.embedding_half.slice(0, 8), `... (${c.embedding_half.length} dims total)`]
+                : c.embedding_half
+            }))
+          };
+          chunksCode.textContent = JSON.stringify(previewChunks, null, 2);
+          document.getElementById('downloadChunksLink').href =
+            'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(result.chunks, null, 2));
+        } else {
+          chunksCode.textContent = "// Chưa có chunks.json";
         }
 
-        resultSection.classList.remove('hidden');
-        startProcessBtn.disabled = false;
+        // Tab 5: Manifest
+        document.getElementById('manifestJsonCode').textContent = JSON.stringify(result.manifest, null, 2);
 
+        // Tab 6: DB Inspection
+        renderDbTab(result);
+
+        resultSection.classList.remove('hidden');
+        startProcessBtn.disabled = !selectedFile;
       } catch (err) {
         console.error("Fetch result error", err);
+        showError("Không thể tải kết quả: " + err.message);
+      }
+    }
+
+    function renderChunksTab(chunksArtifact) {
+      const summaryEl = document.getElementById('chunksSummaryBar');
+      const container = document.getElementById('chunksContainer');
+      container.innerHTML = '';
+
+      if (!chunksArtifact || !chunksArtifact.chunks || chunksArtifact.chunks.length === 0) {
+        summaryEl.innerHTML = '<span class="text-plum-muted">Chưa có dữ liệu Stage 2 chunks.json.</span>';
+        return;
+      }
+
+      const chunks = chunksArtifact.chunks;
+      const maxTok = Math.max(...chunks.map(c => c.token_count || 0));
+      const allWithin512 = maxTok <= (chunksArtifact.max_tokens || 512);
+      const firstDim = chunks[0].embedding_half ? chunks[0].embedding_half.length : 0;
+
+      summaryEl.innerHTML = `
+        <span class="px-3 py-1 rounded-full bg-matcha-mint/60 font-bold text-plum-ink">Tổng: ${chunks.length} chunks</span>
+        <span class="px-3 py-1 rounded-full ${allWithin512 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'} font-bold">
+          Max Tokens: ${maxTok} / ${chunksArtifact.max_tokens || 512} ${allWithin512 ? '✓' : '⚠️'}
+        </span>
+        <span class="px-3 py-1 rounded-full bg-mist-sky/50 font-bold text-plum-ink">Overlap: ${chunksArtifact.overlap_tokens || 64} tokens</span>
+        <span class="px-3 py-1 rounded-full bg-sakura-pink/40 font-bold text-plum-ink">Model: ${escapeHtml(chunksArtifact.model)} (${firstDim}-d halfvec)</span>
+        <span class="px-3 py-1 rounded-full bg-mochi-yellow/50 font-bold text-plum-ink">Thời gian Stage 2: ${chunksArtifact.processing_seconds || 0}s</span>
+      `;
+
+      chunks.forEach(chunk => {
+        const lexEntries = Object.entries(chunk.lexical_weights || {})
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 12);
+        const lexHtml = lexEntries.length
+          ? lexEntries.map(([tok, wt]) =>
+              `<span class="px-2 py-0.5 rounded-full bg-mochi-yellow/45 border border-amber-300/60 font-mono text-[11px] text-plum-ink">${escapeHtml(tok)}: <strong>${Number(wt).toFixed(3)}</strong></span>`
+            ).join(' ')
+          : '<span class="text-[11px] text-plum-muted italic">Không có lexical weights</span>';
+
+        const vec = Array.isArray(chunk.embedding_half) ? chunk.embedding_half : [];
+        const normVal = vectorNorm(vec);
+        const previewDims = vec.slice(0, 12).map(v => Number(v).toFixed(4)).join(', ');
+
+        const prevBtn = chunk.prev_chunk_id
+          ? `<button onclick="jumpToChunk('${chunk.prev_chunk_id}')" class="px-2 py-0.5 rounded-full bg-white border border-sakura-pink text-[10px] font-mono text-kitsune-coral hover:bg-sakura-pink/20">← prev: ${chunk.prev_chunk_id.slice(0, 8)}</button>`
+          : `<span class="px-2 py-0.5 rounded-full bg-white/60 border border-sakura-pink/30 text-[10px] font-mono text-plum-muted">prev: null</span>`;
+
+        const nextBtn = chunk.next_chunk_id
+          ? `<button onclick="jumpToChunk('${chunk.next_chunk_id}')" class="px-2 py-0.5 rounded-full bg-white border border-sakura-pink text-[10px] font-mono text-kitsune-coral hover:bg-sakura-pink/20">next: ${chunk.next_chunk_id.slice(0, 8)} →</button>`
+          : `<span class="px-2 py-0.5 rounded-full bg-white/60 border border-sakura-pink/30 text-[10px] font-mono text-plum-muted">next: null</span>`;
+
+        const card = document.createElement('div');
+        card.id = `chunk-card-${chunk.id}`;
+        card.className = "p-4 rounded-2xl bg-white/85 border border-sakura-pink/55 shadow-xs space-y-3 transition-all";
+        card.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-1 rounded-full bg-kitsune-coral text-white font-mono text-xs font-bold">Chunk #${chunk.chunk_index}</span>
+              <button onclick="seekAudio(${Number(chunk.start_time_seconds)})" class="px-2.5 py-1 rounded-full bg-matcha-mint/70 hover:bg-matcha-mint text-plum-ink font-mono text-xs font-bold mochi-press">
+                🕒 ${escapeHtml(chunk.start_timestamp_display)} → ${escapeHtml(chunk.end_timestamp_display)}
+              </button>
+              <span class="px-2.5 py-1 rounded-full bg-mist-sky/45 text-plum-ink font-mono text-xs font-semibold">
+                ${chunk.token_count} / 512 tokens
+              </span>
+              <span class="text-[10px] font-mono text-plum-muted">id: ${chunk.id.slice(0, 13)}...</span>
+            </div>
+            <div class="flex items-center gap-1.5">${prevBtn}${nextBtn}</div>
+          </div>
+
+          <p class="text-xs text-plum-ink leading-relaxed bg-washi-cream/80 p-3 rounded-xl border border-sakura-pink/30">${escapeHtml(chunk.content)}</p>
+
+          <div class="space-y-1.5">
+            <div class="text-[11px] font-bold text-plum-muted">🏷️ BGE-M3 Sparse Lexical Weights (Top ${lexEntries.length}):</div>
+            <div class="flex flex-wrap gap-1.5">${lexHtml}</div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-plum-ink/95 text-emerald-200 font-mono text-[11px] flex flex-col gap-1">
+            <div class="flex items-center justify-between text-[10px] text-sakura-pink">
+              <span>📐 embedding_half (${vec.length}-d FP16)</span>
+              <span>||v||₂ = ${normVal.toFixed(4)}</span>
+            </div>
+            <div class="truncate">[${previewDims}${vec.length > 12 ? ', ...' : ''}]</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function jumpToChunk(chunkId) {
+      const target = document.getElementById(`chunk-card-${chunkId}`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.add('chunk-highlight');
+      setTimeout(() => target.classList.remove('chunk-highlight'), 1800);
+    }
+
+    function setSearchQuery(q) {
+      document.getElementById('searchQueryInput').value = q;
+      runHybridSearch();
+    }
+
+    async function runHybridSearch() {
+      if (!currentLectureId) {
+        alert("Hãy chạy Stage 2 hoặc Full Pipeline trước để có dữ liệu lecture_id!");
+        return;
+      }
+      const query = document.getElementById('searchQueryInput').value.trim();
+      if (!query) return;
+
+      const mode = document.getElementById('searchModeSelect').value;
+      const topK = Number(document.getElementById('searchTopKSelect').value || 5);
+      const btn = document.getElementById('runSearchBtn');
+      const statusBanner = document.getElementById('searchStatusBanner');
+      const container = document.getElementById('searchResultsContainer');
+
+      btn.disabled = true;
+      btn.textContent = "⏳ Đang truy vấn...";
+
+      try {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lecture_id: currentLectureId,
+            query: query,
+            top_k: topK,
+            mode: mode
+          })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+
+        statusBanner.classList.remove('hidden');
+        statusBanner.textContent = `⚡ Tìm thấy ${data.results.length} chunks khớp truy vấn "${data.query}" • Backend: ${data.backend} • Mode: ${data.mode} • Latency: ${data.latency_ms} ms`;
+
+        container.innerHTML = '';
+        if (data.results.length === 0) {
+          container.innerHTML = '<div class="p-6 rounded-2xl bg-white/75 text-center text-xs text-plum-muted">Không có chunk nào khớp truy vấn.</div>';
+          return;
+        }
+
+        data.results.forEach((item, idx) => {
+          const lexPills = Object.entries(item.lexical_weights || {})
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8)
+            .map(([t, w]) => `<span class="px-2 py-0.5 rounded-full bg-mochi-yellow/40 font-mono text-[10px]">${escapeHtml(t)}: ${Number(w).toFixed(3)}</span>`)
+            .join(' ');
+
+          const ctxCards = (item.expanded_context || []).map(ctx => {
+            const isCurr = ctx.position === 'CURRENT';
+            const badgeCls = isCurr
+              ? 'bg-kitsune-coral text-white'
+              : (ctx.position === 'PREVIOUS' ? 'bg-mist-sky/60 text-plum-ink' : 'bg-matcha-mint/60 text-plum-ink');
+            const boxCls = isCurr
+              ? 'bg-kitsune-coral/10 border-kitsune-coral/60'
+              : 'bg-white/75 border-sakura-pink/40';
+            return `
+              <div class="p-2.5 rounded-xl border ${boxCls} space-y-1">
+                <div class="flex items-center gap-2 text-[10px] font-mono">
+                  <span class="px-2 py-0.5 rounded-full font-bold ${badgeCls}">${escapeHtml(ctx.position)}</span>
+                  <span class="font-bold text-plum-ink">${escapeHtml(ctx.start_timestamp_display)} → ${escapeHtml(ctx.end_timestamp_display)}</span>
+                </div>
+                <p class="text-[11px] text-plum-ink leading-relaxed">${escapeHtml(ctx.content)}</p>
+              </div>
+            `;
+          }).join('');
+
+          const card = document.createElement('div');
+          card.className = "p-4 rounded-2xl bg-white/90 border border-sakura-pink/60 shadow-xs space-y-3";
+          card.innerHTML = `
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="px-2.5 py-1 rounded-full bg-plum-ink text-white font-mono text-xs font-bold">#${idx + 1} (Chunk #${item.chunk_index})</span>
+                <button onclick="seekAudio(${Number(item.start_time_seconds)})" class="px-2.5 py-1 rounded-full bg-matcha-mint/70 hover:bg-matcha-mint text-plum-ink font-mono text-xs font-bold mochi-press">
+                  🕒 ${escapeHtml(item.start_timestamp_display)} → ${escapeHtml(item.end_timestamp_display)}
+                </button>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
+                <span class="px-2.5 py-0.5 rounded-full bg-kitsune-coral/15 text-kitsune-hover font-bold">RRF: ${Number(item.rrf_total_score).toFixed(5)}</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-mist-sky/40 text-plum-ink">Dense: ${Number(item.dense_score).toFixed(4)}</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-sakura-pink/35 text-plum-ink">LexRank: ${item.lexical_rank ?? '—'}</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-matcha-mint/45 text-plum-ink">FuzzyRank: ${item.fuzzy_rank ?? '—'}</span>
+              </div>
+            </div>
+
+            <p class="text-xs font-medium text-plum-ink bg-washi-cream p-3 rounded-xl border border-sakura-pink/35">${escapeHtml(item.content)}</p>
+
+            ${lexPills ? `<div class="flex flex-wrap items-center gap-1">${lexPills}</div>` : ''}
+
+            <details class="group">
+              <summary class="cursor-pointer text-[11px] font-bold text-kitsune-coral hover:underline">
+                📚 Xem Ngữ Cảnh Mở Rộng 3 Chiều (PREVIOUS / CURRENT / NEXT) — ${(item.expanded_context || []).length} đoạn
+              </summary>
+              <div class="mt-2 space-y-2">${ctxCards}</div>
+            </details>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        statusBanner.classList.remove('hidden');
+        statusBanner.textContent = "❌ Lỗi tìm kiếm: " + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "🔍 Tìm Kiếm RRF";
+      }
+    }
+
+    function renderDbTab(result) {
+      const dbSummary = document.getElementById('dbConnectionSummary');
+      const isPg = result.db_backend === 'postgres_pgvector';
+      dbSummary.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="px-3 py-1 rounded-full font-bold ${isPg ? 'bg-matcha-mint text-plum-ink' : 'bg-mochi-yellow text-plum-ink'}">
+            ${isPg ? '🐘 Đang lưu trực tiếp trên PostgreSQL + pgvector' : '🟡 Đang dùng InMemoryChunkStore Fallback (Postgres offline)'}
+          </span>
+        </div>
+        <div class="font-mono font-bold text-plum-ink">
+          rag.lecture_chunks rows: ${result.db_chunks_count ?? 0}
+        </div>
+      `;
+
+      const jobStatus = (result.job_state && result.job_state.status) ||
+        (result.manifest.chunking && result.manifest.chunking.status === 'COMPLETED' ? 'READY' : 'STT_COMPLETED');
+      const jobProgress = (result.job_state && result.job_state.progress) || 100;
+
+      const tbodyJobs = document.getElementById('dbJobsTableBody');
+      tbodyJobs.innerHTML = `
+        <tr>
+          <td class="p-2 text-kitsune-coral font-bold">${escapeHtml(result.manifest.job_id.substring(0, 13))}...</td>
+          <td class="p-2 text-plum-muted">${escapeHtml(result.manifest.lecture_id.substring(0, 13))}...</td>
+          <td class="p-2"><span class="px-2 py-0.5 rounded-full bg-matcha-mint text-plum-ink font-semibold">${escapeHtml(jobStatus)}</span></td>
+          <td class="p-2 font-bold text-emerald-700">${jobProgress}%</td>
+          <td class="p-2 text-plum-muted">${new Date().toLocaleTimeString()}</td>
+        </tr>
+      `;
+
+      const tbodyChunks = document.getElementById('dbChunksTableBody');
+      tbodyChunks.innerHTML = '';
+      const chunks = result.chunks && result.chunks.chunks ? result.chunks.chunks : [];
+      if (chunks.length > 0) {
+        chunks.forEach(c => {
+          const tr = document.createElement('tr');
+          const lexCount = Object.keys(c.lexical_weights || {}).length;
+          const prevShort = c.prev_chunk_id ? c.prev_chunk_id.slice(0, 6) : 'null';
+          const nextShort = c.next_chunk_id ? c.next_chunk_id.slice(0, 6) : 'null';
+          tr.innerHTML = `
+            <td class="p-2 font-bold text-plum-ink">#${c.chunk_index}</td>
+            <td class="p-2 text-kitsune-coral font-bold">${escapeHtml(c.start_timestamp_display)} → ${escapeHtml(c.end_timestamp_display)}</td>
+            <td class="p-2">${c.token_count}</td>
+            <td class="p-2">${Array.isArray(c.embedding_half) ? c.embedding_half.length : 0}-d</td>
+            <td class="p-2">${lexCount} keys</td>
+            <td class="p-2 text-[10px] text-plum-muted">${prevShort} / ${nextShort}</td>
+            <td class="p-2 text-plum-ink truncate max-w-[260px]">${escapeHtml(c.content)}</td>
+          `;
+          tbodyChunks.appendChild(tr);
+        });
       }
     }
 
     function seekAudio(sec) {
+      if (!hasAudioSource || !audioPlayer.src) return;
       audioPlayer.currentTime = sec;
       audioPlayer.play();
     }
 
-    function updateProgress(percent, msg) {
+    function updateProgress(percent, msg, statusText) {
       progressBar.style.width = `${percent}%`;
       percentBadge.textContent = `${percent}%`;
+      if (msg) trackerMessage.textContent = msg;
+      if (statusText) statusBadge.textContent = statusText;
     }
 
     function markStepDone(id) {
       const el = document.getElementById(id);
       if (!el) return;
-      el.className = "p-3 rounded-2xl bg-matcha-mint/30 border border-matcha-mint text-xs text-plum-ink flex flex-col gap-1";
+      el.className = "p-3 rounded-2xl bg-matcha-mint/35 border border-matcha-mint text-xs text-plum-ink flex flex-col gap-1";
       el.querySelector('.step-icon').textContent = "✅";
     }
 
@@ -651,7 +1133,7 @@
     }
 
     function resetSteps() {
-      const steps = ['step-staged', 'step-normalize', 'step-asr', 'step-artifact', 'step-db'];
+      const steps = ['step-staged', 'step-normalize', 'step-asr', 'step-chunking', 'step-embedding', 'step-db'];
       steps.forEach(s => {
         const el = document.getElementById(s);
         if (el) {
@@ -661,20 +1143,28 @@
       });
     }
 
-    function switchTab(tabId) {
+    function switchTab(tabId, btnEl) {
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
       document.getElementById(tabId).classList.remove('hidden');
 
       document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.className = "tab-btn px-4 py-2 rounded-full bg-white/70 text-plum-muted hover:text-plum-ink mochi-press";
+        btn.className = "tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap";
       });
-      event.target.className = "tab-btn px-4 py-2 rounded-full bg-kitsune-coral text-white shadow-xs mochi-press";
+      if (btnEl) {
+        btnEl.className = "tab-btn px-4 py-2 rounded-full bg-kitsune-coral text-white shadow-xs mochi-press whitespace-nowrap";
+      }
     }
 
     function copyContent(elemId) {
       const text = document.getElementById(elemId).textContent;
       navigator.clipboard.writeText(text);
       alert("Đã sao chép nội dung vào bộ nhớ tạm!");
+    }
+
+    function copyChunksJson() {
+      if (!fullChunksPayload) return;
+      navigator.clipboard.writeText(JSON.stringify(fullChunksPayload, null, 2));
+      alert("Đã sao chép toàn bộ chunks.json (1024-d vectors + lexical_weights) vào bộ nhớ tạm!");
     }
   </script>
 </body>

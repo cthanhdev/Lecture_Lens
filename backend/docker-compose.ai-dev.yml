@@ -1,27 +1,60 @@
+# =========================================================================
+# LectureLens Backend Dev Stack (PostgreSQL 16 pgvector + FastAPI AI Engine)
+# Optimized for 16 logical CPUs / 16 GB Host RAM / 4 GB VRAM (RTX 3050)
+# Launch in one command from repo root:
+#   docker compose -f backend/docker-compose.ai-dev.yml up --build
+# =========================================================================
+
 services:
   # =========================================================================
-  # 🐘 PostgreSQL 16 + pgvector Database
+  # 🐘 PostgreSQL 16 + pgvector 0.7+ Database
   # =========================================================================
   db:
     image: pgvector/pgvector:pg16
     container_name: lecturelens-dev-db
     restart: unless-stopped
+    shm_size: 256mb
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=384MB"
+      - "-c"
+      - "effective_cache_size=1024MB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "max_connections=50"
     environment:
-      POSTGRES_DB: lecturelens_db
-      POSTGRES_USER: ll_admin
-      POSTGRES_PASSWORD: ll_secure_password_2026
+      POSTGRES_DB: ${POSTGRES_DB:-lecturelens_db}
+      POSTGRES_USER: ${POSTGRES_USER:-ll_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ll_secure_password_2026}
     ports:
       - "5432:5432"
     volumes:
-      - ./db/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./db/rag_schema_complete.sql:/docker-entrypoint-initdb.d/01_rag_schema.sql:ro
       - ./db/init/06_app_jobs_status_migration.sql:/docker-entrypoint-initdb.d/06_app_jobs_status_migration.sql:ro
       - dev-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-ll_admin} -d ${POSTGRES_DB:-lecturelens_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1536M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
     networks:
       - rag-internal-network
 
   # =========================================================================
-  # ⚡ FastAPI AI Service (PhoWhisper ASR & Ingest Pipeline)
+  # ⚡ FastAPI AI Service (PhoWhisper ASR + [I5] Chunking + [I6] BGE-M3)
   # =========================================================================
   ai:
     build:
@@ -29,19 +62,47 @@ services:
       dockerfile: Dockerfile.ai
     container_name: lecturelens-dev-ai
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       STORAGE_ROOT: /volumes/rag_data
-      INTERNAL_API_SECRET_KEY: lecture_lens_internal_secret_token_xyz987
-      SPRING_BASE_URL: http://spring:8080
-      DEVICE: gpu
+      INTERNAL_API_SECRET_KEY: ${INTERNAL_API_SECRET_KEY:-lecture_lens_internal_secret_token_xyz987}
+      SPRING_BASE_URL: ${SPRING_BASE_URL:-http://spring:8080}
+      DEVICE: ${DEVICE:-auto}
+      LOW_VRAM_MODE: ${LOW_VRAM_MODE:-true}
+      OMP_NUM_THREADS: "4"
+      MKL_NUM_THREADS: "4"
+      TORCH_NUM_THREADS: "4"
       MODEL_PATH_PHOWHISPER: /models/phowhisper-base
+      MODEL_PATH_BGE_M3: /models/bge-m3
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-lecturelens_db}
+      POSTGRES_USER: ${POSTGRES_USER:-ll_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ll_secure_password_2026}
     ports:
       - "8000:8000"
     volumes:
-      - ./volumes/rag_data:/volumes/rag_data
+      - ../volumes/rag_data:/volumes/rag_data
       - ./models:/models:ro
-    depends_on:
-      - db
+    deploy:
+      resources:
+        limits:
+          cpus: "6.0"
+          memory: 6G
+        reservations:
+          cpus: "1.0"
+          memory: 2G
+          # -----------------------------------------------------------------
+          # Optional NVIDIA GPU passthrough (e.g., RTX 3050 4 GB VRAM).
+          # Keep commented on hosts without nvidia-container-toolkit;
+          # uncomment on GPU-enabled Docker Desktop (WSL2) / Linux hosts:
+          # -----------------------------------------------------------------
+          # devices:
+          #   - driver: nvidia
+          #     count: 1
+          #     capabilities: [gpu]
     networks:
       - rag-internal-network
 

@@ -67,6 +67,7 @@ def run_verification():
 
         # 2. Kiểm tra cấu hình HNSW pgvector 0.7.0+
         print("\n[Bước 2/6] Kiểm tra tham số cấu hình pgvector 0.7.0+...")
+        cur.execute("SELECT '[0]'::halfvec(1);")
         try:
             cur.execute("SHOW hnsw.iterative_scan;")
             iter_scan = cur.fetchone()["hnsw.iterative_scan"]
@@ -74,9 +75,12 @@ def run_verification():
         except Exception:
             print("  ⚠️ hnsw.iterative_scan chưa khả dụng (yêu cầu pgvector 0.7.0+)")
 
-        cur.execute("SHOW hnsw.ef_search;")
-        ef_search = cur.fetchone()["hnsw.ef_search"]
-        print(f"  ✅ hnsw.ef_search = {ef_search}")
+        try:
+            cur.execute("SHOW hnsw.ef_search;")
+            ef_search = cur.fetchone()["hnsw.ef_search"]
+            print(f"  ✅ hnsw.ef_search = {ef_search}")
+        except Exception:
+            print("  ⚠️ hnsw.ef_search chưa khả dụng trong session hiện tại")
 
         # 3. Tạo ID bài giảng thử nghiệm
         test_lecture_id = str(uuid.uuid4())

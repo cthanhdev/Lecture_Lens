@@ -28,11 +28,17 @@ Tài liệu này là **Hiến Chương Kỹ Thuật (Constitution)** bắt buộ
 
 ### Backend & AI Engine (`backend/`)
 - **API Gateway Service (Ingress)**: Java 21, Spring Boot 3.3 (Cổng công khai `8080`, xác thực JWT, RBAC, Audio Upload)
-- **AI & RAG Service (Internal Engine)**: Python 3.10+, FastAPI 0.111 (Cổng nội bộ `8000`, bảo vệ bằng `X-Internal-Secret`)
-- **Vector Database**: PostgreSQL 16 + `pgvector` 0.7+ (Chỉ mục HNSW, cosine distance, schema phân vùng `app` và `rag`)
-- **Local AI Models (On-Premise Weights)**:
+- **AI & RAG Service (Internal Engine)**: Python 3.10+, FastAPI 0.111 (Cổng nội bộ `8000`, bảo vệ bằng `X-Internal-Secret`). Xem đầy đủ hợp đồng API tại [`docs/API-REFERENCE.md`](./docs/API-REFERENCE.md).
+- **Stage 2 Pipeline Modules (`backend/ai_service/core/`)**:
+  - **`[I5]` Recursive Token Chunker (`text_chunker.py`)**: `RecursiveTokenChunker` phân đoạn `transcript.json` với `CHUNK_MAX_TOKENS=512`, `CHUNK_OVERLAP_TOKENS=64` và liên kết hai chiều `prev_chunk_id`/`next_chunk_id` (Doubly-Linked Chunks).
+  - **`[I6]` BGE-M3 Dual Embedder (`embedder.py`)**: `BgeM3Embedder` nạp trực tiếp qua `transformers` (`AutoTokenizer`, `AutoModel`) + `sparse_linear.pt` (`weights_only=True`, không dùng `FlagEmbedding`), xuất đồng thời Dense Vector (`halfvec(1024)` FP16 chuẩn hóa L2) và `lexical_weights` (`JSONB`).
+  - **Chunk Store (`chunk_store.py`)**: `CompositeChunkStore` ghi `chunks/{job_id}/chunks.json` bất biến và đồng bộ batch vào `rag.lecture_chunks` trên PostgreSQL/`pgvector`.
+- **Vector Database**: PostgreSQL 16 + `pgvector` 0.7+ (Chỉ mục HNSW `halfvec_cosine_ops` `idx_chunks_hnsw_cosine`, GIN trên `tsv_content` & `content_unaccent` `pg_trgm`, B-tree nav `idx_chunks_nav`, 3-Stream RRF, schema phân vùng `app` và `rag`)
+- **Local AI Models & VRAM Management (`LOW_VRAM_MODE`)**:
+  - Cấu hình Docker dev chuẩn (`backend/docker-compose.ai-dev.yml`): **`16 vCPU / 16 GB RAM / 4 GB VRAM`** (`LOW_VRAM_MODE=true`, `OMP_NUM_THREADS=4`, `MKL_NUM_THREADS=4`, `TORCH_NUM_THREADS=4`, `ai` `6.0` CPU / `6G` RAM, `db` `2.0` CPU / `1536M` RAM / `256mb` shm).
+  - **Sequential VRAM Offloading**: `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)` buộc `PhoWhisperEngine.unload()` giải phóng VRAM ở `STT_COMPLETED` trước khi nạp `BgeM3Embedder` ở giai đoạn `EMBEDDING` (tương thích GPU 4 GB VRAM hoặc fallback CPU).
   - ASR Tiếng Việt: `phowhisper-base` (tự động gán timestamp `[MM:SS]`)
-  - Dense Embedding: `bge-m3` (1024 chiều)
+  - Dense + Sparse Embedding: `bge-m3` (`halfvec(1024)` + `lexical_weights JSONB`)
   - Cross-Encoder Reranker: `bge-reranker-v2-m3`
   - Contextual LLM: `gemma-4-e4b` chạy trên máy chủ Ollama cục bộ
 
@@ -78,11 +84,17 @@ Mọi mã nguồn giao diện được sinh ra trong thư mục `mobile/` bắt 
    - Trao đổi âm thanh giữa Spring Boot Gateway và FastAPI AI Service thực hiện qua volume chia sẻ và `jobId` định danh $O(1)$; tệp `transcript.json` là hợp đồng dữ liệu bất biến giữa ASR (Giai đoạn 1) và Vectorization (Giai đoạn 2).
 3. **Kiến Trúc Di Động Native 100% ([ADR 0003](./docs/adr/0003-native-mobile-architecture-expo-sdk58.md)):**
    - Ứng dụng khách chính thức là Mobile App trên Expo SDK 58 (`mobile/`). Web study portal cũ đã được đóng gói và lưu trữ tại `legacy/web-frontend/` (không phát triển tính năng mới vào đây).
-4. **Tuân Thủ Ngôn Ngữ Miền (Ubiquitous Language):**
+4. **Recursive Chunking, Dual Vector & Sequential VRAM Offloading ([ADR 0004](./docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md)):**
+   - Phân đoạn đệ quy `[I5]` (`<=512` tokens, `64` token overlap, `prev_chunk_id`/`next_chunk_id`) xuất bản hợp đồng bất biến `chunks/{job_id}/chunks.json`.
+   - Nhúng kép `[I6]` bằng `BgeM3Embedder` trực tiếp qua `transformers` + `sparse_linear.pt` (`halfvec(1024)` FP16 + `lexical_weights JSONB`, tuyệt đối không phụ thuộc `FlagEmbedding`).
+   - Toàn bộ tác vụ nặng chạy dưới `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)` và `LOW_VRAM_MODE=true` để giải phóng VRAM PhoWhisper ở `STT_COMPLETED` trước khi nạp BGE-M3.
+5. **Tuân Thủ Hợp Đồng API Nội Bộ & Gateway ([API-REFERENCE.md](./docs/API-REFERENCE.md)):**
+   - Mọi endpoint, JSON field, header (`Bearer JWT` / `X-Internal-Secret`), trạng thái job (`QUEUED -> PROCESSING_STT -> STT_COMPLETED -> CHUNKING -> EMBEDDING -> READY | FAILED`), webhook (`PUT /internal/v1/jobs/{jobId}/status`), và SQL RPCs đều phải đối chiếu với [`docs/API-REFERENCE.md`](./docs/API-REFERENCE.md) làm Single Source of Truth.
+6. **Tuân Thủ Ngôn Ngữ Miền (Ubiquitous Language):**
    - Luôn đọc và đối chiếu thuật ngữ với [GLOSSARY.md](./GLOSSARY.md).
-   - Dùng đúng `LectureLens` (không dùng `SmartLecture`, `LectureApp`), dùng đúng `Kitsune Soft`, `Kitsune Fox Companion`, `Capsule Audio Player`, `Cornell Notes`, `2-Stage Neural RAG`.
-5. **Bảo Tồn Ranh Giới (Seams):**
-   - Client (`mobile/`) không bao giờ truy vấn trực tiếp cơ sở dữ liệu hoặc AI model weights. Mọi luồng đi qua Gateway hoặc Backend API.
+   - Dùng đúng `LectureLens` (không dùng `SmartLecture`, `LectureApp`), dùng đúng `Kitsune Soft`, `Kitsune Fox Companion`, `Capsule Audio Player`, `Cornell Notes`, `2-Stage Neural RAG`, `Recursive Token Chunker ([I5])`, `BGE-M3 Dual Embedder ([I6])`, `Doubly-Linked Chunks`, `Sequential VRAM Offloading`.
+7. **Bảo Tồn Ranh Giới (Seams):**
+   - Client (`mobile/`) không bao giờ truy vấn trực tiếp cơ sở dữ liệu hoặc AI model weights. Mọi luồng đi qua Gateway hoặc Backend API; mọi persistence backend đi qua Protocol Seams (`AudioStoreProtocol`, `ChunkStoreProtocol`, `EmbedderProtocol`, `JobReporterProtocol`).
 
 ---
 
@@ -136,6 +148,15 @@ npm run understand:dashboard
 
 Đối với Backend:
 ```bash
+# Kiểm tra toàn bộ test suite Backend (Stage 1 + Stage 2 [I5]/[I6] + Chunk Store)
+.\.venv\Scripts\python.exe -m pytest backend/tests -v
+
+# Khởi chạy 1-lệnh Docker Compose (PostgreSQL 16 + pgvector & FastAPI AI Service, profile 16GB RAM / 4GB VRAM)
+docker compose -f backend/docker-compose.ai-dev.yml up --build
+
+# Hoặc khởi chạy LectureLens TEST Studio (Stage 1 + Stage 2 Pipeline Tester UI)
+docker compose -f TEST/docker-compose.test.yml up --build
+
 # Kiểm tra cấu hình và kết nối cơ sở dữ liệu RAG
 python backend/db/verify_rag_db.py
 

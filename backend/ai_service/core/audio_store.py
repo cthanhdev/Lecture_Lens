@@ -7,10 +7,13 @@ import logging
 import os
 from pathlib import Path
 import tempfile
-from typing import Protocol
+from typing import Protocol, TypeVar
 from uuid import UUID
 
+from pydantic import BaseModel
+
 from ai_service.core.schemas import (
+    ChunksArtifactSchema,
     ManifestSchema,
     OriginalAudioMeta,
     SttMeta,
@@ -18,6 +21,8 @@ from ai_service.core.schemas import (
 )
 
 logger = logging.getLogger("ai_service.audio_store")
+
+_SchemaT = TypeVar("_SchemaT", bound=BaseModel)
 
 
 class AudioStoreProtocol(Protocol):
@@ -30,6 +35,9 @@ class AudioStoreProtocol(Protocol):
     def resolve_manifest(self, job_id: UUID) -> ManifestSchema | None: ...
     def update_manifest(self, job_id: UUID, manifest: ManifestSchema) -> None: ...
     def save_transcript(self, job_id: UUID, transcript: TranscriptSchema) -> Path: ...
+    def load_transcript(self, job_id: UUID) -> TranscriptSchema | None: ...
+    def save_chunks(self, job_id: UUID, artifact: ChunksArtifactSchema, db_synced: bool = False) -> Path: ...
+    def load_chunks(self, job_id: UUID) -> ChunksArtifactSchema | None: ...
     def mark_failed(self, job_id: UUID, error_message: str) -> None: ...
 
 
@@ -44,11 +52,13 @@ class LocalVolumeAudioStore:
         self.incoming_dir = self.storage_root / "ingest" / "incoming"
         self.audio_dir = self.storage_root / "audio"
         self.transcripts_dir = self.storage_root / "transcripts"
+        self.chunks_dir = self.storage_root / "chunks"
 
         # Ensure root subdirectories exist
         self.incoming_dir.mkdir(parents=True, exist_ok=True)
         self.audio_dir.mkdir(parents=True, exist_ok=True)
         self.transcripts_dir.mkdir(parents=True, exist_ok=True)
+        self.chunks_dir.mkdir(parents=True, exist_ok=True)
 
     def get_incoming_path(self, job_id: UUID, ext: str) -> Path:
         clean_ext = ext.lstrip(".")
@@ -68,6 +78,17 @@ class LocalVolumeAudioStore:
     def _get_transcript_path(self, job_id: UUID) -> Path:
         target_dir = self.transcripts_dir / str(job_id)
         return target_dir / "transcript.json"
+
+    def _get_chunks_path(self, job_id: UUID) -> Path:
+        target_dir = self.chunks_dir / str(job_id)
+        return target_dir / "chunks.json"
+
+    def _load_json_artifact(self, path: Path, schema_cls: type[_SchemaT]) -> _SchemaT | None:
+        if not path.exists():
+            return None
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return schema_cls.model_validate(data)
 
     def _assert_within_storage_root(self, path: Path) -> None:
         try:
@@ -159,12 +180,7 @@ class LocalVolumeAudioStore:
         """
         Deterministic O(1) manifest retrieval by jobId.
         """
-        manifest_path = self._get_manifest_path(job_id)
-        if not manifest_path.exists():
-            return None
-        with open(manifest_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return ManifestSchema.model_validate(data)
+        return self._load_json_artifact(self._get_manifest_path(job_id), ManifestSchema)
 
     def update_manifest(self, job_id: UUID, manifest: ManifestSchema) -> None:
         manifest_path = self._get_manifest_path(job_id)
@@ -189,10 +205,47 @@ class LocalVolumeAudioStore:
         logger.info("Persisted transcript.json for job %s at %s", job_id, transcript_path)
         return transcript_path
 
+    def load_transcript(self, job_id: UUID) -> TranscriptSchema | None:
+        """
+        Loads the persisted transcript.json artifact for Stage 2 chunking & embedding.
+        """
+        return self._load_json_artifact(self._get_transcript_path(job_id), TranscriptSchema)
+
+    def save_chunks(self, job_id: UUID, artifact: ChunksArtifactSchema, db_synced: bool = False) -> Path:
+        """
+        Atomically persists chunks/{job_id}/chunks.json and updates manifest.chunking metadata.
+        """
+        chunks_path = self._get_chunks_path(job_id)
+        self._atomic_write_json(chunks_path, artifact.model_dump(mode="json"))
+
+        manifest = self.resolve_manifest(job_id)
+        if manifest:
+            rel_path = str(chunks_path.relative_to(self.storage_root)).replace("\\", "/")
+            manifest.chunking.status = "COMPLETED"
+            manifest.chunking.model = artifact.model
+            manifest.chunking.chunk_count = artifact.total_chunks
+            manifest.chunking.chunks_rel_path = rel_path
+            manifest.chunking.db_synced = db_synced
+            manifest.chunking.last_error = None
+            self.update_manifest(job_id, manifest)
+
+        logger.info("Persisted chunks.json for job %s at %s (%d chunks)", job_id, chunks_path, artifact.total_chunks)
+        return chunks_path
+
+    def load_chunks(self, job_id: UUID) -> ChunksArtifactSchema | None:
+        """
+        Loads the persisted chunks/{job_id}/chunks.json artifact if available.
+        """
+        return self._load_json_artifact(self._get_chunks_path(job_id), ChunksArtifactSchema)
+
     def mark_failed(self, job_id: UUID, error_message: str) -> None:
         manifest = self.resolve_manifest(job_id)
         if manifest:
-            manifest.stt.status = "FAILED"
-            manifest.stt.last_error = error_message
+            if manifest.stt.status == "COMPLETED":
+                manifest.chunking.status = "FAILED"
+                manifest.chunking.last_error = error_message
+            else:
+                manifest.stt.status = "FAILED"
+                manifest.stt.last_error = error_message
             self.update_manifest(job_id, manifest)
             logger.warning("Marked job %s as FAILED: %s", job_id, error_message)

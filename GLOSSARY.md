@@ -165,3 +165,31 @@ _Avoid_: Subtitle file, Text transcript, SRT file.
 **Job State Machine**:
 Máy trạng thái chu kỳ xử lý bài giảng: `QUEUED` $\rightarrow$ `PROCESSING_STT` $\rightarrow$ `STT_COMPLETED` $\rightarrow$ `CHUNKING` $\rightarrow$ `EMBEDDING` $\rightarrow$ `READY` (hoặc `FAILED`).
 _Avoid_: Pipeline progress, Worker status.
+
+---
+
+## 6. 🧩 Phân Đoạn & Nhúng Vector Giai Đoạn 2 (Stage 2 Chunking & Vectorization)
+
+**Recursive Token Chunker (`[I5]`)**:
+Bộ phân đoạn đệ quy cấp token chuyển đổi `transcript.json` thành các phân đoạn ngữ nghĩa tối đa 512 token (kèm vùng gối đầu 64 token và nội suy mốc thời gian `[MM:SS]`).
+_Avoid_: Character splitter, Fixed-length slicer, Naive chunker.
+
+**BGE-M3 Dual Embedder (`[I6]`)**:
+Thành phần trích xuất vector kép từ mô hình BGE-M3 cục bộ, sinh đồng thời vector đặc 1024 chiều chuẩn hóa nửa độ chính xác (`halfvec(1024)`) và trọng số từ vựng học được cho từng phân đoạn hoặc câu truy vấn.
+_Avoid_: Dense-only embedder, FlagEmbedding wrapper, Cloud embedding API.
+
+**Lexical Weights (`JSONB`)**:
+Bản đồ trọng số từ vựng học được (`"token": weight`) trích xuất từ đầu tuyến tính thưa của BGE-M3 và lưu ở định dạng `JSONB` để hỗ trợ đối chiếu thuật ngữ chuyên ngành.
+_Avoid_: TF-IDF map, Raw BM25 bag, Sparse matrix blob.
+
+**Doubly-Linked Chunks**:
+Chuỗi phân đoạn liên kết hai chiều qua cặp khóa `prev_chunk_id` và `next_chunk_id`, cho phép mở rộng ngữ cảnh ba chiều (`PREVIOUS`, `CURRENT`, `NEXT`) tức thì cho LLM.
+_Avoid_: Flat chunk list, Orphan chunks, Ad-hoc neighbor query.
+
+**Chunks Artifact (`chunks.json`)**:
+Hợp đồng dữ liệu bất biến đầu ra của Giai đoạn 2 lưu trên volume chia sẻ theo `jobId`, chứa danh sách phân đoạn, vector `embedding_half`, `lexical_weights` và liên kết hai chiều trước khi đồng bộ vào PostgreSQL `pgvector`.
+_Avoid_: Embedding dump, Vector cache file, Temp chunk list.
+
+**Sequential VRAM Offloading**:
+Chiến lược giải phóng tuần tự mô hình khỏi bộ nhớ GPU (`LOW_VRAM_MODE`) giữa Giai đoạn 1 (PhoWhisper ASR) và Giai đoạn 2 (BGE-M3 Dual Embedder) để vận hành an toàn trên phần cứng 4 GB VRAM.
+_Avoid_: Simultaneous model pinning, Multi-GPU sharding, Model eviction hack.

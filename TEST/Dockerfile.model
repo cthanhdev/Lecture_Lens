@@ -1,42 +1,43 @@
 # =========================================================================
 # LectureLens Model Runner & Test Studio Dockerfile
-# Provides PhoWhisper ASR + FFmpeg + FastAPI Test UI
+# Provides PhoWhisper ASR + BGE-M3 + pgvector Client + FastAPI Test UI
 # =========================================================================
 FROM python:3.10-slim
 
-# Install system dependencies & FFmpeg with audio codecs
+# Install system dependencies, FFmpeg audio codecs, and PostgreSQL client libs
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
     curl \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install PyTorch & ASR dependencies
-RUN pip install --no-cache-dir \
-    fastapi>=0.111.0 \
-    uvicorn[standard]>=0.30.0 \
-    pydantic>=2.7.0 \
-    pydantic-settings>=2.3.0 \
-    httpx>=0.27.0 \
-    python-multipart>=0.0.9 \
-    soundfile>=0.12.1 \
-    numpy>=1.24.0 \
-    imageio-ffmpeg \
-    torch \
-    transformers>=4.40.0
+# Install shared backend dependencies (torch, transformers, psycopg2-binary, etc.)
+COPY backend/requirements.txt /app/backend/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /app/backend/requirements.txt
 
-# Copy application code preserving repository structure
-COPY backend/ /app/backend/
+# Copy backend source & fixtures (models are mounted read-only at runtime)
+COPY backend/ai_service/ /app/backend/ai_service/
+COPY backend/tests/fixtures/ /app/backend/tests/fixtures/
 COPY TEST/ /app/TEST/
 
 ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app/backend:/app \
-    PORT=8090
+    PORT=8090 \
+    OMP_NUM_THREADS=4 \
+    MKL_NUM_THREADS=4 \
+    TORCH_NUM_THREADS=4 \
+    TOKENIZERS_PARALLELISM=false
 
 WORKDIR /app/TEST
 
 EXPOSE 8090
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS "http://127.0.0.1:${PORT:-8090}/api/system-diagnostics" || exit 1
 
 CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8090"]

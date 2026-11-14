@@ -3,6 +3,7 @@ AsrEngine Deep Module: Vietnamese Speech-to-Text inference with PhoWhisper.
 Handles natural silence VAD chunking, GPU acceleration, vocabulary prompting, and monotonic timestamp alignment [MM:SS].
 """
 from collections.abc import Callable
+import gc
 import logging
 import math
 from pathlib import Path
@@ -46,6 +47,8 @@ class AsrEngineProtocol(Protocol):
         on_progress: Callable[[int], None] | None = None
     ) -> list[TranscriptSegment]: ...
 
+    def unload(self) -> None: ...
+
 
 class PhoWhisperEngine:
     """
@@ -81,7 +84,9 @@ class PhoWhisperEngine:
         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
 
         actual_device = self.device
-        if actual_device == "cuda" and not torch.cuda.is_available():
+        if actual_device == "auto":
+            actual_device = "cuda" if torch.cuda.is_available() else "cpu"
+        elif actual_device == "cuda" and not torch.cuda.is_available():
             logger.warning("CUDA requested but not available. Falling back to CPU for PhoWhisper.")
             actual_device = "cpu"
 
@@ -219,6 +224,26 @@ class PhoWhisperEngine:
         logger.info("Transcribed %d segments successfully.", len(segments))
         return segments
 
+    def unload(self) -> None:
+        """
+        Releases PhoWhisper model weights from VRAM and RAM so BGE-M3 can load cleanly
+        on 4GB VRAM GPUs in LOW_VRAM_MODE.
+        """
+        if self._model is None and self._processor is None and self._prompt_ids is None:
+            return
+
+        self._model = None
+        self._processor = None
+        self._prompt_ids = None
+        gc.collect()
+        try:
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except ImportError:
+            pass
+        logger.info("Unloaded PhoWhisper weights and reclaimed VRAM/RAM.")
+
 
 class FakeAsrEngine:
     """
@@ -232,6 +257,11 @@ class FakeAsrEngine:
             "Một tập hợp các vector được gọi là độc lập tuyến tính nếu không có vector nào biểu diễn được qua các vector còn lại.",
             "Chúng ta sẽ xem xét ma trận chuyển cơ sở và thuật toán khử Gauss-Jordan."
         ]
+        self.unload_calls: int = 0
+
+    def unload(self) -> None:
+        """No-op unload hook tracking invocation count for pipeline tests."""
+        self.unload_calls += 1
 
     def transcribe(
         self,

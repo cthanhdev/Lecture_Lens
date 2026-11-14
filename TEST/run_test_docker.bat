@@ -1,12 +1,12 @@
 @echo off
 chcp 65001 > nul
 echo =========================================================================
-echo 🐳 LectureLens Model Runner - Docker Compose Launcher
+echo 🐳 LectureLens Stage 1 + Stage 2 Model Runner - Docker Compose Launcher
 echo =========================================================================
 
 cd /d "%~dp0"
 
-echo [1/2] Đang khởi chạy Docker Compose (PostgreSQL pgvector + AI Model Studio)...
+echo [1/2] Đang khởi chạy Docker Compose (PostgreSQL 16 pgvector + PhoWhisper/BGE-M3 Studio)...
 docker compose -f docker-compose.test.yml up --build -d
 
 if %errorlevel% neq 0 (
@@ -24,7 +24,8 @@ start "" "http://localhost:8090"
 
 echo.
 echo ✅ Hệ thống đã chạy thành công trong Docker!
-echo 🌐 Giao diện: http://localhost:8090
-echo 🛑 Để dừng container: docker compose -f docker-compose.test.yml down
+echo 🌐 Giao diện TEST Studio: http://localhost:8090
+echo 🐘 PostgreSQL + pgvector: localhost:5432 (db=lecturelens_db, user=ll_admin)
+echo 🛑 Để dừng container: docker compose -f TEST\docker-compose.test.yml down
 echo.
 pause

@@ -1,29 +1,39 @@
 # =========================================================================
-# LectureLens AI Service - Dockerfile (FastAPI + PhoWhisper ASR)
+# LectureLens AI Service - Dockerfile (FastAPI + PhoWhisper + BGE-M3)
 # =========================================================================
 FROM python:3.10-slim
 
-# Install system utilities & FFmpeg for audio transcoding
+# Install system utilities, FFmpeg audio codecs, and PostgreSQL client libs
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
     curl \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install Python requirements
+# Install Python requirements (cached independently from source edits)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application source code
 COPY ai_service/ ./ai_service/
 
-# Default runtime configuration
+# Default runtime & thread-pool configuration (tuned for 16 vCPU / 16 GB RAM)
 ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
-    PORT=8000
+    PORT=8000 \
+    OMP_NUM_THREADS=4 \
+    MKL_NUM_THREADS=4 \
+    TORCH_NUM_THREADS=4 \
+    TOKENIZERS_PARALLELISM=false
 
 EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS -H "X-Internal-Secret: ${INTERNAL_API_SECRET_KEY:-lecture_lens_internal_secret_token_xyz987}" "http://127.0.0.1:${PORT:-8000}/internal/v1/ai/health" || exit 1
 
 CMD ["uvicorn", "ai_service.main:app", "--host", "0.0.0.0", "--port", "8000"]

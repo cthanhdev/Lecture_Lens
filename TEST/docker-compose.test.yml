@@ -1,25 +1,11 @@
-services:
-  # =========================================================================
-  # 🎙️ PhoWhisper AI Model Runner & Web Test Studio
-  # =========================================================================
-  test-ai-model:
-    build:
-      context: ..
-      dockerfile: TEST/Dockerfile.model
-    container_name: lecturelens-test-ai-model
-    restart: unless-stopped
-    ports:
-      - "8090:8090"
-    environment:
-      STORAGE_ROOT: /app/volumes/rag_data
-      MODEL_PATH_PHOWHISPER: /app/backend/models/phowhisper-base
-      DEVICE: cpu
-    volumes:
-      - ../volumes/rag_data:/app/volumes/rag_data
-      - ../backend/models:/app/backend/models:ro
-    networks:
-      - test-network
+# =========================================================================
+# LectureLens TEST Studio Stack (Isolated Test UI + PostgreSQL pgvector)
+# Optimized for 16 logical CPUs / 16 GB Host RAM / 4 GB VRAM (RTX 3050)
+# Launch in one command from repo root:
+#   docker compose -f TEST/docker-compose.test.yml up --build
+# =========================================================================
 
+services:
   # =========================================================================
   # 🐘 PostgreSQL 16 + pgvector Test Database
   # =========================================================================
@@ -27,16 +13,93 @@ services:
     image: pgvector/pgvector:pg16
     container_name: lecturelens-test-db
     restart: unless-stopped
+    shm_size: 256mb
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=384MB"
+      - "-c"
+      - "effective_cache_size=1024MB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "max_connections=50"
     environment:
-      POSTGRES_DB: lecturelens_db
-      POSTGRES_USER: ll_admin
-      POSTGRES_PASSWORD: ll_secure_password_2026
+      POSTGRES_DB: ${POSTGRES_DB:-lecturelens_db}
+      POSTGRES_USER: ${POSTGRES_USER:-ll_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ll_secure_password_2026}
     ports:
       - "5432:5432"
     volumes:
       - ../backend/db/rag_schema_complete.sql:/docker-entrypoint-initdb.d/01_rag_schema.sql:ro
       - ../backend/db/init/06_app_jobs_status_migration.sql:/docker-entrypoint-initdb.d/06_app_jobs_status_migration.sql:ro
       - test-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-ll_admin} -d ${POSTGRES_DB:-lecturelens_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1536M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    networks:
+      - test-network
+
+  # =========================================================================
+  # 🎙️🧠 PhoWhisper + BGE-M3 AI Model Runner & Web Test Studio
+  # =========================================================================
+  test-ai-model:
+    build:
+      context: ..
+      dockerfile: TEST/Dockerfile.model
+    container_name: lecturelens-test-ai-model
+    restart: unless-stopped
+    depends_on:
+      test-db:
+        condition: service_healthy
+    ports:
+      - "8090:8090"
+    environment:
+      STORAGE_ROOT: /app/volumes/rag_data
+      MODEL_PATH_PHOWHISPER: /app/backend/models/phowhisper-base
+      MODEL_PATH_BGE_M3: /app/backend/models/bge-m3
+      DEVICE: ${DEVICE:-auto}
+      LOW_VRAM_MODE: ${LOW_VRAM_MODE:-true}
+      OMP_NUM_THREADS: "4"
+      MKL_NUM_THREADS: "4"
+      TORCH_NUM_THREADS: "4"
+      POSTGRES_HOST: test-db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-lecturelens_db}
+      POSTGRES_USER: ${POSTGRES_USER:-ll_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ll_secure_password_2026}
+    volumes:
+      - ../volumes/rag_data:/app/volumes/rag_data
+      - ../backend/models:/app/backend/models:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "6.0"
+          memory: 6G
+        reservations:
+          cpus: "1.0"
+          memory: 2G
+          # -----------------------------------------------------------------
+          # Optional NVIDIA GPU passthrough (e.g., RTX 3050 4 GB VRAM).
+          # Uncomment on GPU-enabled hosts with nvidia-container-toolkit:
+          # -----------------------------------------------------------------
+          # devices:
+          #   - driver: nvidia
+          #     count: 1
+          #     capabilities: [gpu]
     networks:
       - test-network
 

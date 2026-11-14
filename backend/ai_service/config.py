@@ -43,6 +43,50 @@ class Settings(BaseSettings):
         default=Path("./backend/models/phowhisper-medium"),
         description="Local directory containing PhoWhisper model weights (medium or base)"
     )
+    MODEL_PATH_BGE_M3: Path = Field(
+        default=Path("./backend/models/bge-m3"),
+        description="Local directory containing BGE-M3 embedding model weights"
+    )
+
+    # Chunking & VRAM Management (Stage 2)
+    CHUNK_MAX_TOKENS: int = Field(
+        default=512,
+        description="Maximum BGE-M3 sequence tokens per chunk"
+    )
+    CHUNK_OVERLAP_TOKENS: int = Field(
+        default=64,
+        description="Token overlap retained across adjacent chunk boundaries"
+    )
+    LOW_VRAM_MODE: bool = Field(
+        default=True,
+        description="Sequentially unload PhoWhisper before loading BGE-M3 to stay under 4GB VRAM"
+    )
+
+    # PostgreSQL + pgvector RAG Store
+    POSTGRES_HOST: str = Field(
+        default="localhost",
+        description="PostgreSQL host for pgvector RAG chunk store"
+    )
+    POSTGRES_PORT: int = Field(
+        default=5432,
+        description="PostgreSQL port"
+    )
+    POSTGRES_DB: str = Field(
+        default="lecturelens_db",
+        description="PostgreSQL database name"
+    )
+    POSTGRES_USER: str = Field(
+        default="ll_admin",
+        description="PostgreSQL user"
+    )
+    POSTGRES_PASSWORD: str = Field(
+        default="ll_secure_password_2026",
+        description="PostgreSQL password"
+    )
+    ENABLE_PGVECTOR_SYNC: bool = Field(
+        default=True,
+        description="Sync chunks to PostgreSQL pgvector when reachable"
+    )
 
     # Audio Ingest constraints
     WHISPER_CHUNK_SECONDS: int = Field(

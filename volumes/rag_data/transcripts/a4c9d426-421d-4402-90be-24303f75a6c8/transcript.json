@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "job_id": "a4c9d426-421d-4402-90be-24303f75a6c8",
+  "lecture_id": "feba7337-ffbb-48de-adf9-2a53cf48e021",
+  "generated": {
+    "model": "phowhisper-base",
+    "language": "vi",
+    "device": "cpu",
+    "created_at": "2026-11-14T13:07:41.710318+00:00",
+    "processing_seconds": 310.25
+  },
+  "audio": {
+    "duration_seconds": 461.938,
+    "sample_rate_hz": 16000
+  },
+  "full_text": "đề bài hợp đề xuất dự án năm một nghìn chín trăm hai mươi. trong video này thầy sẽ hướng dẫn cho các bạn tạo dư sơ và nguồn gốc ở trên servertrước tiên để 2016 để tậu dư xơ tiền. giải sử chúng ta có bốn dư sơ dưới đây là công nghệ âm tim hai dư hoạt hai dự sở quản ti kinh doanh không một và quà trừ kinhdoanh không hai theo truyền thống lớp công ty và bây giờ chúng tôi sẽ tạo rút trước sau đó tảo dưu sơ ép cái dư này vào rút chúng da đã táo. để tạo dư sơ vào web trong môi trường windows server 2016 thì bạn có thể vào container tuy nhiên mình chuyên nghiệp mình cho công nghệông teen thành chúng ta không có phải trồng này để chúng tả cần phải vào ở trọng cái server manager để vào server manager thìcác bạn có khi phải chụp ở tuân hay chọn cam kê store management. còn chọn computer management ở trong này nó có cái tab là cái phần user and group hoặc các bạn có thể mở ở đây. vào server manager ở trong server manager sẽ có cái phần tool mình cho vào server manager computer management mình các bạn mở đâu cũng được nhưng sẽ ra cái chỗ cho chúng ta tạo là được rồi ở đây các bạn vào khung user and tạo user tạo group trước ở đây là một số các group có sẵn để táo user trong này click chọn phải chọn new group cái group thứ hai là group quản bring toán. đội quan trì kinh doanh thì chúng ta tạo rock để sau khi xong rock thôi chúng tha chuyển vào phần tài khoản user user thời chúng thấy có xem lại nha chúng hts có hai cái user là cnpt không một và cnb không hai thuộc rock đó là công nghệ y thống tim đòi cho tải user đây cái cnpt không một hai cái gia này là namron phunen là công nghệ. đặc thân cầu cho báo động phát hiện đoạn tiên ở đây chỗ tạo user thì các bạn nhớ có thể 4 option tảo một đó là user can not load on có nghĩa nếu chọn option này thi khi user lock mode lần đầu tiền user phải bắt buộc đổi user cannot load cái thứ hai là user cán no chat có nghĩnh như vậy không có dấu hiệu căn bài nên cho đến năm nay và sau khi load file vào lần ý ngay hay không có hậu sự kết hợp với dữ chảy đòi lại nhiều hơn một chút tim không biết chắc chắn gì hết rồi nhưng để nấu cho vào lúc ý chung không hề rõ ràng lắm lắm rồi theoai đó là loại đĩa nhất mà thanh nhiễ hình cảm nhận thích lâu đáng lẽ đâu có lẽ ông ấy rất hẵ dùi lắm chứa lắm cả chứ thí đúng không liều lắm đâu có nghĩ đã hiểu đàn gà thường lắm không liong đặc đặc tốt đặc lắm cho đặc nào đặc nhất không ai không có nghĩ lắm đặcthừa đặc nhà lẫn ỉthì đặc đấy không có yêu đặc làm thực đặc ly không có đĩ đĩ đâu đĩ không có gì không có tha đĩỡ ủa lắm chưa đĩnhteen đĩhỹỡ đặc ò đĩ đã nghĩa là nếu chọn cách này thì user không thể thay đổi được password user chỉ chiếm những lá chuẩn bắt buộc và cấp một lần cho user thành resort đã xài vĩnh viễn nên không theo đuổi được dạ cái option thứ ba là password neverspite có nghĩa là cái password vẫn phải cấp nó sẽ không bao giờ hết hạn có nghĩ ra là xài mãi mãi thôi các ổng các ốp sinh cuối cùng là ốc sinh màir cao và diesel có nghĩà khi chúng ta chọn ấu sinh này ấn tâm. nếu sơ này nó sẽ không lọt in được hệ n hệ phẩm có nghĩa là nó bị đi sử bộ đi nè tạm thời đi sứ bộ đó là 4 option mà bạn nhớ để khi hoàn tất duy sơ ha thế này ở đây thầy sẽ chọn một cái là cái à. cắn chat đi nha ở đây password nhập với password vào thì trong các windows server 2016 nó bắt buộc cơ bản là phải có ký tự white ký hướng thường ký cử chỉ số. đơn giản là abc hoa bc hợp đơn giả nhưng mà tự nhiên ở bên ngoài thì các bạn đừng có nhập vô đó nha tb nó không có tính kỳ rõ rệt hơn sau khi bạn tạo xong thời gian rất dày tao tiếp cho user user clt đợi clt không hai nha. đợi abc 123 đà nhẵm báo xuống hài lòng rồi ok tôi dành đòi yêu cơ tiếp theo là quản  chỉ kinh doanh quản chỉ kình doanh không một đợi ibc đây là quy định ngay lập tức. là chúng ta có một cái user đó là quản bring business không hai rồi sau khi chúng tạo user tẩy drop xong thì nó vẫn chưa vào. cho nên ét usurper chọn root để ét usurp chọn properties chọn protein chọn men bờ công nghệ phím công ngệ trúng tuyển nền. đợi công nghệthông vào bằng đốp bolero ép thêm tiếp admin fidel ét liên sơ thứ hai sau khi ép xong rồi offline ok hả nội quản ứng kinh doanh các bạn cũng làm như vậy chọn vào bolero đáp án vào chọn admin chọn file nào rồi ép duy sự vào ngay quán chỉ kinhdoanh chúng ta chọn quán chữ kinh gianh và có thể nhấn chữ win. đốc bộ liếp báo đọc đáp như in touch báo tiếp sau khi đọng ok rồi bây giờ chúng ta qua lại cái chỗ user này các bạn đốt bộ lên một cái user bất kì để các bạn xem đốp bộ hoặc chọn list chuột phải chọn properties nè thế các bạn sẽ thấy chọn menua off nè vậy các bạn đã thay là cái user đang ở ngựa ngựang hình dẫn ấy nhé. mặc định khi mà có một tạo dư sơ là một dư số nó sẽ nằm ở trong các group là user có chìa xác ngang mặc đĩnh tất cả các dư sự khi mà táo ra thì nó sẽ năm ở toàn một group là Users đó là cái quá trình mà các bạn tảo dư suor xong còn một phần thầy muốn nói với các bạn đó là cách phần mà server trên quá  trường chúng ta sử dụng á thôi đôi khi cái bó xuộc người ta cung cấp nó bị sai trúng mặt cắp mà user quen đó sẽ lăn đĩa. khi tuyển sai chúng ta có thể sử dụng click phải chuẩn chọn check password rồi sau đó xét cái password cho user rồi ép cái user vào group.",
+  "segments": [
+    {
+      "id": 0,
+      "start_time_seconds": 0.0,
+      "end_time_seconds": 10.7,
+      "timestamp_label": "00:00",
+      "text": "đề bài hợp đề xuất dự án năm một nghìn chín trăm hai mươi."
+    },
+    {
+      "id": 1,
+      "start_time_seconds": 10.7,
+      "end_time_seconds": 22.85,
+      "timestamp_label": "00:10",
+      "text": "trong video này thầy sẽ hướng dẫn cho các bạn tạo dư sơ và nguồn gốc ở trên servertrước tiên để 2016 để tậu dư xơ tiền."
+    },
+    {
+      "id": 2,
+      "start_time_seconds": 22.85,
+      "end_time_seconds": 50.85,
+      "timestamp_label": "00:22",
+      "text": "giải sử chúng ta có bốn dư sơ dưới đây là công nghệ âm tim hai dư hoạt hai dự sở quản ti kinh doanh không một và quà trừ kinhdoanh không hai theo truyền thống lớp công ty và bây giờ chúng tôi sẽ tạo rút trước sau đó tảo dưu sơ ép cái dư này vào rút chúng da đã táo."
+    },
+    {
+      "id": 3,
+      "start_time_seconds": 50.85,
+      "end_time_seconds": 78.85,
+      "timestamp_label": "00:50",
+      "text": "để tạo dư sơ vào web trong môi trường windows server 2016 thì bạn có thể vào container tuy nhiên mình chuyên nghiệp mình cho công nghệông teen thành chúng ta không có phải trồng này để chúng tả cần phải vào ở trọng cái server manager để vào server manager thìcác bạn có khi phải chụp ở tuân hay chọn cam kê store management."
+    },
+    {
+      "id": 4,
+      "start_time_seconds": 78.85,
+      "end_time_seconds": 95.6,
+      "timestamp_label": "01:18",
+      "text": "còn chọn computer management ở trong này nó có cái tab là cái phần user and group hoặc các bạn có thể mở ở đây."
+    },
+    {
+      "id": 5,
+      "start_time_seconds": 95.6,
+      "end_time_seconds": 123.6,
+      "timestamp_label": "01:35",
+      "text": "vào server manager ở trong server manager sẽ có cái phần tool mình cho vào server manager computer management mình các bạn mở đâu cũng được nhưng sẽ ra cái chỗ cho chúng ta tạo là được rồi ở đây các bạn vào khung user and"
+    },
+    {
+      "id": 6,
+      "start_time_seconds": 123.6,
+      "end_time_seconds": 147.4,
+      "timestamp_label": "02:03",
+      "text": "tạo user tạo group trước ở đây là một số các group có sẵn để táo user trong này click chọn phải chọn new group cái group thứ hai là group quản bring toán."
+    },
+    {
+      "id": 7,
+      "start_time_seconds": 147.4,
+      "end_time_seconds": 174.85,
+      "timestamp_label": "02:27",
+      "text": "đội quan trì kinh doanh thì chúng ta tạo rock để sau khi xong rock thôi chúng tha chuyển vào phần tài khoản user user thời chúng thấy có xem lại nha chúng hts có hai cái user là cnpt không một và cnb không hai thuộc rock đó là công nghệ y thống tim đòi cho tải user đây cái cnpt không một hai cái gia này là namron phunen là công nghệ."
+    },
+    {
+      "id": 8,
+      "start_time_seconds": 174.85,
+      "end_time_seconds": 202.85,
+      "timestamp_label": "02:54",
+      "text": "đặc thân cầu cho báo động phát hiện đoạn tiên ở đây chỗ tạo user thì các bạn nhớ có thể 4 option tảo một đó là user can not load on có nghĩa nếu chọn option này thi khi user lock mode lần đầu tiền user phải bắt buộc đổi user cannot load cái thứ hai là user cán no chat có nghĩnh như vậy không có dấu hiệu căn bài nên cho đến năm nay và sau khi load file vào lần ý ngay hay không có hậu sự kết hợp với dữ chảy đòi lại nhiều hơn một chút tim không biết chắc chắn gì hết rồi nhưng để nấu cho vào lúc ý chung không hề rõ ràng lắm lắm rồi theoai đó là loại đĩa nhất mà thanh nhiễ hình cảm nhận thích lâu đáng lẽ đâu có lẽ ông ấy rất hẵ dùi lắm chứa lắm cả chứ thí đúng không liều lắm đâu có nghĩ đã hiểu đàn gà thường lắm không liong đặc đặc tốt đặc lắm cho đặc nào đặc nhất không ai không có nghĩ lắm đặcthừa đặc nhà lẫn ỉthì đặc đấy không có yêu đặc làm thực đặc ly không có đĩ đĩ đâu đĩ không có gì không có tha đĩỡ ủa lắm chưa đĩnhteen đĩhỹỡ đặc ò đĩ đã"
+    },
+    {
+      "id": 9,
+      "start_time_seconds": 202.85,
+      "end_time_seconds": 230.85,
+      "timestamp_label": "03:22",
+      "text": "nghĩa là nếu chọn cách này thì user không thể thay đổi được password user chỉ chiếm những lá chuẩn bắt buộc và cấp một lần cho user thành resort đã xài vĩnh viễn nên không theo đuổi được dạ cái option thứ ba là password neverspite có nghĩa là cái password vẫn phải cấp nó sẽ không bao giờ hết hạn có nghĩ ra là xài mãi mãi thôi các ổng các ốp sinh cuối cùng là ốc sinh màir cao và diesel có nghĩà khi chúng ta chọn ấu sinh này ấn tâm."
+    },
+    {
+      "id": 10,
+      "start_time_seconds": 230.85,
+      "end_time_seconds": 244.7,
+      "timestamp_label": "03:50",
+      "text": "nếu sơ này nó sẽ không lọt in được hệ n hệ phẩm có nghĩa là nó bị đi sử bộ đi nè tạm thời đi sứ bộ đó là 4 option mà bạn nhớ để khi hoàn tất duy sơ ha thế này ở đây thầy sẽ chọn một cái là cái à."
+    },
+    {
+      "id": 11,
+      "start_time_seconds": 244.7,
+      "end_time_seconds": 256.05,
+      "timestamp_label": "04:04",
+      "text": "cắn chat đi nha ở đây password nhập với password vào thì trong các windows server 2016 nó bắt buộc cơ bản là phải có ký tự white ký hướng thường ký cử chỉ số."
+    },
+    {
+      "id": 12,
+      "start_time_seconds": 256.05,
+      "end_time_seconds": 276.55,
+      "timestamp_label": "04:16",
+      "text": "đơn giản là abc hoa bc hợp đơn giả nhưng mà tự nhiên ở bên ngoài thì các bạn đừng có nhập vô đó nha tb nó không có tính kỳ rõ rệt hơn sau khi bạn tạo xong thời gian rất dày tao tiếp cho user user clt đợi clt không hai nha."
+    },
+    {
+      "id": 13,
+      "start_time_seconds": 276.55,
+      "end_time_seconds": 304.55,
+      "timestamp_label": "04:36",
+      "text": "đợi abc 123 đà nhẵm báo xuống hài lòng rồi ok tôi dành đòi yêu cơ tiếp theo là quản  chỉ kinh doanh quản chỉ kình doanh không một đợi ibc đây là quy định ngay lập tức."
+    },
+    {
+      "id": 14,
+      "start_time_seconds": 304.55,
+      "end_time_seconds": 332.55,
+      "timestamp_label": "05:04",
+      "text": "là chúng ta có một cái user đó là quản bring business không hai rồi sau khi chúng tạo user tẩy drop xong thì nó vẫn chưa vào."
+    },
+    {
+      "id": 15,
+      "start_time_seconds": 332.55,
+      "end_time_seconds": 354.75,
+      "timestamp_label": "05:32",
+      "text": "cho nên ét usurper chọn root để ét usurp chọn properties chọn protein chọn men bờ công nghệ phím công ngệ trúng tuyển nền."
+    },
+    {
+      "id": 16,
+      "start_time_seconds": 354.75,
+      "end_time_seconds": 382.75,
+      "timestamp_label": "05:54",
+      "text": "đợi công nghệthông vào bằng đốp bolero ép thêm tiếp admin fidel ét liên sơ thứ hai sau khi ép xong rồi offline ok hả nội quản ứng kinh doanh các bạn cũng làm như vậy chọn vào bolero đáp án vào chọn admin chọn file nào rồi ép duy sự vào ngay quán chỉ kinhdoanh chúng ta chọn quán chữ kinh gianh và có thể nhấn chữ win."
+    },
+    {
+      "id": 17,
+      "start_time_seconds": 382.75,
+      "end_time_seconds": 410.75,
+      "timestamp_label": "06:22",
+      "text": "đốc bộ liếp báo đọc đáp như in touch báo tiếp sau khi đọng ok rồi bây giờ chúng ta qua lại cái chỗ user này các bạn đốt bộ lên một cái user bất kì để các bạn xem đốp bộ hoặc chọn list chuột phải chọn properties nè thế các bạn sẽ thấy chọn menua off nè vậy các bạn đã thay là cái user đang ở ngựa ngựang hình dẫn ấy nhé."
+    },
+    {
+      "id": 18,
+      "start_time_seconds": 410.75,
+      "end_time_seconds": 438.75,
+      "timestamp_label": "06:50",
+      "text": "mặc định khi mà có một tạo dư sơ là một dư số nó sẽ nằm ở trong các group là user có chìa xác ngang mặc đĩnh tất cả các dư sự khi mà táo ra thì nó sẽ năm ở toàn một group là Users đó là cái quá trình mà các bạn tảo dư suor xong còn một phần thầy muốn nói với các bạn đó là cách phần mà server trên quá  trường chúng ta sử dụng á thôi đôi khi cái bó xuộc người ta cung cấp nó bị sai trúng mặt cắp mà user quen đó sẽ lăn đĩa."
+    },
+    {
+      "id": 19,
+      "start_time_seconds": 438.75,
+      "end_time_seconds": 461.94,
+      "timestamp_label": "07:18",
+      "text": "khi tuyển sai chúng ta có thể sử dụng click phải chuẩn chọn check password rồi sau đó xét cái password cho user rồi ép cái user vào group."
+    }
+  ]
+}

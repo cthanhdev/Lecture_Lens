@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "historyId": "8d0c01e4-a5cc-4279-bb43-7190eaa932f6",
+  "currentRevision": null,
+  "pendingChanges": false,
+  "files": {
+    "01 - Splash - App Launch.svg": {
+      "hash": "9eabab13a2a756bf8e923dce4feaec8ab3c98674c50432639806ccf04b1badf3",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\9e\\9eabab13a2a756bf8e923dce4feaec8ab3c98674c50432639806ccf04b1badf3"
+    },
+    "02 - Onboarding - Step 1 (Record or Upload).svg": {
+      "hash": "6f0e987138a6987b6ee6afb7c4a152e06b198d2e65d14b347f267f84ae144842",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\6f\\6f0e987138a6987b6ee6afb7c4a152e06b198d2e65d14b347f267f84ae144842"
+    },
+    "03 - Onboarding - Step 2 (Find What Matters).svg": {
+      "hash": "f5fcd3ce75d41651c8a49c0719c028983699831a0d59aeaaa2dc550c6ca71823",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\f5\\f5fcd3ce75d41651c8a49c0719c028983699831a0d59aeaaa2dc550c6ca71823"
+    },
+    "04 - Onboarding - Step 3 (Remember It).svg": {
+      "hash": "c613ee9f5b7adbd54e8cb17c68715262a1db3dd9c8a4701613ac6b6c0d4de75f",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\c6\\c613ee9f5b7adbd54e8cb17c68715262a1db3dd9c8a4701613ac6b6c0d4de75f"
+    },
+    "05 - Auth - Sign In.svg": {
+      "hash": "91bd729a58cce26a18e9ab2654d08848aea131368753f6de000121c87ea73658",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\91\\91bd729a58cce26a18e9ab2654d08848aea131368753f6de000121c87ea73658"
+    },
+    "06 - Auth - Create Account.svg": {
+      "hash": "c41d0636ddc3272b46dac7007cd93961196d838f8ae2b69244545f43617ffa90",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\c4\\c41d0636ddc3272b46dac7007cd93961196d838f8ae2b69244545f43617ffa90"
+    },
+    "07 - Paywall - Kitsune Plus Subscription.svg": {
+      "hash": "921e09d1203b97d0de820dd43556f21887baa3ae3bc28e913ad59975e465e78f",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\92\\921e09d1203b97d0de820dd43556f21887baa3ae3bc28e913ad59975e465e78f"
+    },
+    "08 - Home - Study Hub Dashboard.svg": {
+      "hash": "d9d5c8c287963dcac6a923b71562bc0074eeebb72e1aad65a95595034ccc27b8",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\d9\\d9d5c8c287963dcac6a923b71562bc0074eeebb72e1aad65a95595034ccc27b8"
+    },
+    "09 - Home - Offline State.svg": {
+      "hash": "7d182a98e368243ed54250aa5b5a4a51d38695af613a3cd52bfdcee83687d8c0",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\7d\\7d182a98e368243ed54250aa5b5a4a51d38695af613a3cd52bfdcee83687d8c0"
+    },
+    "10 - Library - Lecture Archive.svg": {
+      "hash": "a2b1986cd4bdef0ea8f02421590ec708416f75d5d458ccad2530778fecab8fe4",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\a2\\a2b1986cd4bdef0ea8f02421590ec708416f75d5d458ccad2530778fecab8fe4"
+    },
+    "11 - Library - Empty State.svg": {
+      "hash": "48a70656dce41ee09b53538724cc63e0ce08fa8df96fd352ec0a5d489a4c94fc",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\48\\48a70656dce41ee09b53538724cc63e0ce08fa8df96fd352ec0a5d489a4c94fc"
+    },
+    "12 - Library - Offline State.svg": {
+      "hash": "5e7ed8b2266fb8cf59aeb2874bd1ad41ae7475a465ceba676b199dce678a7c0b",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\5e\\5e7ed8b2266fb8cf59aeb2874bd1ad41ae7475a465ceba676b199dce678a7c0b"
+    },
+    "13 - Audio - Add Audio Bottom Sheet.svg": {
+      "hash": "e1be33a7875f845b41a22072b5cf5dbf8f51b37f28f08c462edb19147cc96313",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\e1\\e1be33a7875f845b41a22072b5cf5dbf8f51b37f28f08c462edb19147cc96313"
+    },
+    "14 - Audio - Live Recording.svg": {
+      "hash": "25db4b08521723b7eb80e030fb525d6a6f18095d740495f1bfafb91bd60b1ed7",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\25\\25db4b08521723b7eb80e030fb525d6a6f18095d740495f1bfafb91bd60b1ed7"
+    },
+    "15 - Audio - Processing Pipeline.svg": {
+      "hash": "2689ff3e7aba5c785ced8a32b0c1b38737b06d911ca29511c127f088ceaf9f20",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\26\\2689ff3e7aba5c785ced8a32b0c1b38737b06d911ca29511c127f088ceaf9f20"
+    },
+    "16 - Audio Detail - Synchronized Transcript.svg": {
+      "hash": "2e3921edd1805efe463613884fa0d2e9a39920a4978fb047cbe3f20d82d37a5b",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\2e\\2e3921edd1805efe463613884fa0d2e9a39920a4978fb047cbe3f20d82d37a5b"
+    },
+    "17 - Audio Detail - Key Highlights.svg": {
+      "hash": "973e70443e6deb945b2fb62d518d1808d8c2765c80d781deff066a8c4bcc6a6c",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\97\\973e70443e6deb945b2fb62d518d1808d8c2765c80d781deff066a8c4bcc6a6c"
+    },
+    "18 - Audio Detail - Cornell Summary Overview.svg": {
+      "hash": "5e129a1d7590a1488148c92ead0d140a6d4027b67bf6571a2dea128dae643baf",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\5e\\5e129a1d7590a1488148c92ead0d140a6d4027b67bf6571a2dea128dae643baf"
+    },
+    "20 - Subjects - Course Archive.svg": {
+      "hash": "ac7974f5f8952a7e315b60c316b36fa21e01c5086d99b5b826e5ed7faddc3ac3",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\ac\\ac7974f5f8952a7e315b60c316b36fa21e01c5086d99b5b826e5ed7faddc3ac3"
+    },
+    "21 - Subjects - Course Detail (Macroeconomics).svg": {
+      "hash": "ea9c4bd843e80bd3b15a73cd20abf3363c188bf6341567b9506ee8b60ae27d15",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\ea\\ea9c4bd843e80bd3b15a73cd20abf3363c188bf6341567b9506ee8b60ae27d15"
+    },
+    "22 - Search - Neural RAG & Audio Snippets.svg": {
+      "hash": "6149fa784a70c12a6474bce9c37e1464e2bb69c08d599e616273033f0be67e40",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\61\\6149fa784a70c12a6474bce9c37e1464e2bb69c08d599e616273033f0be67e40"
+    },
+    "23 - Review - Spaced Repetition Study Hub.svg": {
+      "hash": "2f3f588027854cc0144cf82d44c765d92f59dce248d188d9f6dc87963a6b8417",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\2f\\2f3f588027854cc0144cf82d44c765d92f59dce248d188d9f6dc87963a6b8417"
+    },
+    "24 - Flashcard - Question (Front).svg": {
+      "hash": "f6e58f79ca27bddbff7de85883d957719977e1ad509d3bdc8da36ead383225fd",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\f6\\f6e58f79ca27bddbff7de85883d957719977e1ad509d3bdc8da36ead383225fd"
+    },
+    "25 - Flashcard - Answer (Back).svg": {
+      "hash": "e47bd7b190673a335135ac799b5ef10550b8f2d93ba07d2da8ecebf5ab178404",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\e4\\e47bd7b190673a335135ac799b5ef10550b8f2d93ba07d2da8ecebf5ab178404"
+    },
+    "26 - Review - Session Complete Celebration.svg": {
+      "hash": "86aa3b150bc14e38c7f93191ea204bdf08aa0eb37626958b04c4f1de3ace75d4",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\86\\86aa3b150bc14e38c7f93191ea204bdf08aa0eb37626958b04c4f1de3ace75d4"
+    },
+    "27 - Profile - Student Stats & Activity.svg": {
+      "hash": "ef3950f69ebe3de5d2388bbec441871daa6e7c66dc6b6cfb4533b86e3f2abc99",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\ef\\ef3950f69ebe3de5d2388bbec441871daa6e7c66dc6b6cfb4533b86e3f2abc99"
+    },
+    "28 - Settings - App Preferences.svg": {
+      "hash": "3f503c06d4132f742e2659699e3ba2d3f6745919e76cc2d250b47c506706f48f",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\3f\\3f503c06d4132f742e2659699e3ba2d3f6745919e76cc2d250b47c506706f48f"
+    },
+    "19 - Audio Detail - Cornell Summary Chapter View.svg": {
+      "hash": "26f23b3b6380d0d9077492e379c093435e67ee02a3e3c911c4026c65656cf1a5",
+      "content": "C:\\Users\\CThanhDev\\.cache\\hyperframes\\history\\8d0c01e4-a5cc-4279-bb43-7190eaa932f6\\blobs\\26\\26f23b3b6380d0d9077492e379c093435e67ee02a3e3c911c4026c65656cf1a5"
+    }
+  },
+  "revisions": {},
+  "checks": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  }
+}

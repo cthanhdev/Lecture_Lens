@@ -18,10 +18,10 @@ CREATE TABLE IF NOT EXISTS rag.lecture_chunks (
     
     -- Cột sinh tự động: Chuỗi định dạng hiển thị [MM:SS] phục vụ trực tiếp cho UI và Trích dẫn Citation
     start_timestamp_display VARCHAR(10) GENERATED ALWAYS AS (
-        to_char(interval '1 second' * start_time_seconds, 'MI:SS')
+        rag.format_timestamp_display(start_time_seconds)
     ) STORED,
     end_timestamp_display VARCHAR(10) GENERATED ALWAYS AS (
-        to_char(interval '1 second' * end_time_seconds, 'MI:SS')
+        rag.format_timestamp_display(end_time_seconds)
     ) STORED,
     
     -- Nhãn phân biệt người nói (Giảng viên / Sinh viên / Diễn giả - phục vụ Diarization)

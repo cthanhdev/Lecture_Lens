@@ -120,7 +120,7 @@ $$;
 -- và đoạn sau để tạo thành đoạn văn mạch lạc 2-3 phút cho LLM trả lời.
 CREATE OR REPLACE FUNCTION rag.get_expanded_context(p_chunk_id UUID)
 RETURNS TABLE (
-    position VARCHAR,
+    "position" VARCHAR,
     chunk_id UUID,
     start_timestamp_display VARCHAR,
     end_timestamp_display VARCHAR,

@@ -77,14 +77,18 @@ flowchart TD
 
         subgraph AIService ["⚡ FastAPI AI Service (Container: ai)"]
             direction TB
-            INGEST_FLOW["📥 Ingest Pipeline (Offline Worker)<br/>PhoWhisper-base ➔ Recursive Chunking ➔ BGE-M3"]
-            QUERY_FLOW["🔍 Query Pipeline (Online Engine)<br/>BGE-M3 Query ➔ Vector Search ➔ BGE-Reranker-v2-m3"]
+            INGEST_FLOW["📥 Stage 1 + Stage 2 Ingest Worker<br/>[I4] PhoWhisper-base ➔ transcript.json<br/>➔ [I5] RecursiveTokenChunker (<=512 tok)<br/>➔ Unload ASR ➔ [I6] BgeM3Embedder ➔ chunks.json"]
+            QUERY_FLOW["🔍 Query & Context Engine<br/>BGE-M3 Query ➔ 3-Stream RRF Hybrid Search<br/>➔ Doubly-Linked Context / Reranker"]
+        end
+
+        subgraph SharedVol ["💾 Shared Volume (/volumes/rag_data)"]
+            VOLUME[("ingest/incoming, audio/manifest.json,<br/>transcripts/transcript.json, chunks/chunks.json")]
         end
 
         subgraph StorageLayer ["🐘 PostgreSQL 16 + pgvector (Container: db)"]
             direction LR
             SCHEMA_APP[("🗄️ Schema: app<br/>users, roles, classes,<br/>lectures, jobs")]
-            SCHEMA_RAG[("📐 Schema: rag<br/>lecture_chunks,<br/>embeddings 1024-d (HNSW)")]
+            SCHEMA_RAG[("📐 Schema: rag<br/>lecture_chunks: halfvec(1024) HNSW<br/>+ lexical_weights JSONB + tsv_content GIN + prev/next")]
         end
 
         subgraph LLMRuntime ["🦙 Ollama Local Inference (Container: llm)"]
@@ -93,13 +97,19 @@ flowchart TD
     end
 
     SB -->|HTTP + Header: X-Internal-Secret| AIService
+    SB -->|Ghi âm thanh nguyên tử| VOLUME
+    AIService -->|Đọc/Ghi artifacts O(1)| VOLUME
     SB -->|JDBC / JPA Connections| SCHEMA_APP
-    INGEST_FLOW -->|Batch Insert Chunks & Vectors| SCHEMA_RAG
-    QUERY_FLOW <-->|Vector Cosine Nearest Neighbor| SCHEMA_RAG
+    INGEST_FLOW -->|Batch Upsert Chunks & Dual Vectors| SCHEMA_RAG
+    QUERY_FLOW <-->|3-Stream RRF & Expanded Context RPC| SCHEMA_RAG
     QUERY_FLOW -->|Prompt Context + Re-ranked Chunks| GEMMA
     GEMMA -->|Streamed Answer + Timestamp Citations| QUERY_FLOW
-    AIService -.->|Webhook Notification: Job READY| SB
+    AIService -.->|Webhook PUT /internal/v1/jobs/{jobId}/status| SB
 ```
+
+> 📚 **Tài liệu chuẩn bắt buộc tham chiếu:**
+> - **Single Source of Truth API Reference**: [`../docs/API-REFERENCE.md`](../docs/API-REFERENCE.md)
+> - **Stage 2 Architectural Decision**: [`../docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md`](../docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md)
 
 ---
 
@@ -116,20 +126,21 @@ flowchart TD
   - **Đồng bộ liên dịch vụ:** Giao tiếp với FastAPI thông qua Spring `WebClient` có cấu hình Retry với Circuit Breaker (Resilience4j) và kiểm định khóa bí mật nội bộ (`X-Internal-Secret`).
 
 ### 3.2. FastAPI AI & RAG Engine (`ai`)
-- **Ngôn ngữ & Môi trường:** Python 3.10+ / FastAPI 0.111 / Uvicorn.
-- **Thư viện AI nền tảng:** `torch 2.3+ (CUDA 12.1)`, `transformers`, `sentence-transformers`, `FlagEmbedding`, `torchaudio`.
-- **Vai trò:** Thực hiện tính toán trí tuệ nhân tạo chuyên sâu và điều phối các mô hình học máy.
+- **Ngôn ngữ & Môi trường:** Python 3.10+ / FastAPI 0.111 / Uvicorn (`docs_url="/internal/docs"`, `openapi_url="/internal/openapi.json"`).
+- **Thư viện AI nền tảng:** `torch>=2.3.0`, `transformers>=4.40.0`, `numpy>=1.24.0`, `imageio-ffmpeg>=0.4.9`, `psycopg2-binary>=2.9.9` (`soundfile`, `librosa`, `httpx`, `pydantic-settings`).
+- **Ràng buộc nạp mô hình (`bge-m3`):** Tải trực tiếp qua HuggingFace `transformers` (`AutoTokenizer`, `AutoModel`) kết hợp `torch.load("sparse_linear.pt", weights_only=True)` — **tuyệt đối không phụ thuộc `FlagEmbedding` hay `sentence-transformers`**.
+- **Vai trò:** Thực hiện pipeline xử lý âm thanh, phiên âm, phân đoạn đệ quy (`[I5]`), nhúng kép (`[I6]`), đồng bộ `pgvector` và tìm kiếm 3-Stream RRF + mở rộng ngữ cảnh.
 - **Trách nhiệm kỹ thuật:**
-  - **Nạp mô hình thông minh (Model Lifecycle Management):** Tải trước trọng số các mô hình `bge-m3`, `bge-reranker-v2-m3` và `phowhisper-base` vào bộ nhớ VRAM khi container khởi động thông qua FastAPI lifespan events.
-  - **Background Ingestion Worker:** Phân luồng chạy nền bất đồng bộ (`BackgroundTasks` hoặc Celery worker) để phiên âm và sinh vector các bài giảng dài mà không làm nghẽn tiến trình HTTP.
-  - **Xếp hạng & Tinh chỉnh ngữ cảnh:** Thực hiện tái sắp xếp Top-25 vector bằng Cross-Encoder trước khi định dạng prompt cho LLM.
+  - **Lazy-Loading & Sequential VRAM Offloading (`LOW_VRAM_MODE=true`):** Các model nặng (`PhoWhisperEngine`, `BgeM3Embedder`) được nạp lười (lazy-load) theo nhu cầu. Dưới khóa `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)`, pipeline gọi `asr_engine.unload()` tại `STT_COMPLETED` (`gc.collect()` + `torch.cuda.empty_cache()`) trước khi nạp `BgeM3Embedder` ở `EMBEDDING` (tối ưu cho GPU 4 GB VRAM như RTX 3050).
+  - **Background Ingestion Worker:** Chạy bất đồng bộ qua FastAPI `BackgroundTasks` và báo tiến độ về Spring Boot Gateway qua `SpringJobReporter` (`PUT /internal/v1/jobs/{jobId}/status`).
+  - **2-Stage Neural Retrieval & Doubly-Linked Context:** Tìm kiếm lai 3 luồng RRF trong PostgreSQL (`dense_stream` `halfvec(1024)` HNSW + `lexical_stream` `tsv_content` `rag.immutable_unaccent` + `fuzzy_stream` `pg_trgm`), lưu kèm `lexical_weights` (`JSONB`) từ `BgeM3Embedder` và mở rộng ngữ cảnh liền kề (`[PREVIOUS, CURRENT, NEXT]`) bằng con trỏ `prev_chunk_id`/`next_chunk_id` qua `rag.get_expanded_context`.
 
 ### 3.3. PostgreSQL 16 + pgvector Multi-Schema DB (`db`)
-- **Phiên bản:** PostgreSQL 16.3 đi kèm extension `pgvector 0.7.0+`.
+- **Phiên bản:** PostgreSQL 16 (docker image `pgvector/pgvector:pg16`, extension `pgvector 0.7.0+`).
 - **Kiến trúc Multi-Schema:**
   - `Schema app`: Chứa toàn bộ thực thể quan hệ phục vụ nghiệp vụ (Người dùng, lớp học, bài giảng, tác vụ xử lý). Quản lý bởi Spring Data JPA / Hibernate.
-  - `Schema rag`: Chứa dữ liệu tri thức học thuật không cấu trúc (`lecture_chunks`) và vector nhúng 1024 chiều. Quản lý bởi FastAPI qua SQLAlchemy / asyncpg.
-- **Chỉ mục Vector HNSW:** Sử dụng thuật toán Hierarchical Navigable Small World với khoảng cách Cosine (`vector_cosine_ops`), đem lại tốc độ truy vấn milli-giây trên hàng triệu vector.
+  - `Schema rag`: Chứa dữ liệu tri thức học thuật (`lecture_chunks` với `halfvec(1024)` và `lexical_weights JSONB`). Đồng bộ idempotent từ FastAPI thông qua `PostgresPgVectorChunkStore` (`psycopg2-binary` batch upsert).
+- **Chỉ mục Vector HNSW & Hybrid:** Kết hợp `idx_chunks_hnsw_cosine` (`halfvec_cosine_ops`, `m = 16, ef_construction = 64`), GIN trên `tsv_content` (`idx_chunks_tsv`), GIN trigram trên `content_unaccent` (`idx_chunks_trgm_unaccent`), và B-tree nav `idx_chunks_nav`.
 
 ### 3.4. Ollama LLM Runtime Engine (`llm`)
 - **Phiên bản:** Ollama v0.3.x+.
@@ -156,7 +167,7 @@ sequenceDiagram
     participant EMB as 🧠 BGE-M3 (Embedder)
     participant DB as 🐘 PostgreSQL (pgvector)
 
-    GV->>SB: POST /api/v1/lectures/upload (Audio File)
+    GV->>SB: POST /api/v1/audio/upload (Audio File)
     SB->>FS: Ghi nguyên tử vào incoming/{jobId}.{ext} (ADR 0002)
     SB->>DB: INSERT INTO app.jobs (status = 'QUEUED')
     SB-->>GV: HTTP 202 Accepted (jobId: UUID)
@@ -169,26 +180,29 @@ sequenceDiagram
     AI->>FS: Xuất bản tệp transcripts/{jobId}/transcript.json
     AI->>SB: Cập nhật job status: 'STT_COMPLETED' (Ranh giới Seam Giai đoạn 1)
     
-    AI->>SB: Cập nhật job status: 'CHUNKING'
-    AI->>SPLIT: Chia đoạn đệ quy (Recursive Chunking: 512 tokens, 64 overlap)
-    SPLIT-->>AI: Danh sách Chunks có ngữ cảnh liền mạch & mốc thời gian tổng hợp
+    AI->>SB: Cập nhật job status: 'STT_COMPLETED' (progress: 75) & Unload PhoWhisper (LOW_VRAM_MODE)
+    AI->>SB: Cập nhật job status: 'CHUNKING' (progress: 85)
+    AI->>SPLIT: [I5] RecursiveTokenChunker (<=512 tokens, 64 overlap, prev/next_chunk_id)
+    SPLIT-->>AI: Danh sách ChunkDrafts có ngữ cảnh liền mạch & mốc thời gian nội suy
     
-    AI->>SB: Cập nhật job status: 'EMBEDDING'
-    AI->>EMB: Tính toán Dense Embedding (1024 chiều, normalized)
-    EMB-->>AI: Mảng ma trận vector 1024-d
+    AI->>SB: Cập nhật job status: 'EMBEDDING' (progress: 92)
+    AI->>EMB: [I6] BgeM3Embedder (transformers + sparse_linear.pt: halfvec(1024) + lexical_weights)
+    EMB-->>AI: Dual Embedding Results (Dense FP16 L2-normalized + Top-64 Sparse Lexical)
     
-    AI->>DB: BATCH INSERT INTO rag.lecture_chunks (content, timestamps, embedding)
-    DB-->>AI: Xác nhận ghi thành công vào Schema rag
+    AI->>DB: CompositeChunkStore: lưu chunks/{job_id}/chunks.json + Batch Upsert rag.lecture_chunks
+    DB-->>AI: Xác nhận ghi thành công vào Schema rag (prev_chunk_id/next_chunk_id đã nối 2 chiều)
     
-    AI->>SB: Cập nhật job status: 'READY' (Webhook / Internal Event)
+    AI->>SB: Cập nhật job status: 'READY' (progress: 100 - Webhook PUT /internal/v1/jobs/{jobId}/status)
     SB-->>GV: Gửi thông báo WebSocket / Push Notification: "Bài giảng đã sẵn sàng!"
 ```
 
-#### Chi tiết kỹ thuật Ingestion:
-1. **Chuẩn hóa âm thanh (Audio Preprocessing):** File tải lên được chuyển đổi tự động bằng `ffmpeg` sang định dạng chuẩn: **16,000 Hz, Mono channel, 16-bit PCM**.
-2. **ASR Timestamp Extraction:** PhoWhisper xuất ra mảng các phân đoạn câu với độ phân giải thời gian chính xác đến từng mili-giây:
-   $$\text{Segment} = \{ \text{id}, \text{start\_time}, \text{end\_time}, \text{text} \}$$
-3. **Recursive Context Chunking:** Văn bản được gom cụm sao cho không vượt quá **512 tokens** (khoảng 350-400 từ tiếng Việt), duy trì **overlap 64 tokens** giữa hai đoạn liên tiếp để bảo toàn trọn vẹn ngữ nghĩa ở ranh giới đoạn. Mỗi chunk lưu giữ mốc thời gian bắt đầu của câu đầu tiên và mốc thời gian kết thúc của câu cuối cùng trong chunk đó.
+#### Chi tiết kỹ thuật Ingestion (Stage 1 + Stage 2):
+1. **Chuẩn hóa âm thanh (Audio Preprocessing):** File tải lên được chuyển đổi tự động bằng `ffmpeg` (`highpass=80`, `lowpass=7500`, `afftdn`, `loudnorm`) sang định dạng chuẩn: **16,000 Hz, Mono channel, 16-bit PCM**.
+2. **ASR Timestamp Extraction (`[I4]`):** `PhoWhisperEngine` (kèm `EnergyVadChunker`) xuất ra `transcripts/{job_id}/transcript.json` gồm mảng các phân đoạn câu với độ phân giải thời gian chính xác:
+   $$\text{Segment} = \{ \text{id}, \text{start\_time}, \text{end\_time}, \text{timestamp\_label}, \text{text} \}$$
+3. **Sequential VRAM Offloading (`LOW_VRAM_MODE=true`):** Dưới điều phối tuần tự `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)`, pipeline gọi `asr_engine.unload()` tại `STT_COMPLETED` (`75%`) để giải phóng hoàn toàn VRAM/RAM trước khi nạp `BgeM3Embedder` ở `EMBEDDING` (`92%`), giúp vận hành ổn định trên GPU **4 GB VRAM** (như RTX 3050).
+4. **Recursive Context Chunking (`[I5]`):** `RecursiveTokenChunker` dùng `BgeM3TokenizerAdapter` gom các segment thành chunk không vượt quá **512 tokens** (`reserve_special_tokens=2` -> hiệu dụng `<=510`), duy trì **overlap 64 tokens**, nội suy mốc thời gian nếu phải tách đoạn dài đơn lẻ theo `. `, `? `, `! `, `; `, `\n`, `, `, ` `, và liên kết hai chiều `prev_chunk_id` / `next_chunk_id` (Doubly-Linked Chunks).
+5. **BGE-M3 Dual Embedding (`[I6]`):** `BgeM3Embedder` nạp trực tiếp qua `transformers` + `sparse_linear.pt` (`weights_only=True`, không dùng `FlagEmbedding`) để sinh đồng thời Dense Vector **`halfvec(1024)`** (FP16 L2-normalized) và **`lexical_weights`** (`JSONB`, ReLU, Top-64 token không phải special/punctuation, `>=0.01`). Kết quả được lưu bất biến tại `chunks/{job_id}/chunks.json` và đồng bộ lên `rag.lecture_chunks`. (Có thể chạy độc lập Stage 2 từ `transcript.json` có sẵn qua `POST /internal/v1/ai/chunk-and-embed`).
 
 ---
 
@@ -211,16 +225,16 @@ sequenceDiagram
     SV->>Client: Nhập câu hỏi: "Thuật toán Gradient Descent hoạt động thế nào?"
     Client->>SB: POST /api/v1/rag/query (Bearer JWT, lectureId, query)
     SB->>SB: Kiểm tra phân quyền truy cập bài giảng của sinh viên (RBAC)
-    SB->>AI: POST /internal/v1/ai/query (X-Internal-Secret, authorizedLectureIds, query)
+    SB->>AI: POST /internal/v1/ai/search/hybrid (X-Internal-Secret, lectureIds, query, topK)
     
-    AI->>EMB: Embed câu hỏi người dùng
-    EMB-->>AI: Query Vector Q ∈ ℝ¹⁰²⁴
+    AI->>EMB: [I6] Embed câu hỏi người dùng (BgeM3Embedder)
+    EMB-->>AI: Dense Vector Q ∈ ℝ¹⁰²⁴ (FP16) + Lexical Weights
     
-    Note over AI,DB: GIAI ĐOẠN 1: Dense Retrieval (HNSW Index)
-    AI->>DB: SELECT * FROM rag.lecture_chunks WHERE lecture_id IN (...) ORDER BY embedding <=> Q LIMIT 25
-    DB-->>AI: Top 25 Chunks ứng viên sơ bộ
+    Note over AI,DB: GIAI ĐOẠN 1: 3-Stream Hybrid RRF Retrieval (HNSW halfvec + FTS unaccent + pg_trgm)
+    AI->>DB: SELECT * FROM rag.search_vietnamese_rag_rrf(lectureIds, Q, query, topK)
+    DB-->>AI: Top ứng viên kèm expanded_context [PREVIOUS, CURRENT, NEXT]
     
-    Note over AI,RR: GIAI ĐOẠN 2: Deep Cross-Encoder Reranking
+    Note over AI,RR: GIAI ĐOẠN 2: Deep Cross-Encoder Reranking (Target Online RAG Stage)
     AI->>RR: Chấm điểm cặp [Query, Chunk_i] (i = 1..25)
     RR-->>AI: Điểm tương quan sâu Relevance Scores s_i ∈ [-10, 10]
     AI->>AI: Sắp xếp theo s_i & chọn lọc Top 3-5 Chunks xuất sắc nhất (s_i > ngưỡng)
@@ -236,7 +250,7 @@ sequenceDiagram
 
 ```markdown
 [HỆ THỐNG]
-Bạn là Trợ lý Cú Mèo của LectureLens — hệ thống hỗ trợ học tập bài giảng tiếng Việt thông minh.
+Bạn là Trợ lý Cáo Kitsune của LectureLens — hệ thống hỗ trợ học tập bài giảng tiếng Việt thông minh.
 Nhiệm vụ của bạn là trả lời câu hỏi của người học DỰA TRÊN ngữ cảnh trích xuất dưới đây.
 
 [QUY TẮC BẮT BUỘC]
@@ -263,7 +277,7 @@ Hệ thống sử dụng bộ 4 mô hình AI chuyên trách:
 | Thư mục cục bộ | Định danh Hugging Face | Dung lượng | Kiến trúc mạng | Ngữ cảnh tối đa | Nhiệm vụ kỹ thuật |
 | :--- | :--- | :---: | :--- | :---: | :--- |
 | **`phowhisper-base`** | [`vinai/phowhisper-base`](https://huggingface.co/vinai/phowhisper-base) | ~290 MB | Whisper (Encoder-Decoder) | 30s audio / chunk | Nhận dạng tiếng nói tiếng Việt, giải mã âm vị địa phương. |
-| **`bge-m3`** | [`BAAI/bge-m3`](https://huggingface.co/BAAI/bge-m3) | ~2.2 GB | XLM-RoBERTa (1024-d) | 8192 tokens | Sinh dense embedding 1024 chiều cho cả đoạn văn và truy vấn. |
+| **`bge-m3`** | [`BAAI/bge-m3`](https://huggingface.co/BAAI/bge-m3) | ~2.2 GB | XLM-RoBERTa (1024-d) | 8192 tokens | Sinh đồng thời dense embedding `halfvec(1024)` và `lexical_weights` (`sparse_linear.pt`) qua `transformers`. |
 | **`bge-reranker-v2-m3`** | [`BAAI/bge-reranker-v2-m3`](https://huggingface.co/BAAI/bge-reranker-v2-m3) | ~2.27 GB | Cross-Encoder (XLM-RoBERTa) | 8192 tokens | Tái xếp hạng ngữ nghĩa sâu 25 đoạn văn bản ứng viên. |
 | **`gemma-4-e4b`** | [`google/gemma-4-E4B-it`](https://ai.google.dev/gemma) | ~15.8 GB | Gemma 4 Decoder-only | 8192 tokens | Suy luận ngữ cảnh, giải thích bài tập và tạo trích dẫn. |
 
@@ -350,36 +364,64 @@ CREATE TABLE app.jobs (
 -- ==========================================================
 -- SCHEMA: rag (Tri thức số hóa & Không gian Vector đa chiều)
 -- ==========================================================
-CREATE TABLE rag.lecture_chunks (
+-- Hợp đồng DDL chuẩn xác xem tại `backend/db/init/02_rag_chunks_schema.sql`, `03_rag_indexes.sql` & `04_rag_hybrid_search_rrf.sql`
+CREATE TABLE IF NOT EXISTS rag.lecture_chunks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    lecture_id UUID NOT NULL REFERENCES app.lectures(id) ON DELETE CASCADE,
+    lecture_id UUID NOT NULL,
     chunk_index INT NOT NULL,
-    start_time_seconds NUMERIC(10, 2) NOT NULL,
-    end_time_seconds NUMERIC(10, 2) NOT NULL,
+    start_time_seconds NUMERIC(10, 3) NOT NULL,
+    end_time_seconds NUMERIC(10, 3) NOT NULL,
+    start_timestamp_display VARCHAR(10) GENERATED ALWAYS AS (
+        rag.format_timestamp_display(start_time_seconds)
+    ) STORED,
+    end_timestamp_display VARCHAR(10) GENERATED ALWAYS AS (
+        rag.format_timestamp_display(end_time_seconds)
+    ) STORED,
+    speaker_label VARCHAR(50) DEFAULT 'LECTURER',
     content TEXT NOT NULL,
+    content_unaccent TEXT GENERATED ALWAYS AS (
+        rag.immutable_unaccent(content)
+    ) STORED,
     token_count INT NOT NULL DEFAULT 0,
-    embedding vector(1024) NOT NULL, -- Sinh từ BGE-M3
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    -- [I6] BGE-M3 Dual Embedding: halfvec(1024) FP16 + lexical_weights JSONB
+    embedding_half halfvec(1024) NOT NULL,
+    lexical_weights JSONB DEFAULT '{}'::jsonb,
+    tsv_content TSVECTOR GENERATED ALWAYS AS (
+        to_tsvector('simple', rag.immutable_unaccent(content))
+    ) STORED,
+    -- [I5] Doubly-Linked Chunks hỗ trợ mở rộng ngữ cảnh [PREVIOUS, CURRENT, NEXT]
+    prev_chunk_id UUID,
+    next_chunk_id UUID,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_lecture_chunk UNIQUE (lecture_id, chunk_index)
 );
 
 -- ==========================================================
--- TỐI ƯU HÓA CHỈ MỤC HNSW (Hierarchical Navigable Small World)
+-- TỐI ƯU HÓA CHỈ MỤC HYBRID (HNSW halfvec + GIN FTS + pg_trgm)
 -- ==========================================================
--- m = 16: Số liên kết tối đa giữa các node (cân bằng giữa tốc độ tìm kiếm và bộ nhớ)
--- ef_construction = 64: Kích thước danh sách ứng viên khi xây dựng cây chỉ mục
-CREATE INDEX IF NOT EXISTS idx_chunks_embedding_hnsw 
-ON rag.lecture_chunks 
-USING hnsw (embedding vector_cosine_ops)
+CREATE INDEX IF NOT EXISTS idx_chunks_hnsw_cosine
+ON rag.lecture_chunks
+USING hnsw (embedding_half halfvec_cosine_ops)
 WITH (m = 16, ef_construction = 64);
 
--- Chỉ mục hỗ trợ truy vấn lọc theo bài giảng siêu tốc
-CREATE INDEX IF NOT EXISTS idx_chunks_lecture_id ON rag.lecture_chunks(lecture_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_tsv
+ON rag.lecture_chunks USING gin (tsv_content);
+
+CREATE INDEX IF NOT EXISTS idx_chunks_trgm_unaccent
+ON rag.lecture_chunks USING gin (content_unaccent gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_chunks_lecture_timeline
+ON rag.lecture_chunks (lecture_id, start_time_seconds);
+
+CREATE INDEX IF NOT EXISTS idx_chunks_nav
+ON rag.lecture_chunks (id, prev_chunk_id, next_chunk_id);
 ```
 
-### Phân Tích Hiệu Năng Chỉ Mục HNSW
-- **Khoảng cách Cosine (`vector_cosine_ops`):** Đo lường độ tương đồng góc giữa hai vector trong không gian $\mathbb{R}^{1024}$:
-  $$\text{Cosine Similarity}(u, v) = \frac{u \cdot v}{\|u\| \|v\|} = 1 - (\text{embedding} \Leftrightarrow \text{query\_vector})$$
-- **Thời gian tìm kiếm (Query Latency):** Dưới **15ms** cho tập dữ liệu 500,000 chunks với `ef_search = 40`.
+### Phân Tích Hiệu Năng Chỉ Mục HNSW (`halfvec_cosine_ops`)
+- **Khoảng cách Cosine (`halfvec_cosine_ops`):** Đo lường độ tương đồng góc giữa hai vector FP16 chuẩn hóa L2 trong không gian $\mathbb{R}^{1024}$:
+  $$\text{Cosine Similarity}(u, v) = \frac{u \cdot v}{\|u\| \|v\|} = 1 - (\text{embedding\_half} \Leftrightarrow \text{p\_query\_embedding})$$
+- **Thời gian tìm kiếm (Query Latency):** Tối ưu bộ nhớ 50% so với `vector(1024)` FP32 và tăng tốc quét HNSW ~1.8x trong `rag.search_vietnamese_rag_rrf`.
 
 ---
 
@@ -432,21 +474,24 @@ CREATE INDEX IF NOT EXISTS idx_chunks_lecture_id ON rag.lecture_chunks(lecture_i
 
 ### Ma Trận Cấu Hình Phần Cứng
 
-| Tiêu chí | Cấu hình Tối thiểu (Minimum) | Cấu hình Đề xuất (Production Recommended) |
-| :--- | :--- | :--- |
-| **GPU (VRAM)** | 1x NVIDIA RTX 3060 12GB (Quantized INT4) | 1x NVIDIA RTX 4090 24GB hoặc A10G / A100 |
-| **CUDA Core** | CUDA Toolkit v12.1+ | CUDA Toolkit v12.4+ |
-| **CPU** | 8 Cores (Intel i7 / AMD Ryzen 7) | 16+ Cores (Intel Xeon / AMD EPYC) |
-| **Bộ Nhớ Hệ Thống (RAM)** | 32 GB DDR4/DDR5 | 64 GB DDR5 |
-| **Ổ Cứng Lưu Trữ (SSD)** | 100 GB NVMe SSD | 500 GB NVMe PCIe 4.0 |
+| Tiêu chí | Hồ sơ Dev / Edge (`LOW_VRAM_MODE=true`) | Cấu hình Tối thiểu (Concurrent) | Cấu hình Đề xuất (Production Recommended) |
+| :--- | :--- | :--- | :--- |
+| **GPU (VRAM)** | **NVIDIA RTX 3050 4 GB VRAM** (hoặc fallback CPU) | 1x NVIDIA RTX 3060 12GB (Quantized INT4) | 1x NVIDIA RTX 4090 24GB hoặc A10G / A100 |
+| **CUDA Core** | CUDA Toolkit v12.1+ (tùy chọn, `DEVICE=auto`) | CUDA Toolkit v12.1+ | CUDA Toolkit v12.4+ |
+| **CPU** | **16 vCPU** (`ai` cap `6.0`, `db` cap `2.0`, `OMP/MKL/TORCH=4`) | 8+ Cores (Intel i7 / AMD Ryzen 7) | 16+ Cores (Intel Xeon / AMD EPYC) |
+| **Bộ Nhớ Hệ Thống (RAM)** | **16 GB RAM** (`ai` max `6G`, `db` max `1536M`, `shm_size: 256mb`) | 32 GB DDR4/DDR5 | 64 GB DDR5 |
+| **Ổ Cứng Lưu Trữ (SSD)** | 60+ GB NVMe SSD | 100 GB NVMe SSD | 500 GB NVMe PCIe 4.0 |
 
-### Phân Bổ Bộ Nhớ VRAM Đề Xuất (Trên GPU 24GB):
-- **Ollama Gemma 4 E4B (INT4/Q4_K_M):** ~6.5 GB VRAM
-- **BGE-M3 (FP16):** ~2.2 GB VRAM
-- **BGE-Reranker-v2-m3 (FP16):** ~2.4 GB VRAM
-- **PhoWhisper-base (FP16):** ~1.2 GB VRAM
-- **CUDA Cache & Activation:** ~3.0 GB VRAM
-- **Tổng VRAM tiêu thụ dự kiến:** ~15.3 GB / 24 GB (An toàn cho các tác vụ tải cao song song).
+### Phân Bổ Tài Nguyên Theo Chế Độ Vận Hành:
+- **Chế độ `LOW_VRAM_MODE=true` (Mặc định Docker Dev `16 vCPU / 16 GB RAM / 4 GB VRAM`):**
+  - Nhờ **Sequential VRAM Offloading** ([ADR 0004](../docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md)), `PhoWhisper-base` (~1.2 GB VRAM) và `BGE-M3` (~2.2 GB VRAM FP16) **không bao giờ nạp đồng thời**. Khi Stage 1 đạt `STT_COMPLETED`, `asr_engine.unload()` giải phóng hoàn toàn GPU memory trước khi Stage 2 nạp `BGE-M3`, giữ đỉnh VRAM ~2.5 GB nằm gọn trong ngưỡng **4 GB VRAM** và RAM container `ai` dưới **6 GB** (an toàn trên host **16 GB RAM**).
+- **Chế độ Production (`LOW_VRAM_MODE=false`, GPU 24 GB VRAM):**
+  - **Ollama Gemma 4 E4B (INT4/Q4_K_M):** ~6.5 GB VRAM
+  - **BGE-M3 (FP16):** ~2.2 GB VRAM
+  - **BGE-Reranker-v2-m3 (FP16):** ~2.4 GB VRAM
+  - **PhoWhisper-base (FP16):** ~1.2 GB VRAM
+  - **CUDA Cache & Activation:** ~3.0 GB VRAM
+  - **Tổng VRAM tiêu thụ dự kiến:** ~15.3 GB / 24 GB (An toàn cho các tác vụ tải cao song song).
 
 ---
 
@@ -478,14 +523,14 @@ CREATE INDEX IF NOT EXISTS idx_chunks_lecture_id ON rag.lecture_chunks(lecture_i
   }
   ```
 
-#### [POST] `/api/v1/lectures/upload`
+#### [POST] `/api/v1/audio/upload`
 - **Quyền:** Bearer JWT (`LECTURER`, `ADMIN`).
 - **Content-Type:** `multipart/form-data`.
-- **Form Data:**
-  - `file`: Tệp âm thanh (`bai_giang_tuan_3.mp3`).
-  - `title`: "Đại Số Tuyến Tính - Tuần 3: Không Gian Vector".
-  - `subject`: "Toán Cao Cấp".
-- **Response (202 Accepted):**
+- **Form Data (khớp `mobile/src/services/apiClient.ts` & ADR 0002):**
+  - `audio`: Tệp âm thanh nhị phân (`bai_giang_tuan_3.mp3`).
+  - `lectureId`: UUID của bài giảng (`a9010344-77bb-4e32-9112-229988776655`).
+  - `fileExtension`: Phần mở rộng không dấu chấm (`mp3`, `wav`, `m4a`, `aac`, `flac`).
+- **Response (`200 OK` / `202 Accepted`):**
   ```json
   {
     "jobId": "f103b415-992a-4bc8-8f55-1178a9c0012f",
@@ -494,6 +539,9 @@ CREATE INDEX IF NOT EXISTS idx_chunks_lecture_id ON rag.lecture_chunks(lecture_i
     "message": "Bài giảng đã được đưa vào hàng đợi xử lý âm thanh."
   }
   ```
+  > *Ghi chú:* Nếu Gateway mở thêm cổng `/api/v1/lectures/upload` cho kịch bản tạo bài giảng mới kèm upload, route đó dùng chung cơ chế ghi nguyên tử `{jobId}.tmp` $\rightarrow$ `{jobId}.{ext}`.
+
+*(Xem đầy đủ các endpoint public `/api/v1/auth/*`, `/api/v1/audio/{jobId}/manifest`, `/api/v1/lectures/{lectureId}/transcript` tại [`../docs/API-REFERENCE.md`](../docs/API-REFERENCE.md).)*
 
 #### [POST] `/api/v1/rag/query`
 - **Quyền:** Bearer JWT (`STUDENT`, `LECTURER`).
@@ -528,47 +576,63 @@ CREATE INDEX IF NOT EXISTS idx_chunks_lecture_id ON rag.lecture_chunks(lecture_i
 
 ---
 
-### 9.2. Private Internal APIs (FastAPI AI Service)
+### 9.2. Private Internal APIs (FastAPI AI Service `:8000`)
 
-#### [POST] `/internal/v1/ai/ingest`
+> Xem bảng tham số đầy đủ, ví dụ `cURL` / `TypeScript` / `Python httpx` và schema chi tiết tại [`../docs/API-REFERENCE.md`](../docs/API-REFERENCE.md). Mọi endpoint dưới `/internal/v1/ai/*` yêu cầu header `X-Internal-Secret: ${INTERNAL_API_SECRET_KEY}` và hỗ trợ cả `camelCase` lẫn `snake_case` trên JSON request body (`populate_by_name=True`).
+
+| Method & Endpoint | Vai Trò & Dữ Liệu Trả Về |
+| :--- | :--- |
+| `GET /internal/v1/ai/health` | Kiểm tra CUDA/VRAM, `configured_device`, `low_vram_mode`, kết nối `pgvector_connected` và sự tồn tại của trọng số `phowhisper_path_exists`, `bge_m3_path_exists` |
+| `POST /internal/v1/ai/ingest` | Kích hoạt bất đồng bộ toàn bộ Stage 1 (FFmpeg + PhoWhisper) & Stage 2 (`[I5]` + `[I6]`), trả về `202 Accepted` (`{"status": "ACCEPTED", "message": "..."}`) |
+| `POST /internal/v1/ai/chunk-and-embed` | Chạy đồng bộ Stage 2 từ `transcript.json` đã có (`jobId`, `lectureId?`, `syncToDb=true`), trả về `ChunkAndEmbedResponse` (`200 OK`) |
+| `GET /internal/v1/ai/audio/{job_id}/manifest` | Tra cứu $O(1)$ tệp `audio/{job_id}/manifest.json` |
+| `GET /internal/v1/ai/chunks/{job_id}` | Tra cứu artifact `chunks/{job_id}/chunks.json` |
+| `POST /internal/v1/ai/search/hybrid` | Nhúng câu truy vấn tiếng Việt (có dấu/không dấu) bằng `BGE-M3` và chạy 3-Stream RRF Hybrid Search + `expanded_context` |
+| `GET /internal/v1/ai/chunks/context/{chunk_id}` | Trả về tối đa 3 chunk `[PREVIOUS, CURRENT, NEXT]` qua liên kết đôi `prev_chunk_id`/`next_chunk_id` |
+
+#### Ví dụ tiêu biểu: `[POST] /internal/v1/ai/ingest`
 - **Header:** `X-Internal-Secret: ${INTERNAL_API_SECRET_KEY}`
 - **Request Body (ADR 0002 — cấm truyền arbitrary path):**
   ```json
   {
-    "job_id": "f103b415-992a-4bc8-8f55-1178a9c0012f",
-    "lecture_id": "a9010344-77bb-4e32-9112-229988776655",
-    "file_extension": "wav"
+    "jobId": "f103b415-992a-4bc8-8f55-1178a9c0012f",
+    "lectureId": "a9010344-77bb-4e32-9112-229988776655",
+    "fileExtension": "wav"
   }
   ```
-- **Response (202 Accepted):**
+- **Response (`202 Accepted` — `IngestResponse`):**
   ```json
   {
     "status": "ACCEPTED",
-    "job_id": "f103b415-992a-4bc8-8f55-1178a9c0012f",
     "message": "Ingest pipeline background task spawned successfully."
   }
   ```
 
-#### [GET] `/internal/v1/ai/audio/{job_id}/manifest`
+#### Ví dụ tiêu biểu: `[GET] /internal/v1/ai/health`
 - **Header:** `X-Internal-Secret: ${INTERNAL_API_SECRET_KEY}`
-- **Response (200 OK):** Trả về `manifest.json` của tác vụ với tra cứu $O(1)$.
-
-#### [GET] `/internal/v1/ai/health`
-- **Header:** `X-Internal-Secret: ${INTERNAL_API_SECRET_KEY}`
-- **Response (200 OK):**
+- **Response (`200 OK`):**
   ```json
   {
     "status": "HEALTHY",
-    "gpuAvailable": true,
-    "gpuDeviceName": "NVIDIA GeForce RTX 4090",
-    "vramAllocatedMB": 14210.5,
-    "loadedModels": {
-      "stt": "phowhisper-base",
-      "embedding": "bge-m3",
-      "reranker": "bge-reranker-v2-m3"
+    "service": "lecturelens-ai-service",
+    "configured_device": "auto",
+    "low_vram_mode": true,
+    "cuda_available": true,
+    "vram": {
+      "device_name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+      "allocated_mb": 0.0,
+      "reserved_mb": 0.0
+    },
+    "pgvector_connected": true,
+    "models": {
+      "phowhisper_path_exists": true,
+      "bge_m3_path_exists": true
     }
   }
   ```
+
+#### Webhook Callback (`FastAPI -> Spring Boot`)
+- **`PUT ${SPRING_BASE_URL}/internal/v1/jobs/{jobId}/status`** (Header `X-Internal-Secret`): gửi `{"status": "...", "progressPercentage": 0..100, "errorMessage": null}` tại mọi bước chuyển trạng thái (`PROCESSING_STT` -> `STT_COMPLETED` -> `CHUNKING` -> `EMBEDDING` -> `READY` | `FAILED`), thử lại tối đa 3 lần (`0.5s` backoff, timeout `5.0s`).
 
 ---
 
@@ -592,36 +656,51 @@ python download_models.py
 ```
 
 ### Bước 3: Cấu Hình Biến Môi Trường
-Sao chép `.env.example` sang `.env` và điền các khóa bí mật:
+Sao chép `backend/.env.example` sang `backend/.env` và điều chỉnh các khóa bí mật nếu cần:
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
 ```
-Nội dung file `.env`:
+Nội dung file `.env` mẫu xem tại [`backend/.env.example`](./.env.example):
 ```env
-# Spring Boot Configuration
-SPRING_PORT=8080
-JWT_SECRET=lecture_lens_jwt_super_secure_key_min_256_bits_2026!
-INTERNAL_API_SECRET_KEY=ll_internal_mesh_secret_token_998877
+# Internal Mesh & Spring Gateway
+INTERNAL_API_SECRET_KEY=lecture_lens_internal_secret_token_xyz987
+SPRING_BASE_URL=http://spring:8080
+FASTAPI_INTERNAL_URL=http://ai:8000
 
-# PostgreSQL Database Configuration
+# PostgreSQL + pgvector
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
 POSTGRES_DB=lecturelens_db
 POSTGRES_USER=ll_admin
-POSTGRES_PASSWORD=ll_master_secure_password_2026
-POSTGRES_PORT=5432
+POSTGRES_PASSWORD=ll_secure_password_2026
 
-# Ollama LLM Configuration
-OLLAMA_MODEL=gemma-4-e4b
+# AI Models, Device & LOW_VRAM_MODE (16GB RAM / 16 vCPU / 4GB VRAM)
+STORAGE_ROOT=/volumes/rag_data
+MODEL_PATH_PHOWHISPER=/models/phowhisper-base
+MODEL_PATH_BGE_M3=/models/bge-m3
+DEVICE=auto
+LOW_VRAM_MODE=true
+OMP_NUM_THREADS=4
+MKL_NUM_THREADS=4
+TORCH_NUM_THREADS=4
 ```
 
-### Bước 4: Khởi Chạy Hệ Thống Bằng Docker Compose
+### Bước 4: Khởi Chạy 1-Lệnh Docker Compose & Kiểm Thử
 ```bash
-docker compose up -d --build
+# 1. Khởi chạy PostgreSQL 16 (pgvector) + FastAPI AI Service (cấu hình chuẩn 16GB RAM / 4GB VRAM)
+docker compose -f backend/docker-compose.ai-dev.yml up --build
+
+# 2. (Tùy chọn) Khởi chạy LectureLens TEST Studio cho Stage 1 + Stage 2
+docker compose -f TEST/docker-compose.test.yml up --build
+
+# 3. Chạy bộ kiểm thử Backend pytest (từ thư mục gốc)
+.\.venv\Scripts\python.exe -m pytest backend/tests -v
 ```
 
 Kiểm tra sức khỏe cụm container:
 ```bash
-docker compose ps
-docker compose logs -f ai
+docker compose -f backend/docker-compose.ai-dev.yml ps
+docker compose -f backend/docker-compose.ai-dev.yml logs -f ai
 ```
 
 ---

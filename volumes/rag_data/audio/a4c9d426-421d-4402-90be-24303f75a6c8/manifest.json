@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "job_id": "a4c9d426-421d-4402-90be-24303f75a6c8",
+  "lecture_id": "feba7337-ffbb-48de-adf9-2a53cf48e021",
+  "original": {
+    "filename": "a4c9d426-421d-4402-90be-24303f75a6c8.m4a",
+    "extension": "m4a",
+    "size_bytes": 7476787,
+    "sha256": "2fc81788f62450c79c992bdd39a6d99d562b5e4c221712d12745df6462620ec8",
+    "created_at": "2026-11-14T13:02:31.559599+00:00"
+  },
+  "normalized": {
+    "rel_path": "normalized.wav",
+    "sample_rate_hz": 16000,
+    "channels": 1,
+    "bits_per_sample": 16,
+    "duration_seconds": 461.938
+  },
+  "stt": {
+    "status": "COMPLETED",
+    "model": "phowhisper-base",
+    "device": "cuda:0",
+    "attempts": 1,
+    "last_error": null,
+    "transcript_rel_path": "transcripts/a4c9d426-421d-4402-90be-24303f75a6c8/transcript.json"
+  },
+  "chunking": {
+    "status": "COMPLETED",
+    "model": "bge-m3",
+    "chunk_count": 4,
+    "chunks_rel_path": "chunks/a4c9d426-421d-4402-90be-24303f75a6c8/chunks.json",
+    "db_synced": true,
+    "last_error": null
+  }
+}

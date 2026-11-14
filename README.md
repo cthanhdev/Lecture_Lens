@@ -18,7 +18,7 @@
 [![PostgreSQL 16 + pgvector](https://img.shields.io/badge/PostgreSQL%2016-pgvector%200.7+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 [![Ollama Gemma 4](https://img.shields.io/badge/Ollama-Gemma%204%20E4B-111111?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.ai/)
 [![Mobile Tests](https://img.shields.io/badge/Mobile%20Tests-31%20passed-brightgreen?style=for-the-badge)](./mobile)
-[![Backend Tests](https://img.shields.io/badge/Backend%20Tests-27%20passed-brightgreen?style=for-the-badge)](./backend)
+[![Backend Tests](https://img.shields.io/badge/Backend%20Tests-65%20passed-brightgreen?style=for-the-badge)](./backend)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge)](./LICENSE)
 
 <br/>
@@ -183,18 +183,18 @@ flowchart TD
 
         subgraph AIService ["⚡ FastAPI AI Service (Container: ai - Internal Port: 8000)"]
             direction TB
-            INGEST_FLOW["📥 Pipeline Ingest (Offline Worker)<br/>PhoWhisper ➔ VAD Chunking ➔ transcript.json (ADR 0002)"]
-            QUERY_FLOW["🔍 Pipeline Query (Online Engine)<br/>BGE-M3 Query ➔ 3-Stream RRF ➔ BGE-Reranker-v2-m3"]
+            INGEST_FLOW["📥 Stage 1 + Stage 2 Ingest Worker (GLOBAL_GPU_SEMAPHORE=1)<br/>[I4] PhoWhisper ➔ transcript.json ➔ [I5] Recursive Chunking (<=512 tok)<br/>➔ Unload ASR (LOW_VRAM_MODE) ➔ [I6] BGE-M3 Dual Embedding ➔ chunks.json"]
+            QUERY_FLOW["🔍 Query & Context Engine<br/>BGE-M3 Dual Query ➔ 3-Stream RRF ➔ Doubly-Linked Context Expansion"]
         end
 
         subgraph SharedVol ["💾 Thư Mục Dùng Chung (Shared Volume)"]
-            VOLUME[("volumes/rag_data<br/>• ingest/incoming/{jobId}.ext<br/>• audio/{jobId}/manifest.json<br/>• transcripts/{jobId}/transcript.json")]
+            VOLUME[("volumes/rag_data<br/>• ingest/incoming/{jobId}.ext<br/>• audio/{jobId}/manifest.json<br/>• transcripts/{jobId}/transcript.json<br/>• chunks/{jobId}/chunks.json")]
         end
 
         subgraph StorageLayer ["🐘 PostgreSQL 16 + pgvector (Container: db)"]
             direction LR
-            SCHEMA_APP[("🗄️ Schema: app<br/>users, roles, lectures, jobs (STT_COMPLETED)")]
-            SCHEMA_RAG[("📐 Schema: rag<br/>lecture_chunks (halfvec 1024-d, HNSW)<br/>semantic_query_cache, audit_logs")]
+            SCHEMA_APP[("🗄️ Schema: app<br/>users, roles, lectures, jobs (READY)")]
+            SCHEMA_RAG[("📐 Schema: rag<br/>lecture_chunks (halfvec 1024-d HNSW +<br/>lexical_weights JSONB + tsv_content GIN + prev/next)<br/>semantic_query_cache, audit_logs")]
         end
 
         subgraph LLMRuntime ["🦙 Ollama Local Inference (Container: llm)"]
@@ -203,21 +203,22 @@ flowchart TD
     end
 
     SPRING -->|Ghi audio nguyên tử| VOLUME
-    AIService -->|Đọc audio & Ghi transcript| VOLUME
+    AIService -->|Đọc/Ghi manifest, transcript, chunks| VOLUME
     SPRING -->|HTTP + Header: X-Internal-Secret| AIService
     SPRING -->|JDBC / JPA Connections| SCHEMA_APP
-    INGEST_FLOW -->|Batch Insert Chunks & Vectors| SCHEMA_RAG
-    QUERY_FLOW <-->|3-Stream RRF Hybrid Query| SCHEMA_RAG
+    INGEST_FLOW -->|Batch Upsert Chunks & Dual Vectors| SCHEMA_RAG
+    QUERY_FLOW <-->|3-Stream RRF Hybrid Query & Context RPC| SCHEMA_RAG
     QUERY_FLOW -->|Prompt Context + Re-ranked Chunks| GEMMA
     GEMMA -->|Streamed Answer + Timestamp Citations| QUERY_FLOW
-    AIService -.->|Webhook Notification: STT_COMPLETED| SPRING
+    AIService -.->|Webhook PUT /internal/v1/jobs/{jobId}/status| SPRING
 ```
 
-### Cơ Chế An Toàn Mạng (Security Invariants):
-1. **Chỉ mở cổng Ingress:** Duy nhất dịch vụ `spring` được bind port ra mạng ngoài (`8080:8080`).
-2. **Khóa bí mật nội bộ (`X-Internal-Secret`):** Toàn bộ lời gọi nội bộ từ Spring Boot sang FastAPI bắt buộc phải đính kèm khóa bí mật.
+### Cơ Chế An Toàn Mạng & Hợp Đồng Dữ Liệu (Security & Data Invariants):
+1. **Chỉ mở cổng Ingress:** Duy nhất dịch vụ `spring` được bind port ra mạng ngoài (`8080:8080`). Chi tiết toàn bộ API xem tại [`docs/API-REFERENCE.md`](./docs/API-REFERENCE.md).
+2. **Khóa bí mật nội bộ (`X-Internal-Secret`):** Toàn bộ lời gọi nội bộ từ Spring Boot sang FastAPI và webhook callback (`PUT /internal/v1/jobs/{jobId}/status`) đều xác thực qua `X-Internal-Secret`.
 3. **Cô lập CSDL & LLM:** Container `db`, `ai`, `llm` hoạt động trong subnet khép kín `rag-internal-network`, không mở port ra Internet.
-4. **Bắt tay âm thanh qua Volume chia sẻ ([ADR 0002](./docs/adr/0002-audio-ingest-storage-and-transcript.md)):** Spring Boot ghi file âm thanh nguyên tử vào `volumes/rag_data/ingest/incoming/{jobId}.ext`; FastAPI chỉ đọc và xuất bản `transcripts/{jobId}/transcript.json` với tra cứu $O(1)$.
+4. **Bắt tay âm thanh & chunks qua Volume chia sẻ ([ADR 0002](./docs/adr/0002-audio-ingest-storage-and-transcript.md), [ADR 0004](./docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md)):** Spring Boot ghi file âm thanh nguyên tử vào `volumes/rag_data/ingest/incoming/{jobId}.ext`; FastAPI xuất bản `transcripts/{jobId}/transcript.json` ở Stage 1 và `chunks/{jobId}/chunks.json` ở Stage 2 với tra cứu $O(1)$.
+5. **Sequential VRAM Offloading (`LOW_VRAM_MODE=true`):** Để chạy mượt trên GPU 4 GB VRAM (`RTX 3050`), pipeline giải phóng `PhoWhisper` ngay tại `STT_COMPLETED` trước khi nạp `BGE-M3` (`transformers` + `sparse_linear.pt`) cho `[I6]`.
 
 ---
 
@@ -249,15 +250,15 @@ lecturelens_db
 │   └── jobs (Máy trạng thái xử lý: QUEUED -> PROCESSING_STT -> STT_COMPLETED -> CHUNKING -> EMBEDDING -> READY)
 │
 └── 📐 schema: rag (Tri thức số hóa do FastAPI quản trị)
-    ├── lecture_chunks (Phân đoạn bài giảng, halfvec 1024-d, timestamps, unaccent, TSVECTOR)
+    ├── lecture_chunks (Phân đoạn bài giảng <=512 tok, halfvec(1024), lexical_weights JSONB, prev/next_chunk_id, tsv_content)
     ├── semantic_query_cache (Bộ đệm câu hỏi tương đồng >0.95, phản hồi <10ms)
     └── rag_audit_logs (Lưu vết độ trễ và chất lượng truy xuất)
 ```
 
 ### Các Đặc Tính Tối Ưu Nâng Cao:
-- **`halfvec(1024)` (pgvector 0.7+):** Lưu trữ vector ở nửa độ chính xác FP16, giảm 50% RAM, tăng 1.8x tốc độ quét HNSW với độ bao phủ Recall duy trì > 99.2%.
-- **3-Stream RRF Hybrid Search (`rag.search_vietnamese_rag_rrf`):** Kết hợp đồng thời Dense Vector + Lexical Full-Text (`to_tsvector('simple', unaccent(content))`) + Fuzzy Trigram (`pg_trgm`).
-- **Mở Rộng Ngữ Cảnh 3 Chiều (`rag.get_expanded_context`):** Tự động liên kết `prev_chunk_id` và `next_chunk_id` để cung cấp cho LLM đoạn văn bản mạch lạc 2–3 phút xung quanh mốc trích xuất.
+- **`halfvec(1024)` + `lexical_weights JSONB` (`[I6]` BGE-M3 Dual Embedding):** Lưu trữ Dense Vector ở FP16 (`halfvec`, giảm 50% RAM, tăng tốc quét HNSW) kết hợp trọng số từ vựng sparse trực tiếp từ `transformers` + `sparse_linear.pt` ([ADR 0004](./docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md)).
+- **3-Stream RRF Hybrid Search (`rag.search_vietnamese_rag_rrf`):** Kết hợp đồng thời Dense Vector + Lexical Weights BGE-M3 + Vietnamese FTS (`to_tsvector('simple', unaccent(content))`). Chi tiết RPCs & API xem tại [`docs/API-REFERENCE.md`](./docs/API-REFERENCE.md).
+- **Mở Rộng Ngữ Cảnh 3 Chiều (`rag.get_expanded_context`):** Tự động liên kết `prev_chunk_id` và `next_chunk_id` (Doubly-Linked Chunks từ `[I5]`) để cung cấp đoạn văn bản mạch lạc `[PREVIOUS, CURRENT, NEXT]` xung quanh mốc trích xuất.
 
 ---
 
@@ -289,27 +290,31 @@ lecture_lens/
 │   └── README.md                        # Đặc tả chi tiết ứng dụng di động
 │
 ├── backend/                             # ⚙️ HẠ TẦNG BACKEND & AI ENGINE (On-Premise 2-Stage RAG)
-│   ├── ai_service/                      # FastAPI AI & RAG Engine (routers: health, ingest)
-│   ├── db/                              # PostgreSQL 16 + pgvector init scripts (01-06) & verify
+│   ├── ai_service/                      # FastAPI AI & RAG Engine
+│   │   ├── core/                        # asr, preprocessing, vad_chunker, text_chunker [I5], embedder [I6], chunk_store, audio_store
+│   │   ├── pipeline/                    # ingest_pipeline.py (GLOBAL_GPU_SEMAPHORE + LOW_VRAM_MODE offload)
+│   │   └── routers/                     # health.py, ingest.py (7 endpoint nội bộ /internal/v1/ai/*)
+│   ├── db/                              # PostgreSQL 16 + pgvector init scripts (01-06) & verify_rag_db.py
 │   ├── models/                          # Thư mục lưu trữ 4 mô hình AI (~21.5 GB)
-│   ├── tests/                           # Bộ kiểm thử 27 tests pytest cho backend
-│   ├── docker-compose.ai-dev.yml        # Docker compose phát triển nội bộ cho db + ai
+│   ├── tests/                           # Bộ kiểm thử 65 tests pytest (Stage 1, Stage 2 [I5]/[I6], Chunk Store)
+│   ├── docker-compose.ai-dev.yml        # Docker compose 1-lệnh cho db + ai (16GB RAM / 4GB VRAM)
 │   ├── download_models.py               # Script tự động tải mô hình từ Hugging Face
 │   └── README.md                        # Đặc tả chi tiết kiến trúc Backend
 │
 ├── docs/                                # 📚 TÀI LIỆU KỸ THUẬT & KIẾN TRÚC
+│   ├── API-REFERENCE.md                 # Single Source of Truth API (Ingress :8080, AI :8000, Webhook, SQL RPCs)
 │   ├── design-system.md                 # Đặc tả hệ thống thiết kế Kitsune Soft
 │   ├── UX-NAVIGATION-FLOW.md            # Đặc tả luồng điều hướng 28 màn hình
-│   ├── adr/                             # Architectural Decision Records (ADR 0001, 0002, 0003)
+│   ├── adr/                             # Architectural Decision Records (ADR 0001, 0002, 0003, 0004)
 │   └── design-assets/                   # 28 màn hình (SVG, PNG 4x), 74 icons vector, branding
 │
 ├── legacy/                              # 🗄️ LƯU TRỮ LỊCH SỬ
 │   └── web-frontend/                    # Bản web study portal cũ (React 19 / Vite 8 / Three.js)
 │
-├── TEST/                                # 🧪 TEST LAB CÔ LẬP
-│   └── server.py / docker-compose       # Lab kiểm thử độc lập cho audio ingest & transcript
+├── TEST/                                # 🧪 TEST STUDIO CÔ LẬP
+│   └── server.py / docker-compose.test.yml # Lab kiểm thử độc lập Stage 1 (ASR) + Stage 2 ([I5]/[I6] & RRF Search)
 │
-└── volumes/rag_data/                    # 💾 Thư mục dùng chung giữa Spring Boot và FastAPI
+└── volumes/rag_data/                    # 💾 Thư mục dùng chung (incoming, audio/manifest.json, transcripts, chunks)
 ```
 
 ---
@@ -320,7 +325,9 @@ lecture_lens/
 - **Node.js:** Phiên bản `v20.x` hoặc `v22.x` (LTS)
 - **Python:** Phiên bản `3.10+` kèm `pip` (khuyến nghị tạo môi trường ảo `.venv`)
 - **Docker & Docker Compose:** Phiên bản `v2.20+`
-- **Phần cứng đề xuất:** Card đồ họa NVIDIA RTX 3060 12GB VRAM (tối thiểu) hoặc RTX 4090 / A10G 24GB (khuyến nghị cho môi trường Production).
+- **Phần cứng hỗ trợ:**
+  - **Hồ sơ Dev / Edge (`LOW_VRAM_MODE=true`):** **16 vCPU / 16 GB RAM / NVIDIA RTX 3050 4 GB VRAM** (hoặc fallback CPU). Cấu hình container giới hạn sẵn `ai` (`6.0` CPU / `6G` RAM) và `db` (`2.0` CPU / `1536M` RAM / `256mb` shm) trong [`backend/docker-compose.ai-dev.yml`](./backend/docker-compose.ai-dev.yml).
+  - **Production khuyến nghị:** NVIDIA RTX 3060 12GB VRAM / RTX 4090 24GB VRAM, 32–64 GB RAM cho tải cao song song.
 
 ---
 
@@ -363,15 +370,20 @@ pip install -r backend/requirements.txt
 # 2. Tải toàn bộ trọng số mô hình AI về backend/models/ (~21.5 GB)
 python backend/download_models.py
 
-# 3. Khởi chạy nhanh môi trường CSDL và AI Service qua Docker
+# 3. Khởi chạy 1-lệnh PostgreSQL (pgvector) và FastAPI AI Service (hồ sơ 16GB RAM / 4GB VRAM)
 docker compose -f backend/docker-compose.ai-dev.yml up --build
 
-# 4. Chạy bộ 27 bài kiểm thử tự động của Backend
-pytest backend/tests -v
+# 4. (Tùy chọn) Khởi chạy LectureLens TEST Studio cho Stage 1 + Stage 2
+docker compose -f TEST/docker-compose.test.yml up --build
 
-# 5. Kiểm tra và xác minh CSDL pgvector RAG
+# 5. Chạy bộ 65 bài kiểm thử tự động của Backend (Stage 1, Stage 2 [I5]/[I6] & Chunk Store)
+.\.venv\Scripts\python.exe -m pytest backend/tests -v
+
+# 6. Kiểm tra và xác minh CSDL pgvector RAG
 python backend/db/verify_rag_db.py
 ```
+
+> 📖 Xem toàn bộ hợp đồng API Gateway `:8080`, FastAPI `:8000`, `chunks.json` và SQL RPCs tại [`docs/API-REFERENCE.md`](./docs/API-REFERENCE.md).
 
 ---
 

@@ -24,6 +24,24 @@ AS $$
     SELECT public.unaccent($1);
 $$;
 
+CREATE OR REPLACE FUNCTION rag.format_timestamp_display(seconds numeric)
+RETURNS varchar(10)
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+STRICT
+AS $$
+    SELECT CASE
+        WHEN seconds >= 3600 THEN
+            lpad((floor(GREATEST(seconds, 0))::bigint / 3600)::text, 2, '0') || ':' ||
+            lpad(((floor(GREATEST(seconds, 0))::bigint % 3600) / 60)::text, 2, '0') || ':' ||
+            lpad((floor(GREATEST(seconds, 0))::bigint % 60)::text, 2, '0')
+        ELSE
+            lpad((floor(GREATEST(seconds, 0))::bigint / 60)::text, 2, '0') || ':' ||
+            lpad((floor(GREATEST(seconds, 0))::bigint % 60)::text, 2, '0')
+    END::varchar(10);
+$$;
+
 \echo '>>> 2/5: Khởi tạo Bảng rag.lecture_chunks chuẩn hóa tiếng Việt...'
 CREATE TABLE IF NOT EXISTS rag.lecture_chunks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -34,10 +52,10 @@ CREATE TABLE IF NOT EXISTS rag.lecture_chunks (
     end_time_seconds NUMERIC(10, 3) NOT NULL,
     
     start_timestamp_display VARCHAR(10) GENERATED ALWAYS AS (
-        to_char(interval '1 second' * start_time_seconds, 'MI:SS')
+        rag.format_timestamp_display(start_time_seconds)
     ) STORED,
     end_timestamp_display VARCHAR(10) GENERATED ALWAYS AS (
-        to_char(interval '1 second' * end_time_seconds, 'MI:SS')
+        rag.format_timestamp_display(end_time_seconds)
     ) STORED,
     
     speaker_label VARCHAR(50) DEFAULT 'LECTURER',
@@ -182,7 +200,7 @@ $$;
 
 CREATE OR REPLACE FUNCTION rag.get_expanded_context(p_chunk_id UUID)
 RETURNS TABLE (
-    position VARCHAR,
+    "position" VARCHAR,
     chunk_id UUID,
     start_timestamp_display VARCHAR,
     end_timestamp_display VARCHAR,
