@@ -57,6 +57,7 @@ Tài liệu đặc tả API chuẩn xác 1:1 với mã nguồn hiện hành cho 
   - Swagger UI: `GET /internal/docs`
   - OpenAPI JSON: `GET /internal/openapi.json`
 - **Dev Compose Port Binding:** `backend/docker-compose.ai-dev.yml` binds `8000:8000` (`ai`) and `5432:5432` (`db`) on `rag-internal-network` for local backend development and testing. In production deployment, only `spring` (`8080`) is exposed externally.
+- **Architecture Diagram:** Sơ đồ trực quan đầy đủ 2 tầng + 14 steps + 7 Protocol Seams xem tại [`docs/KienTrucHeThong.drawio`](./KienTrucHeThong.drawio).
 
 ---
 
@@ -590,8 +591,8 @@ volumes/rag_data/
 | `chunk_index` | `INT NOT NULL` | Chỉ số tuần tự `0..N-1` |
 | `start_time_seconds` | `NUMERIC(10, 3) NOT NULL` | Mốc bắt đầu (giây, mili-giây) |
 | `end_time_seconds` | `NUMERIC(10, 3) NOT NULL` | Mốc kết thúc (giây, mili-giây) |
-| `start_timestamp_display` | `VARCHAR(10) GENERATED ALWAYS` | Sinh tự động `rag.format_timestamp_display(start_time_seconds)` |
-| `end_timestamp_display` | `VARCHAR(10) GENERATED ALWAYS` | Sinh tự động `rag.format_timestamp_display(end_time_seconds)` |
+| `start_timestamp_display` | `VARCHAR(10) GENERATED ALWAYS` | Sinh tự động `rag.format_timestamp_display(start_time_seconds)` (`IMMUTABLE`, `[MM:SS]` / `[HH:MM:SS]`) |
+| `end_timestamp_display` | `VARCHAR(10) GENERATED ALWAYS` | Sinh tự động `rag.format_timestamp_display(end_time_seconds)` (`IMMUTABLE`, `[MM:SS]` / `[HH:MM:SS]`) |
 | `speaker_label` | `VARCHAR(50) DEFAULT 'LECTURER'` | Nhãn người nói |
 | `content` | `TEXT NOT NULL` | Nội dung tiếng Việt có dấu |
 | `content_unaccent` | `TEXT GENERATED ALWAYS` | Sinh tự động qua `rag.immutable_unaccent(content)` |
@@ -604,7 +605,7 @@ volumes/rag_data/
 | `metadata` | `JSONB DEFAULT '{}'::jsonb` | Chứa `segment_ids` và siêu dữ liệu mở rộng |
 | `created_at` | `TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP` | Thời điểm đồng bộ |
 
-> `PostgresPgVectorChunkStore.save_lecture_chunks()` thực thi transaction đồng bộ idempotent: `DELETE FROM rag.lecture_chunks WHERE lecture_id = %s` rồi batch insert qua `psycopg2.extras.execute_values` với ép kiểu `%s::halfvec(1024)` và `Json(...)`.
+> `PostgresPgVectorChunkStore.save_lecture_chunks()` thực thi transaction đồng bộ idempotent: `DELETE FROM rag.lecture_chunks WHERE lecture_id = %s` rồi batch insert qua `psycopg2.extras.execute_values` với ép kiểu `%s::halfvec(1024)` và `Json(...)`. Trong PostgreSQL 16, `rag.format_timestamp_display(seconds numeric)` và `rag.immutable_unaccent(text)` đều được khai báo `IMMUTABLE PARALLEL SAFE STRICT` tại `backend/db/init/01_rag_extensions.sql` để hợp lệ trong cột `GENERATED ALWAYS AS (...) STORED`.
 
 ### 7.2. SQL RPC Functions (`backend/db/init/04_rag_hybrid_search_rrf.sql`)
 
@@ -619,7 +620,7 @@ volumes/rag_data/
 - **Cột trả về:** `chunk_id, lecture_id, chunk_index, start_time_seconds, end_time_seconds, start_timestamp_display, end_timestamp_display, speaker_label, content, prev_chunk_id, next_chunk_id, dense_score, lexical_rank, fuzzy_rank, rrf_total_score`.
 
 #### `rag.get_expanded_context(p_chunk_id UUID)`
-- Trả về tối đa 3 dòng (`position IN ('PREVIOUS', 'CURRENT', 'NEXT')`) gồm `(position, chunk_id, start_timestamp_display, end_timestamp_display, speaker_label, content)`.
+- Trả về tối đa 3 dòng (`"position" IN ('PREVIOUS', 'CURRENT', 'NEXT')`, cột `"position" VARCHAR` được đặt trong ngoặc kép để tránh từ khóa dành riêng `POSITION` của PostgreSQL 16) gồm `("position", chunk_id, start_timestamp_display, end_timestamp_display, speaker_label, content)`.
 
 ---
 

@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-11-14T20:15:00.000Z" agent="LectureLens Architecture Sync" version="24.0.0" type="device">
+  <diagram id="arch-overview" name="1. Kiến Trúc Hệ Thống (Chi Tiết BE)">
+    <mxGraphModel dx="1800" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1680" pageHeight="1040" background="#F8FAFC" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Nền Canvas sáng hiện đại theo phong cách ảnh mẫu -->
+        <mxCell id="canvas-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#CBD5E1;strokeWidth=1.5;arcSize=1;" vertex="1" parent="1">
+          <mxGeometry x="10" y="10" width="1660" height="1020" as="geometry" />
+        </mxCell>
+
+        <!-- =================================================================== -->
+        <!-- TẦNG 1: NGƯỜI DÙNG & ỨNG DỤNG CLIENT                                 -->
+        <!-- =================================================================== -->
+
+        <!-- Khối Người dùng (Trái) -->
+        <mxCell id="u-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E3A8A;strokeWidth=2;arcSize=8;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="28" width="560" height="172" as="geometry" />
+        </mxCell>
+        <mxCell id="u-hdr" value="&lt;b style=&quot;font-size:15px; color:#0F172A;&quot;&gt;Người dùng&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#1E3A8A;strokeWidth=1.5;arcSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="140" y="28" width="560" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="u-lecturer" value="&lt;b style=&quot;font-size:13px; color:#0F172A;&quot;&gt;👨‍🏫 Giảng viên&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#334155;&quot;&gt;Upload audio bài giảng&lt;br/&gt;(.mp3, .wav, .m4a, .flac, .aac)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#94A3B8;strokeWidth=1;arcSize=12;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="165" y="80" width="240" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="u-student" value="&lt;b style=&quot;font-size:13px; color:#0F172A;&quot;&gt;👨‍🎓 Sinh viên&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#334155;&quot;&gt;Đặt câu hỏi tiếng Việt (có/không dấu)&lt;br/&gt;&amp;amp; nghe trích dẫn [MM:SS]&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#94A3B8;strokeWidth=1;arcSize=12;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="435" y="80" width="240" height="104" as="geometry" />
+        </mxCell>
+
+        <!-- Khối Ứng dụng client (Phải) -->
+        <mxCell id="c-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E3A8A;strokeWidth=2;arcSize=8;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="28" width="700" height="172" as="geometry" />
+        </mxCell>
+        <mxCell id="c-hdr" value="&lt;b style=&quot;font-size:15px; color:#0F172A;&quot;&gt;Ứng dụng client&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#1E3A8A;strokeWidth=1.5;arcSize=12;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="840" y="28" width="700" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="c-web" value="&lt;b style=&quot;font-size:13px; color:#0F172A;&quot;&gt;🌐 Web (Trình duyệt)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#334155;&quot;&gt;&amp;bull; &lt;b&gt;TEST/server.py (:8090)&lt;/b&gt; ✅ Test Studio Lab&lt;br/&gt;&amp;bull; &lt;i&gt;legacy/web-frontend/&lt;/i&gt; (Read-only archive)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#94A3B8;strokeWidth=1;arcSize=12;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="865" y="80" width="310" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="c-mobile" value="&lt;b style=&quot;font-size:13px; color:#0F172A;&quot;&gt;📱 Mobile app (iOS &amp;amp; Android)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#334155;&quot;&gt;&lt;b&gt;mobile/&lt;/b&gt; Expo SDK 58 / RN 0.88 (ADR 0003)&lt;br/&gt;ApiClient &amp;bull; AudioPipelineService &amp;bull; CapsulePlayer&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#94A3B8;strokeWidth=1;arcSize=12;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="1205" y="80" width="310" height="104" as="geometry" />
+        </mxCell>
+
+        <!-- Mũi tên Người dùng -> Ứng dụng client -->
+        <mxCell id="edge-u-c" value="" style="endArrow=classic;html=1;strokeColor=#1E293B;strokeWidth=2.5;" edge="1" parent="1" source="u-box" target="c-box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- =================================================================== -->
+        <!-- TẦNG 2: SPRING BOOT (BE) - CỔNG DUY NHẤT RA NGOÀI                    -->
+        <!-- =================================================================== -->
+        <mxCell id="sb-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;arcSize=14;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="250" width="1400" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="sb-title" value="&lt;b style=&quot;font-size:16px; color:#0F172A;&quot;&gt;🍃 Spring Boot 3.3 (BE)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:12px; color:#166534;&quot;&gt;&lt;b&gt;Cổng duy nhất ra ngoài (:8080 • Public Ingress DMZ)&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#B91C1C;&quot;&gt;🔴 Trạng thái: Đặc tả kiến trúc (Chưa có code Java)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="165" y="262" width="360" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="sb-div" value="" style="line;strokeWidth=1.5;direction=south;html=1;strokeColor=#4ADE80;" vertex="1" parent="1">
+          <mxGeometry x="530" y="266" width="10" height="84" as="geometry" />
+        </mxCell>
+
+        <!-- 4 Pill Cards bên trong Spring Boot -->
+        <mxCell id="sb-p1" value="&lt;b style=&quot;font-size:12px; color:#0F172A;&quot;&gt;🔐 Đăng nhập&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;POST /api/v1/auth/*&lt;br/&gt;JWT Stateless Token&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3B82F6;strokeWidth=1.5;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="550" y="268" width="195" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sb-p2" value="&lt;b style=&quot;font-size:12px; color:#0F172A;&quot;&gt;🛡️ Phân quyền (RBAC)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;ADMIN / LECTURER / STUDENT&lt;br/&gt;Lọc authorizedLectureIds&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3B82F6;strokeWidth=1.5;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="758" y="268" width="225" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sb-p3" value="&lt;b style=&quot;font-size:12px; color:#0F172A;&quot;&gt;📋 Trạng thái job (app.jobs)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;QUEUED &amp;rarr; PROCESSING_STT &amp;rarr; STT_COMPLETED&lt;br/&gt;&amp;rarr; CHUNKING &amp;rarr; EMBEDDING &amp;rarr; READY | FAILED&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3B82F6;strokeWidth=1.5;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="996" y="268" width="265" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sb-p4" value="&lt;b style=&quot;font-size:12px; color:#0F172A;&quot;&gt;🐳 Container: spring&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;Ghi nguyên tử {jobId}.tmp &amp;rarr; .{ext}&lt;br/&gt;Webhook PUT /jobs/{id}/status&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3B82F6;strokeWidth=1.5;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="1274" y="268" width="246" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Mũi tên Client -> Spring Boot -->
+        <mxCell id="edge-c-sb" value="&lt;b&gt;Request&lt;/b&gt; (HTTPS + Bearer JWT /api/v1/*)" style="endArrow=classic;html=1;strokeColor=#1E293B;strokeWidth=2.5;exitX=0.5;exitY=1;entryX=0.75;entryY=0;fontSize=11;fontColor=#0F172A;labelBackgroundColor=#F8FAFC;" edge="1" parent="1" source="c-box" target="sb-box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- =================================================================== -->
+        <!-- TẦNG 3: DOCKER COMPOSE MẠNG NỘI BỘ (KHÔNG MỞ RA NGOÀI)               -->
+        <!-- =================================================================== -->
+        <mxCell id="dc-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1F5F9;strokeColor=#334155;strokeWidth=2;dashed=1;dashPattern=8 5;arcSize=4;" vertex="1" parent="1">
+          <mxGeometry x="140" y="430" width="1400" height="530" as="geometry" />
+        </mxCell>
+        <mxCell id="dc-hdr" value="&lt;b style=&quot;font-size:15px; color:#0F172A;&quot;&gt;🐳 Docker Compose: mạng nội bộ, không mở ra ngoài&lt;/b&gt; &lt;span style=&quot;font-size:12px; color:#475569;&quot;&gt;(rag-internal-network &amp;bull; ADR 0001 Privacy-First Local AI)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="160" y="438" width="980" height="32" as="geometry" />
+        </mxCell>
+
+        <!-- Mũi tên Spring Boot -> Docker Compose (FastAPI) -->
+        <mxCell id="edge-sb-dc" value="&lt;b&gt;Khóa nội bộ&lt;/b&gt;: X-Internal-Secret + jobId Handshake (/internal/v1/ai/ingest, /chunk-and-embed, /search/hybrid)" style="endArrow=classic;html=1;strokeColor=#1E293B;strokeWidth=2.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=11;fontColor=#0F172A;labelBackgroundColor=#F8FAFC;" edge="1" parent="1" source="sb-box" target="dc-box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- =================================================================== -->
+        <!-- CỘT TRÁI TRONG DOCKER: FASTAPI (AI SERVICE)                          -->
+        <!-- =================================================================== -->
+        <mxCell id="ai-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0D9488;strokeWidth=2;arcSize=6;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="480" width="710" height="462" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-hdr" value="&lt;b style=&quot;font-size:14px; color:#0F172A;&quot;&gt;⚡ FastAPI (AI service)&lt;/b&gt; &lt;span style=&quot;font-size:11px; color:#0F766E;&quot;&gt;Container: ai (:8000) &amp;bull; backend/ai_service/&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="175" y="488" width="320" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-sec-badge" value="&lt;b style=&quot;font-size:9.5px; color:#0F766E;&quot;&gt;🔒 verify_internal_secret ✅ &amp;bull; /ingest &amp;bull; /chunk-and-embed &amp;bull; /chunks/{id} &amp;bull; /search/hybrid &amp;bull; /health&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCFBF1;strokeColor=#0D9488;strokeWidth=1;arcSize=50;" vertex="1" parent="1">
+          <mxGeometry x="492" y="491" width="363" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- Hộp Ingest (offline) -->
+        <mxCell id="ing-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#0D9488;strokeWidth=1.8;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="175" y="544" width="680" height="168" as="geometry" />
+        </mxCell>
+        <mxCell id="ing-pill" value="&lt;b style=&quot;font-size:12px; color:#FFFFFF;&quot;&gt;Ingest (offline)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0D9488;strokeColor=#0D9488;arcSize=30;" vertex="1" parent="1">
+          <mxGeometry x="188" y="532" width="130" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- 6 Bước ngang trong Ingest (offline) -->
+        <mxCell id="ai-i1" value="&lt;b style=&quot;font-size:11px; color:#0F172A;&quot;&gt;📁 AudioStore ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[I1] SHA-256&lt;br/&gt;manifest.json O(1)&lt;br/&gt;Chống Traversal&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0D9488;strokeWidth=1.2;arcSize=12;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="185" y="566" width="98" height="132" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-i2" value="&lt;b style=&quot;font-size:11px; color:#0F172A;&quot;&gt;🎛️ FFmpeg ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[I2] DSP Lọc nhiễu&lt;br/&gt;HP 80 / LP 7500&lt;br/&gt;afftdn + loudnorm&lt;br/&gt;&amp;rarr; 16kHz PCM&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0D9488;strokeWidth=1.2;arcSize=12;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="297" y="566" width="98" height="132" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-i3" value="&lt;b style=&quot;font-size:11px; color:#0F172A;&quot;&gt;✂️ VAD Slice ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[I3] EnergyVad&lt;br/&gt;RMS 50ms (-38dB)&lt;br/&gt;Cắt khoảng nghỉ&lt;br/&gt;10s &amp;ndash; 28s&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0D9488;strokeWidth=1.2;arcSize=12;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="409" y="566" width="98" height="132" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-i4" value="&lt;b style=&quot;font-size:11px; color:#0F172A;&quot;&gt;🤗 PhoWhisper ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[I4] base/medium&lt;br/&gt;GPU Lock(1), STT&lt;br/&gt;Gán [MM:SS] + unload()&lt;br/&gt;&amp;rarr; transcript.json&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=12;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="521" y="566" width="104" height="132" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-i5" value="&lt;b style=&quot;font-size:11px; color:#0F172A;&quot;&gt;📄 Chunking ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[I5] Recursive&lt;br/&gt;&amp;le; 512 tokens&lt;br/&gt;64 overlap&lt;br/&gt;prev/next_id&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=12;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="639" y="566" width="98" height="132" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-i6" value="&lt;b style=&quot;font-size:11px; color:#0F172A;&quot;&gt;🤗 BGE-M3 ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[I6] Embedding&lt;br/&gt;halfvec(1024)&lt;br/&gt;lexical_weights&lt;br/&gt;JSONB&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=12;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="751" y="566" width="94" height="132" as="geometry" />
+        </mxCell>
+
+        <!-- Mũi tên nối 6 bước Ingest -->
+        <mxCell id="e-i12" value="" style="endArrow=classic;html=1;strokeColor=#0D9488;strokeWidth=1.8;" edge="1" parent="1" source="ai-i1" target="ai-i2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-i23" value="" style="endArrow=classic;html=1;strokeColor=#0D9488;strokeWidth=1.8;" edge="1" parent="1" source="ai-i2" target="ai-i3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-i34" value="" style="endArrow=classic;html=1;strokeColor=#0D9488;strokeWidth=1.8;" edge="1" parent="1" source="ai-i3" target="ai-i4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-i45" value="" style="endArrow=classic;html=1;strokeColor=#0D9488;strokeWidth=1.8;" edge="1" parent="1" source="ai-i4" target="ai-i5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-i56" value="" style="endArrow=classic;html=1;strokeColor=#0D9488;strokeWidth=1.8;" edge="1" parent="1" source="ai-i5" target="ai-i6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Hộp Query (online) -->
+        <mxCell id="qry-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAF5FF;strokeColor=#7C3AED;strokeWidth=1.8;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="175" y="732" width="680" height="128" as="geometry" />
+        </mxCell>
+        <mxCell id="qry-pill" value="&lt;b style=&quot;font-size:12px; color:#FFFFFF;&quot;&gt;Query (online)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7C3AED;strokeColor=#7C3AED;arcSize=30;" vertex="1" parent="1">
+          <mxGeometry x="188" y="720" width="130" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- 2 Bước ngang trong Query (online) -->
+        <mxCell id="ai-q1" value="&lt;b style=&quot;font-size:12px; color:#0F766E;&quot;&gt;🤗 BGE-M3 (Embed câu hỏi) ✅/🔴&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[Q1] encode_query() &amp;rarr; halfvec(1024) + /search/hybrid ✅&lt;br/&gt;Check Semantic Cache (SQL ✅ / GĐ3 /query 🔴)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#0D9488;strokeWidth=1.5;arcSize=12;spacing=5;" vertex="1" parent="1">
+          <mxGeometry x="195" y="753" width="265" height="94" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-q2" value="&lt;b style=&quot;font-size:12px; color:#991B1B;&quot;&gt;🤗 Reranker (bge-reranker-v2-m3) 🔴&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[Q2] Cross-Encoder chấm cặp [Query, Top 25 RRF]&lt;br/&gt;Lọc Top 3&amp;ndash;5 đoạn + gọi get_expanded_context()&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#DC2626;strokeWidth=1.2;dashed=1;arcSize=12;spacing=5;" vertex="1" parent="1">
+          <mxGeometry x="505" y="753" width="330" height="94" as="geometry" />
+        </mxCell>
+        <mxCell id="e-q12" value="" style="endArrow=classic;html=1;strokeColor=#7C3AED;strokeWidth=2;dashed=1;" edge="1" parent="1" source="ai-q1" target="ai-q2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Dải Shared Volume (ADR 0002 & ADR 0004) -->
+        <mxCell id="vol-strip" value="&lt;b style=&quot;font-size:11px; color:#1E40AF;&quot;&gt;💾 Shared Volume (volumes/rag_data — ADR 0002 &amp;amp; 0004 ✅):&lt;/b&gt; &lt;span style=&quot;font-size:10px; color:#1E293B;&quot;&gt;&lt;b&gt;ingest/incoming/&lt;/b&gt;{jobId}.{ext} &amp;bull; &lt;b&gt;audio/{jobId}/&lt;/b&gt;manifest.json + normalized.wav &amp;bull; &lt;b&gt;transcripts/{jobId}/&lt;/b&gt;transcript.json &amp;bull; &lt;b&gt;chunks/{jobId}/&lt;/b&gt;chunks.json&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#2563EB;strokeWidth=1.2;arcSize=16;spacing=6;" vertex="1" parent="1">
+          <mxGeometry x="175" y="870" width="680" height="58" as="geometry" />
+        </mxCell>
+
+        <!-- =================================================================== -->
+        <!-- CỘT GIỮA TRONG DOCKER: POSTGRESQL + PGVECTOR                         -->
+        <!-- =================================================================== -->
+        <mxCell id="db-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F2FE;strokeColor=#0284C7;strokeWidth=2;arcSize=6;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="945" y="480" width="290" height="408" as="geometry" />
+        </mxCell>
+        <mxCell id="db-hdr" value="&lt;b style=&quot;font-size:14px; color:#0F172A;&quot;&gt;🐘 PostgreSQL + pgvector&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#0369A1;&quot;&gt;Container: db (:5432) &amp;bull; PG16 + 0.7.0+&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="955" y="486" width="270" height="44" as="geometry" />
+        </mxCell>
+
+        <mxCell id="db-app" value="&lt;b style=&quot;font-size:12px; color:#0F172A;&quot;&gt;Schema app ✅ (Migration 06)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;app.users &amp;bull; app.lectures &amp;bull; app.jobs&lt;br/&gt;(Constraint 7 trạng thái có STT_COMPLETED)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#38BDF8;strokeWidth=1.5;arcSize=12;spacing=5;" vertex="1" parent="1">
+          <mxGeometry x="962" y="538" width="256" height="86" as="geometry" />
+        </mxCell>
+
+        <mxCell id="db-rag" value="&lt;b style=&quot;font-size:12px; color:#0F172A;&quot;&gt;Schema rag ✅ (CompositeChunkStore ✅)&lt;/b&gt;&lt;br/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#334155;&quot;&gt;&amp;bull; &lt;b&gt;rag.lecture_chunks:&lt;/b&gt; halfvec(1024), HNSW (m=16, ef=64), GIN tsv_content, GIN pg_trgm unaccent, format_timestamp_display() [MM:SS] IMMUTABLE, prev/next_chunk_id&lt;br/&gt;&amp;bull; &lt;b&gt;search_vietnamese_rag_rrf():&lt;/b&gt; 3-Stream Hybrid RRF &amp;rarr; Top 25&lt;br/&gt;&amp;bull; &lt;b&gt;get_expanded_context():&lt;/b&gt; &quot;position&quot; PREV/CURR/NEXT&lt;br/&gt;&amp;bull; &lt;b&gt;semantic_query_cache&lt;/b&gt; &amp;amp; &lt;b&gt;rag_audit_logs&lt;/b&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#38BDF8;strokeWidth=1.5;arcSize=12;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="962" y="636" width="256" height="238" as="geometry" />
+        </mxCell>
+
+        <!-- =================================================================== -->
+        <!-- CỘT PHẢI TRONG DOCKER: OLLAMA + GEMMA 4 E4B                          -->
+        <!-- =================================================================== -->
+        <mxCell id="llm-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#7E22CE;strokeWidth=2;arcSize=6;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="1295" y="480" width="225" height="462" as="geometry" />
+        </mxCell>
+        <mxCell id="llm-hdr" value="&lt;b style=&quot;font-size:14px; color:#0F172A;&quot;&gt;🦙 Ollama&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#6B21A8;&quot;&gt;Container: llm (:11434)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1305" y="488" width="205" height="44" as="geometry" />
+        </mxCell>
+
+        <mxCell id="llm-gemma" value="&lt;b style=&quot;font-size:12px; color:#991B1B;&quot;&gt;✨ Gemma 4 E4B 🔴&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#0F172A;&quot;&gt;&lt;b&gt;Sinh trả lời&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#334155;&quot;&gt;&amp;bull; Model: &lt;i&gt;google/gemma-4-E4B-it&lt;/i&gt;&lt;br/&gt;&amp;bull; Config: &lt;i&gt;temp=0.2, repeat_penalty=1.15&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;Grounding Prompt:&lt;/b&gt; Kitsune Fox Companion, chỉ dùng ngữ cảnh bài giảng, bắt buộc dẫn nguồn &lt;b&gt;[MM:SS]&lt;/b&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#A855F7;strokeWidth=1.5;dashed=1;arcSize=12;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1312" y="544" width="191" height="216" as="geometry" />
+        </mxCell>
+
+        <mxCell id="llm-models" value="&lt;b style=&quot;font-size:11px; color:#166534;&quot;&gt;📦 Local Models (~23.7 GB) ✅&lt;/b&gt;&lt;br/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#334155;&quot;&gt;&amp;bull; phowhisper-base/medium ✅&lt;br/&gt;&amp;bull; bge-m3 + sparse_linear.pt ✅&lt;br/&gt;&amp;bull; bge-reranker-v2-m3 (2.27 GB) ⏸️&lt;br/&gt;&amp;bull; gemma-4-e4b (15.88 GB) ⏸️&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAF5FF;strokeColor=#A855F7;strokeWidth=1.2;arcSize=12;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1312" y="776" width="191" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- =================================================================== -->
+        <!-- CÁC ĐƯỜNG KẾT NỐI TRONG DOCKER & VÒNG NGOÀI                          -->
+        <!-- =================================================================== -->
+
+        <!-- FastAPI Ingest (BGE-M3) -> PostgreSQL (Schema rag) -->
+        <mxCell id="edge-ing-db" value="Lưu vector +&lt;br/&gt;metadata" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;html=1;strokeColor=#0D9488;strokeWidth=2;exitX=1;exitY=0.55;entryX=0;entryY=0.25;fontSize=10;fontColor=#0F172A;labelBackgroundColor=#F1F5F9;" edge="1" parent="1" source="ai-i6" target="db-rag">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="900" y="639" />
+              <mxPoint x="900" y="695" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- PostgreSQL (Schema rag) -> FastAPI Query (Reranker) -->
+        <mxCell id="edge-db-qry" value="Ứng viên + top-k&lt;br/&gt;(Top 25 RRF)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;html=1;strokeColor=#0284C7;strokeWidth=2;exitX=0;exitY=0.68;entryX=1;entryY=0.45;fontSize=10;fontColor=#0F172A;labelBackgroundColor=#F1F5F9;" edge="1" parent="1" source="db-rag" target="ai-q2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="910" y="798" />
+              <mxPoint x="910" y="795" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- FastAPI Query (Reranker) -> Ollama (Gemma 4 E4B) đi vòng dưới db-box để không đè chữ -->
+        <mxCell id="edge-qry-llm" value="&lt;b&gt;Top 3-5 đoạn&lt;/b&gt; (PREV + CURR + NEXT)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;html=1;strokeColor=#7C3AED;strokeWidth=2.2;dashed=1;exitX=0.5;exitY=1;entryX=0;entryY=0.72;fontSize=11;fontColor=#0F172A;labelBackgroundColor=#F1F5F9;" edge="1" parent="1" source="ai-q2" target="llm-gemma">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="670" y="914" />
+              <mxPoint x="1265" y="914" />
+              <mxPoint x="1265" y="700" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Đường phản hồi vòng trái: Báo xử lý xong -->
+        <mxCell id="edge-left-done" value="&lt;b&gt;Báo xử lý&lt;br/&gt;xong&lt;/b&gt;&lt;br/&gt;(STT_COMPLETED&lt;br/&gt;/ READY)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;html=1;strokeColor=#1E293B;strokeWidth=2;dashed=1;dashPattern=6 4;exitX=0;exitY=0.5;entryX=0;entryY=0.5;fontSize=11;fontColor=#0F172A;labelBackgroundColor=#F8FAFC;" edge="1" parent="1" source="ing-box" target="u-box">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="72" y="628" />
+              <mxPoint x="72" y="114" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Đường phản hồi vòng phải: Trả lời kèm nguồn -->
+        <mxCell id="edge-right-ans" value="&lt;b&gt;Trả lời&lt;br/&gt;kèm nguồn&lt;/b&gt;&lt;br/&gt;({ answer,&lt;br/&gt;citations [MM:SS] })" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;html=1;strokeColor=#1E293B;strokeWidth=2.2;exitX=1;exitY=0.5;entryX=1;entryY=0.5;fontSize=11;fontColor=#0F172A;labelBackgroundColor=#F8FAFC;" edge="1" parent="1" source="llm-gemma" target="c-box">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1605" y="652" />
+              <mxPoint x="1605" y="114" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- =================================================================== -->
+        <!-- HỘP CHÚ GIẢI GÓC DƯỚI BÊN PHẢI                                      -->
+        <!-- =================================================================== -->
+        <mxCell id="leg-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#334155;strokeWidth=1.5;arcSize=12;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="960" y="972" width="580" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-ing" value="&lt;b style=&quot;color:#FFFFFF; font-size:11px;&quot;&gt;Ingest (offline)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0D9488;strokeColor=#0D9488;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry x="975" y="982" width="115" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-qry" value="&lt;b style=&quot;color:#FFFFFF; font-size:11px;&quot;&gt;Query (online)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7C3AED;strokeColor=#7C3AED;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry x="1102" y="982" width="115" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-st" value="&lt;span style=&quot;font-size:11px; color:#0F172A;&quot;&gt;&lt;b&gt;✅ Đã có Code/SQL &amp;amp; Tests&lt;/b&gt; &amp;nbsp;|&amp;nbsp; &lt;b style=&quot;color:#991B1B;&quot;&gt;🔴 Chờ nối Code&lt;/b&gt;&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1228" y="982" width="300" height="28" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- ========================================================================= -->
+  <!-- TRANG 2: CHI TIẾT TỪNG STEP & MATT POCOCK DEEP MODULE SEAMS               -->
+  <!-- ========================================================================= -->
+  <diagram id="steps-and-seams" name="2. Chi Tiết Từng Step &amp; Deep Modules">
+    <mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1680" pageHeight="1160" background="#F8FAFC" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Canvas -->
+        <mxCell id="p2-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#CBD5E1;strokeWidth=1.5;arcSize=1;" vertex="1" parent="1">
+          <mxGeometry x="10" y="10" width="1660" height="1140" as="geometry" />
+        </mxCell>
+
+        <!-- Banner Trang 2 -->
+        <mxCell id="p2-banner" value="&lt;b style=&quot;font-size:19px; color:#0F172A;&quot;&gt;🔍 Chi Tiết Từng Step Xử Lý Backend &amp;amp; Kiến Trúc Deep Module Seams&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:12px; color:#475569;&quot;&gt;Phân tích bằng Understand Anything (.ua/manifest.json) &amp;amp; Matt Pocock Skills (codebase-design + domain-modeling)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E3A8A;strokeWidth=2;align=center;verticalAlign=middle;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="20" width="1620" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- =================================================================== -->
+        <!-- BAND 1: LUỒNG 1 - OFFLINE INGESTION (STEP 1 .. STEP 8)               -->
+        <!-- =================================================================== -->
+        <mxCell id="b1-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0D9488;strokeWidth=2;arcSize=4;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="95" width="1620" height="385" as="geometry" />
+        </mxCell>
+        <mxCell id="b1-hdr" value="&lt;b style=&quot;font-size:13px; color:#FFFFFF;&quot;&gt;LUỒNG 1 — OFFLINE AUDIO INGEST &amp;amp; VECTORIZATION PIPELINE (STEP 1 &amp;rarr; STEP 8)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0D9488;strokeColor=#0D9488;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="106" width="1580" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- Row 1: Step 1..4 -->
+        <mxCell id="s1" value="&lt;b style=&quot;color:#991B1B; font-size:12px;&quot;&gt;Step 1: Client Upload &amp;amp; Cấp jobId 🔴&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; Mobile gửi &lt;b&gt;POST /api/v1/audio/upload&lt;/b&gt; (audio, lectureId, fileExtension) kèm Bearer JWT.&lt;br/&gt;&amp;bull; Gateway sinh UUID v4 &lt;i&gt;jobId&lt;/i&gt;, ghi &lt;i&gt;app.jobs (QUEUED)&lt;/i&gt;, trả &lt;b&gt;202 Accepted&lt;/b&gt;.&lt;br/&gt;&amp;bull; &lt;i&gt;Dev hiện tại:&lt;/i&gt; &lt;b&gt;TEST/server.py (:8090)&lt;/b&gt; nhận upload qua &lt;i&gt;POST /api/upload&lt;/i&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#DC2626;strokeWidth=1.5;dashed=1;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="50" y="146" width="375" height="148" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s2" value="&lt;b style=&quot;color:#0F766E; font-size:12px;&quot;&gt;Step 2: Volume Handshake &amp;amp; Secret Gate ✅/🔴&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; Gateway ghi nguyên tử &lt;i&gt;{jobId}.tmp &amp;rarr; ingest/incoming/{jobId}.{ext}&lt;/i&gt; (ADR 0002).&lt;br/&gt;&amp;bull; Gọi &lt;b&gt;POST /internal/v1/ai/ingest&lt;/b&gt; chỉ truyền &lt;i&gt;{jobId, lectureId, fileExtension}&lt;/i&gt; (cấm path tùy ý).&lt;br/&gt;&amp;bull; FastAPI &lt;b&gt;verify_internal_secret()&lt;/b&gt; kiểm tra &lt;i&gt;X-Internal-Secret&lt;/i&gt; bằng &lt;i&gt;secrets.compare_digest&lt;/i&gt; (401/422/404/202) &amp;rarr; đẩy vào &lt;i&gt;BackgroundTasks&lt;/i&gt; ✅.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#0D9488;strokeWidth=1.5;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="451" y="146" width="375" height="148" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s3" value="&lt;b style=&quot;color:#166534; font-size:12px;&quot;&gt;Step 3: AudioStore Register &amp;amp; Manifest O(1) ✅&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;IngestPipelineCoordinator&lt;/b&gt; báo &lt;i&gt;PROCESSING_STT (5%)&lt;/i&gt;.&lt;br/&gt;&amp;bull; &lt;b&gt;LocalVolumeAudioStore.register()&lt;/b&gt; chặn Path Traversal (&lt;i&gt;relative_to&lt;/i&gt;), kiểm tra file tồn tại &amp;amp; &amp;gt;0 bytes, tính SHA-256.&lt;br/&gt;&amp;bull; Ghi nguyên tử &lt;i&gt;audio/{jobId}/manifest.json&lt;/i&gt; (&lt;i&gt;mkstemp&lt;/i&gt; cùng thư mục + &lt;i&gt;fsync&lt;/i&gt; + &lt;i&gt;os.replace&lt;/i&gt; tránh lỗi &lt;i&gt;EXDEV&lt;/i&gt;).&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="852" y="146" width="375" height="148" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s4" value="&lt;b style=&quot;color:#166534; font-size:12px;&quot;&gt;Step 4: FFmpeg DSP &amp;amp; Chuẩn Hóa 16kHz PCM ✅&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; Báo tiến độ &lt;i&gt;PROCESSING_STT (15%)&lt;/i&gt;.&lt;br/&gt;&amp;bull; &lt;b&gt;FFmpegAudioPreprocessor.process()&lt;/b&gt; tự dò binary (&lt;i&gt;FFMPEG_BINARY &amp;rarr; PATH &amp;rarr; imageio_ffmpeg&lt;/i&gt;).&lt;br/&gt;&amp;bull; Chạy filter DSP: &lt;i&gt;highpass=80, lowpass=7500, afftdn=nf=-25:tn=1, loudnorm=I=-16:TP=-1.5:LRA=11&lt;/i&gt; &amp;rarr; xuất &lt;b&gt;normalized.wav&lt;/b&gt; (16kHz Mono 16-bit).&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1253" y="146" width="375" height="148" as="geometry" />
+        </mxCell>
+
+        <!-- Row 2: Step 5..8 -->
+        <mxCell id="s5" value="&lt;b style=&quot;color:#166534; font-size:12px;&quot;&gt;Step 5: GPU Lock, VAD Slicing &amp;amp; PhoWhisper ✅&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; Khóa &lt;b&gt;GLOBAL_GPU_SEMAPHORE(1)&lt;/b&gt; chống OOM VRAM, chạy đồng bộ trong &lt;i&gt;loop.run_in_executor&lt;/i&gt;.&lt;br/&gt;&amp;bull; &lt;b&gt;EnergyVadChunker:&lt;/b&gt; quét RMS 50ms (-38dB), cắt tại khoảng lặng &amp;ge;300ms (10s&amp;ndash;28s) (đã dùng trong &lt;i&gt;TEST/server.py&lt;/i&gt;; &lt;i&gt;PhoWhisperEngine&lt;/i&gt; mặc định cắt 30s nếu không truyền).&lt;br/&gt;&amp;bull; &lt;b&gt;PhoWhisperEngine:&lt;/b&gt; &lt;i&gt;DEFAULT_IT_PROMPT&lt;/i&gt;, &lt;i&gt;no_repeat_ngram_size=3&lt;/i&gt;, &lt;i&gt;empty_cache()&lt;/i&gt;, báo 25%&amp;rarr;85%.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="50" y="316" width="375" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s6" value="&lt;b style=&quot;color:#166534; font-size:12px;&quot;&gt;Step 6: Xuất transcript.json &amp;amp; STT_COMPLETED ✅&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; Báo &lt;i&gt;90%&lt;/i&gt;, gán nhãn &lt;b&gt;[MM:SS]&lt;/b&gt; tăng đơn điệu (&lt;i&gt;format_timestamp_label()&lt;/i&gt;).&lt;br/&gt;&amp;bull; &lt;b&gt;AudioStore.save_transcript()&lt;/b&gt; ghi nguyên tử &lt;i&gt;transcripts/{jobId}/transcript.json&lt;/i&gt;, cập nhật &lt;i&gt;manifest.stt = COMPLETED&lt;/i&gt;.&lt;br/&gt;&amp;bull; &lt;b&gt;SpringJobReporter&lt;/b&gt; retry 3 lần (backoff 0.5s&amp;rarr;2s) gọi &lt;i&gt;PUT /internal/v1/jobs/{jobId}/status&lt;/i&gt; báo &lt;b&gt;STT_COMPLETED (100%)&lt;/b&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBF7D0;strokeColor=#16A34A;strokeWidth=2;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="451" y="316" width="375" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s7" value="&lt;b style=&quot;color:#166534; font-size:12px;&quot;&gt;Step 7: Recursive Chunking &amp;amp; BGE-M3 Embed ✅&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; Giải phóng VRAM &lt;b&gt;asr_engine.unload()&lt;/b&gt; (&lt;i&gt;LOW_VRAM_MODE=true&lt;/i&gt;), đọc &lt;i&gt;transcript.json&lt;/i&gt;, báo &lt;b&gt;CHUNKING (88%)&lt;/b&gt;.&lt;br/&gt;&amp;bull; &lt;b&gt;[I5] RecursiveTokenChunker&lt;/b&gt; (&lt;i&gt;BgeM3TokenizerAdapter&lt;/i&gt;): gom chunks &amp;le; &lt;b&gt;512 tokens&lt;/b&gt; (64 overlap), nội suy &lt;i&gt;[MM:SS]&lt;/i&gt;, nối &lt;i&gt;prev/next_chunk_id&lt;/i&gt;.&lt;br/&gt;&amp;bull; Báo &lt;b&gt;EMBEDDING (92%)&lt;/b&gt; &amp;rarr; &lt;b&gt;[I6] BgeM3Embedder&lt;/b&gt; (&lt;i&gt;transformers + sparse_linear.pt&lt;/i&gt;) sinh &lt;b&gt;halfvec(1024)&lt;/b&gt; + &lt;i&gt;lexical_weights&lt;/i&gt; JSONB.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="852" y="316" width="375" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s8" value="&lt;b style=&quot;color:#166534; font-size:12px;&quot;&gt;Step 8: Lưu chunks.json, Batch Sync pgvector &amp;amp; READY ✅&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;AudioStore.save_chunks()&lt;/b&gt; ghi nguyên tử &lt;i&gt;chunks/{jobId}/chunks.json&lt;/i&gt;, cập nhật &lt;i&gt;manifest.chunking&lt;/i&gt;.&lt;br/&gt;&amp;bull; &lt;b&gt;CompositeChunkStore&lt;/b&gt; batch upsert vào &lt;b&gt;rag.lecture_chunks&lt;/b&gt; (&lt;i&gt;format_timestamp_display() [MM:SS]&lt;/i&gt;, &lt;i&gt;immutable_unaccent&lt;/i&gt;, &lt;i&gt;tsv_content&lt;/i&gt;, HNSW + GIN).&lt;br/&gt;&amp;bull; Báo &lt;b&gt;READY (100%)&lt;/b&gt; qua Webhook &amp;rarr; sẵn sàng truy vấn Hybrid RRF.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBF7D0;strokeColor=#16A34A;strokeWidth=2;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1253" y="316" width="375" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- Connectors Band 1 -->
+        <mxCell id="e-s12" value="" style="endArrow=classic;html=1;strokeColor=#0F172A;strokeWidth=2;" edge="1" parent="1" source="s1" target="s2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-s23" value="" style="endArrow=classic;html=1;strokeColor=#0D9488;strokeWidth=2;" edge="1" parent="1" source="s2" target="s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-s34" value="" style="endArrow=classic;html=1;strokeColor=#16A34A;strokeWidth=2;" edge="1" parent="1" source="s3" target="s4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-s45" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;html=1;strokeColor=#16A34A;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="s4" target="s5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1440" y="305" />
+              <mxPoint x="237" y="305" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-s56" value="" style="endArrow=classic;html=1;strokeColor=#16A34A;strokeWidth=2;" edge="1" parent="1" source="s5" target="s6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-s67" value="" style="endArrow=classic;html=1;strokeColor=#16A34A;strokeWidth=2;" edge="1" parent="1" source="s6" target="s7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-s78" value="" style="endArrow=classic;html=1;strokeColor=#16A34A;strokeWidth=2;" edge="1" parent="1" source="s7" target="s8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- =================================================================== -->
+        <!-- BAND 2: LUỒNG 2 - ONLINE 2-STAGE NEURAL RAG QUERY (STEP 9 .. STEP 14) -->
+        <!-- =================================================================== -->
+        <mxCell id="b2-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=2;arcSize=4;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="495" width="1620" height="320" as="geometry" />
+        </mxCell>
+        <mxCell id="b2-hdr" value="&lt;b style=&quot;font-size:13px; color:#FFFFFF;&quot;&gt;LUỒNG 2 — ONLINE 2-STAGE NEURAL RAG &amp;amp; GROUNDED CITATION PIPELINE (STEP 9 &amp;rarr; STEP 14)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7C3AED;strokeColor=#7C3AED;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="506" width="1580" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- Row 1: Step 9..11 -->
+        <mxCell id="s9" value="&lt;b style=&quot;color:#991B1B; font-size:12px;&quot;&gt;Step 9: Mobile Query &amp;amp; Kiểm Quyền RBAC 🔴&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; Sinh viên đặt câu hỏi tiếng Việt (có hoặc không dấu) gửi &lt;b&gt;POST /api/v1/rag/query&lt;/b&gt; { lectureId, query, topK } kèm Bearer JWT.&lt;br/&gt;&amp;bull; Spring Boot xác thực JWT, trích lọc danh sách bài giảng hợp lệ (&lt;i&gt;authorizedLectureIds&lt;/i&gt;) &amp;rarr; chuyển tiếp &lt;b&gt;POST /internal/v1/ai/query&lt;/b&gt; kèm &lt;i&gt;X-Internal-Secret&lt;/i&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#DC2626;strokeWidth=1.5;dashed=1;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="50" y="544" width="500" height="118" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s10" value="&lt;b style=&quot;color:#0F766E; font-size:12px;&quot;&gt;Step 10: Query Embedding &amp;amp; Semantic Cache Check ✅/🔴&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;BgeM3Embedder.encode_query() ✅&lt;/b&gt; nhúng câu hỏi thành &lt;i&gt;halfvec(1024)&lt;/i&gt; + &lt;i&gt;lexical_weights&lt;/i&gt;.&lt;br/&gt;&amp;bull; &lt;b&gt;rag.semantic_query_cache&lt;/b&gt; (&lt;i&gt;05_rag_telemetry_cache.sql&lt;/i&gt; ✅): tra cứu Cosine &amp;gt; &lt;b&gt;0.95&lt;/b&gt; (&amp;lt;10ms) trong luồng &lt;i&gt;/query&lt;/i&gt; chờ GĐ3 🔴.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#0D9488;strokeWidth=1.5;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="588" y="544" width="500" height="118" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s11" value="&lt;b style=&quot;color:#166534; font-size:12px;&quot;&gt;Step 11: GĐ1 — 3-Stream Hybrid Search RRF ✅ Code + SQL&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;ChunkStore.search_hybrid_rrf()&lt;/b&gt; (&lt;i&gt;POST /internal/v1/ai/search/hybrid&lt;/i&gt; &amp;amp; &lt;i&gt;TEST /api/search&lt;/i&gt;) gọi &lt;b&gt;rag.search_vietnamese_rag_rrf()&lt;/b&gt;:&lt;br/&gt;&amp;nbsp;&amp;nbsp;1) &lt;b&gt;Dense HNSW:&lt;/b&gt; Cosine &lt;i&gt;halfvec(1024)&lt;/i&gt; | 2) &lt;b&gt;Lexical:&lt;/b&gt; GIN &lt;i&gt;tsv_content&lt;/i&gt; | 3) &lt;b&gt;Fuzzy:&lt;/b&gt; &lt;i&gt;pg_trgm&lt;/i&gt; &amp;gt; 0.15.&lt;br/&gt;&amp;bull; Hợp nhất điểm RRF &amp;Sigma; 1/(60+rank) (có fallback &lt;i&gt;InMemoryChunkStore&lt;/i&gt; khi offline) &amp;rarr; &lt;b&gt;Top K ứng viên&lt;/b&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1126" y="544" width="502" height="118" as="geometry" />
+        </mxCell>
+
+        <!-- Row 2: Step 12..14 -->
+        <mxCell id="s12" value="&lt;b style=&quot;color:#991B1B; font-size:12px;&quot;&gt;Step 12: GĐ2 — Cross-Encoder Reranking 🔴&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; &lt;i&gt;(Cần code GĐ3)&lt;/i&gt; Nạp &lt;b&gt;backend/models/bge-reranker-v2-m3&lt;/b&gt; (đã tải ~2.27 GB trên đĩa ✅).&lt;br/&gt;&amp;bull; Chấm điểm tương quan cặp sâu &lt;b&gt;[Query, Chunk&lt;sub&gt;i&lt;/sub&gt;]&lt;/b&gt; cho toàn bộ Top 25 ứng viên.&lt;br/&gt;&amp;bull; Loại bỏ triệt để phân đoạn nhiễu, chỉ giữ &lt;b&gt;Top 3&amp;ndash;5 chunks&lt;/b&gt; đạt điểm cao nhất.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#DC2626;strokeWidth=1.5;dashed=1;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="50" y="684" width="500" height="116" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s13" value="&lt;b style=&quot;color:#166534; font-size:12px;&quot;&gt;Step 13: Mở Rộng Ngữ Cảnh 3 Chiều ✅ Code + SQL&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;ChunkStore.get_expanded_context()&lt;/b&gt; (&lt;i&gt;GET /chunks/context/{chunk_id}&lt;/i&gt;) gọi &lt;b&gt;rag.get_expanded_context()&lt;/b&gt; (&lt;i&gt;&quot;position&quot; VARCHAR&lt;/i&gt; ✅).&lt;br/&gt;&amp;bull; Truy vết con trỏ kép &lt;i&gt;prev_chunk_id / next_chunk_id&lt;/i&gt; (&lt;i&gt;idx_chunks_nav&lt;/i&gt;) trả cụm &lt;b&gt;PREVIOUS + CURRENT + NEXT&lt;/b&gt; (~2&amp;ndash;3 phút) kèm mốc &lt;b&gt;[MM:SS]&lt;/b&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="588" y="684" width="500" height="116" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s14" value="&lt;b style=&quot;color:#991B1B; font-size:12px;&quot;&gt;Step 14: Grounded Synthesis, Audit Log &amp;amp; Tua Audio 🔴&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; Gửi Prompt &lt;b&gt;Kitsune Fox Companion&lt;/b&gt; + ngữ cảnh mở rộng tới Ollama &lt;b&gt;google/gemma-4-E4B-it&lt;/b&gt; (:11434, &lt;i&gt;temp=0.2&lt;/i&gt;) &amp;rarr; sinh câu trả lời bám ngữ cảnh kèm citation &lt;b&gt;[MM:SS]&lt;/b&gt;.&lt;br/&gt;&amp;bull; Lưu độ trễ &amp;amp; điểm vào &lt;i&gt;rag.rag_audit_logs&lt;/i&gt; + cập nhật &lt;i&gt;semantic_query_cache&lt;/i&gt; &amp;rarr; trả JSON về Mobile (&lt;b&gt;CapsuleAudioPlayer&lt;/b&gt; tua đúng mốc giờ).&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#DC2626;strokeWidth=1.5;dashed=1;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1126" y="684" width="502" height="116" as="geometry" />
+        </mxCell>
+
+        <!-- Connectors Band 2 -->
+        <mxCell id="e-s910" value="" style="endArrow=classic;html=1;strokeColor=#DC2626;strokeWidth=2;dashed=1;" edge="1" parent="1" source="s9" target="s10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-s1011" value="" style="endArrow=classic;html=1;strokeColor=#7C3AED;strokeWidth=2;" edge="1" parent="1" source="s10" target="s11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-s1112" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;html=1;strokeColor=#7C3AED;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="s11" target="s12">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1377" y="673" />
+              <mxPoint x="300" y="673" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-s1213" value="" style="endArrow=classic;html=1;strokeColor=#16A34A;strokeWidth=2;" edge="1" parent="1" source="s12" target="s13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-s1314" value="" style="endArrow=classic;html=1;strokeColor=#DC2626;strokeWidth=2;dashed=1;" edge="1" parent="1" source="s13" target="s14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- =================================================================== -->
+        <!-- BAND 3: MATT POCOCK DEEP MODULES, SEAMS & UNDERSTAND ANYTHING        -->
+        <!-- =================================================================== -->
+        <mxCell id="b3-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1E3A8A;strokeWidth=2;arcSize=4;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="830" width="1620" height="305" as="geometry" />
+        </mxCell>
+        <mxCell id="b3-hdr" value="&lt;b style=&quot;font-size:13px; color:#FFFFFF;&quot;&gt;KIẾN TRÚC DEEP MODULES &amp;amp; SEAMS TRONG BACKEND/AI_SERVICE/ (MATT POCOCK + UNDERSTAND ANYTHING)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E3A8A;strokeColor=#1E3A8A;arcSize=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="841" width="1580" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dm1" value="&lt;b style=&quot;color:#1E3A8A; font-size:11.5px;&quot;&gt;Seam 1: AudioStoreProtocol ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:9.5px; color:#475569;&quot;&gt;core/audio_store.py&lt;/span&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;Interface:&lt;/b&gt; register, resolve_manifest, save_transcript, save_chunks, load_chunks, mark_failed&lt;br/&gt;&amp;bull; &lt;b&gt;Adapter:&lt;/b&gt; &lt;i&gt;LocalVolumeAudioStore&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;Depth:&lt;/b&gt; SHA-256, chống Path Traversal, ghi nguyên tử cùng mount tránh &lt;i&gt;EXDEV&lt;/i&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#3B82F6;strokeWidth=1.5;arcSize=10;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="50" y="882" width="250" height="238" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dm2" value="&lt;b style=&quot;color:#1E3A8A; font-size:11.5px;&quot;&gt;Seam 2 &amp;amp; 3: DSP, ASR &amp;amp; VAD ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:9.5px; color:#475569;&quot;&gt;preprocessing.py &amp;bull; asr.py &amp;bull; vad_chunker.py&lt;/span&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;AudioPreprocessorProtocol:&lt;/b&gt; &lt;i&gt;FFmpegAudioPreprocessor&lt;/i&gt; (16kHz Mono DSP) &amp;amp; &lt;i&gt;FakeAudioPreprocessor&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;AsrEngineProtocol:&lt;/b&gt; &lt;i&gt;PhoWhisperEngine&lt;/i&gt; + &lt;i&gt;unload()&lt;/i&gt; &amp;amp; &lt;i&gt;FakeAsrEngine&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;VadChunkerProtocol:&lt;/b&gt; &lt;i&gt;EnergyVadChunker&lt;/i&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#3B82F6;strokeWidth=1.5;arcSize=10;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="316" y="882" width="250" height="238" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dm3" value="&lt;b style=&quot;color:#1E3A8A; font-size:11.5px;&quot;&gt;Seam 4: TextChunker [I5] ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:9.5px; color:#475569;&quot;&gt;core/text_chunker.py&lt;/span&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;TokenizerProtocol:&lt;/b&gt; &lt;i&gt;BgeM3TokenizerAdapter&lt;/i&gt; &amp;amp; &lt;i&gt;WhitespaceApproxTokenizer&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;TextChunkerProtocol:&lt;/b&gt; &lt;i&gt;RecursiveTokenChunker&lt;/i&gt; (&amp;le;512 tokens, 64 overlap)&lt;br/&gt;&amp;bull; &lt;b&gt;Depth:&lt;/b&gt; tách câu đệ quy, nội suy &lt;i&gt;[MM:SS]&lt;/i&gt;, &lt;i&gt;prev/next_chunk_id&lt;/i&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#3B82F6;strokeWidth=1.5;arcSize=10;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="582" y="882" width="250" height="238" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dm4" value="&lt;b style=&quot;color:#1E3A8A; font-size:11.5px;&quot;&gt;Seam 5: EmbedderProtocol [I6] ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:9.5px; color:#475569;&quot;&gt;core/embedder.py&lt;/span&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;Interface:&lt;/b&gt; encode_passages, encode_query, unload&lt;br/&gt;&amp;bull; &lt;b&gt;Prod Adapter:&lt;/b&gt; &lt;i&gt;BgeM3Embedder&lt;/i&gt; nạp trực tiếp &lt;i&gt;transformers&lt;/i&gt; + &lt;i&gt;sparse_linear.pt&lt;/i&gt; (không dùng &lt;i&gt;FlagEmbedding&lt;/i&gt;)&lt;br/&gt;&amp;bull; &lt;b&gt;Output:&lt;/b&gt; &lt;i&gt;halfvec(1024)&lt;/i&gt; FP16 L2 + &lt;i&gt;lexical_weights&lt;/i&gt; JSONB; &lt;i&gt;FakeEmbedder&lt;/i&gt; cho tests.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#3B82F6;strokeWidth=1.5;arcSize=10;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="848" y="882" width="250" height="238" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dm5" value="&lt;b style=&quot;color:#1E3A8A; font-size:11.5px;&quot;&gt;Seam 6: ChunkStoreProtocol ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:9.5px; color:#475569;&quot;&gt;core/chunk_store.py&lt;/span&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;Interface:&lt;/b&gt; save_lecture_chunks, get_lecture_chunks, search_hybrid_rrf, get_expanded_context&lt;br/&gt;&amp;bull; &lt;b&gt;Adapters:&lt;/b&gt; &lt;i&gt;PostgresPgVectorChunkStore&lt;/i&gt; (HNSW + TSV + pg_trgm), &lt;i&gt;InMemoryChunkStore&lt;/i&gt; (fallback offline), &lt;i&gt;CompositeChunkStore&lt;/i&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#3B82F6;strokeWidth=1.5;arcSize=10;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1114" y="882" width="250" height="238" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dm6" value="&lt;b style=&quot;color:#0F766E; font-size:11.5px;&quot;&gt;Seam 7: Reporter, Coordinator &amp;amp; Status 📌&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:9.5px; color:#475569;&quot;&gt;job_reporter.py &amp;bull; ingest_pipeline.py &amp;bull; deps&lt;/span&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;JobReporterProtocol:&lt;/b&gt; &lt;i&gt;SpringJobReporter&lt;/i&gt;, &lt;i&gt;RecordingJobReporter&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;Coordinator:&lt;/b&gt; &lt;i&gt;GLOBAL_GPU_SEMAPHORE(1)&lt;/i&gt;, &lt;i&gt;LOW_VRAM_MODE=true&lt;/i&gt;, &lt;i&gt;65 passed&lt;/i&gt; pytest, Docker &lt;i&gt;16GB RAM/4GB VRAM&lt;/i&gt;, &lt;i&gt;.ua/manifest.json&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;Còn lại:&lt;/b&gt; Spring Boot Java (:8080) &amp;amp; GĐ3 Reranker + Gemma 4 E4B.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#D97706;strokeWidth=1.5;arcSize=10;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1380" y="882" width="250" height="238" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

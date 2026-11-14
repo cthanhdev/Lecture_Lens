@@ -26,6 +26,7 @@ Stage 1 of the LectureLens Audio Ingest Pipeline produces an immutable `transcri
 3. **Immutable `chunks.json` Artifact & Idempotent PgVector Sync:**
    - Persist `volumes/rag_data/chunks/{jobId}/chunks.json` atomically (`os.replace` on the shared mount point per ADR 0002) and update `manifest.json` (`chunking` metadata) before syncing chunks into `rag.lecture_chunks` (idempotent per `lecture_id` via replace-in-transaction).
    - Provide a `ChunkStoreProtocol` seam with `PostgresPgVectorChunkStore`, `InMemoryChunkStore`, and `CompositeChunkStore` so tests and offline local execution succeed cleanly even when PostgreSQL is unavailable.
+   - Define `GENERATED ALWAYS AS (...) STORED` columns in `rag.lecture_chunks` strictly via `IMMUTABLE` SQL wrappers (`rag.format_timestamp_display(numeric)` for `[MM:SS]`/`[HH:MM:SS]` and `rag.immutable_unaccent(text)`), and quote `"position" VARCHAR` in `rag.get_expanded_context` for full PostgreSQL 16 compatibility.
 
 4. **Sequential VRAM Offloading (`LOW_VRAM_MODE=true`):**
    - Enable `LOW_VRAM_MODE` by default under the global `asyncio.Semaphore(1)` GPU lock: after Stage 1 ASR writes `transcript.json`, invoke `unload()` on the ASR engine (`del` model/processor + `gc.collect()` + `torch.cuda.empty_cache()`) before loading `BGE-M3` for Stage 2. Expose `unload()` on the embedder as well so 4 GB VRAM GPUs never hit CUDA OOM between stages.

@@ -36,6 +36,9 @@ Mở trình duyệt tới **`http://localhost:8090`**.
 ```bash
 # Từ thư mục gốc của repo:
 docker compose -f TEST/docker-compose.test.yml up --build
+
+# (Tùy chọn) Kiểm chứng toàn bộ schema pgvector 16 + 3-Stream RRF trực tiếp qua mạng Docker:
+Get-Content -Raw -Encoding UTF8 backend/db/verify_rag_db.py | docker exec -e PYTHONIOENCODING=utf-8 -e POSTGRES_HOST=test-db -i lecturelens-test-ai-model python -
 ```
 *(Hoặc nhấp đúp **`TEST\run_test_docker.bat`**)*
 

@@ -303,6 +303,7 @@ lecture_lens/
 │
 ├── docs/                                # 📚 TÀI LIỆU KỸ THUẬT & KIẾN TRÚC
 │   ├── API-REFERENCE.md                 # Single Source of Truth API (Ingress :8080, AI :8000, Webhook, SQL RPCs)
+│   ├── KienTrucHeThong.drawio           # Sơ đồ kiến trúc BE 2 trang (Microservices Topology, 14 Steps & 7 Seams)
 │   ├── design-system.md                 # Đặc tả hệ thống thiết kế Kitsune Soft
 │   ├── UX-NAVIGATION-FLOW.md            # Đặc tả luồng điều hướng 28 màn hình
 │   ├── adr/                             # Architectural Decision Records (ADR 0001, 0002, 0003, 0004)
@@ -379,8 +380,10 @@ docker compose -f TEST/docker-compose.test.yml up --build
 # 5. Chạy bộ 65 bài kiểm thử tự động của Backend (Stage 1, Stage 2 [I5]/[I6] & Chunk Store)
 .\.venv\Scripts\python.exe -m pytest backend/tests -v
 
-# 6. Kiểm tra và xác minh CSDL pgvector RAG
+# 6. Kiểm tra và xác minh CSDL pgvector RAG (trực tiếp hoặc qua mạng Docker khi host chiếm cổng 5432)
 python backend/db/verify_rag_db.py
+# Hoặc chạy trong container mạng TEST Studio:
+Get-Content -Raw -Encoding UTF8 backend/db/verify_rag_db.py | docker exec -e PYTHONIOENCODING=utf-8 -e POSTGRES_HOST=test-db -i lecturelens-test-ai-model python -
 ```
 
 > 📖 Xem toàn bộ hợp đồng API Gateway `:8080`, FastAPI `:8000`, `chunks.json` và SQL RPCs tại [`docs/API-REFERENCE.md`](./docs/API-REFERENCE.md).

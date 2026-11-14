@@ -157,8 +157,11 @@ docker compose -f backend/docker-compose.ai-dev.yml up --build
 # Hoặc khởi chạy LectureLens TEST Studio (Stage 1 + Stage 2 Pipeline Tester UI)
 docker compose -f TEST/docker-compose.test.yml up --build
 
-# Kiểm tra cấu hình và kết nối cơ sở dữ liệu RAG
+# Kiểm tra cấu hình và kết nối cơ sở dữ liệu RAG (khi chạy trên host)
 python backend/db/verify_rag_db.py
+
+# Hoặc chạy trực tiếp qua mạng Docker khi TEST Studio đang bật (tránh xung đột cổng 5432 cục bộ)
+Get-Content -Raw -Encoding UTF8 backend/db/verify_rag_db.py | docker exec -e PYTHONIOENCODING=utf-8 -e POSTGRES_HOST=test-db -i lecturelens-test-ai-model python -
 
 # Tải bổ sung trọng số mô hình nếu thiếu
 python backend/download_models.py

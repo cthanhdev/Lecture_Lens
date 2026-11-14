@@ -108,6 +108,7 @@ flowchart TD
 ```
 
 > 📚 **Tài liệu chuẩn bắt buộc tham chiếu:**
+> - **Sơ Đồ Kiến Trúc Chi Tiết (2 Trang Draw.io):** [`../docs/KienTrucHeThong.drawio`](../docs/KienTrucHeThong.drawio)
 > - **Single Source of Truth API Reference**: [`../docs/API-REFERENCE.md`](../docs/API-REFERENCE.md)
 > - **Stage 2 Architectural Decision**: [`../docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md`](../docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md)
 
@@ -693,8 +694,11 @@ docker compose -f backend/docker-compose.ai-dev.yml up --build
 # 2. (Tùy chọn) Khởi chạy LectureLens TEST Studio cho Stage 1 + Stage 2
 docker compose -f TEST/docker-compose.test.yml up --build
 
-# 3. Chạy bộ kiểm thử Backend pytest (từ thư mục gốc)
+# 3. Khởi chạy bộ kiểm thử Backend pytest (từ thư mục gốc)
 .\.venv\Scripts\python.exe -m pytest backend/tests -v
+
+# 4. Kiểm chứng PostgreSQL 16 + pgvector + 3-Stream RRF (trực tiếp qua mạng Docker)
+Get-Content -Raw -Encoding UTF8 backend/db/verify_rag_db.py | docker exec -e PYTHONIOENCODING=utf-8 -e POSTGRES_HOST=test-db -i lecturelens-test-ai-model python -
 ```
 
 Kiểm tra sức khỏe cụm container:
