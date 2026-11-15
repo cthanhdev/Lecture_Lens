@@ -71,6 +71,11 @@ services:
       STORAGE_ROOT: /app/volumes/rag_data
       MODEL_PATH_PHOWHISPER: /app/backend/models/phowhisper-base
       MODEL_PATH_BGE_M3: /app/backend/models/bge-m3
+      MODEL_PATH_RERANKER: /app/backend/models/bge-reranker-v2-m3
+      MODEL_PATH_GEMMA: /app/backend/models/gemma-4-e4b
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma-4-e4b}
+      LLM_ENGINE_MODE: ${LLM_ENGINE_MODE:-auto}
       DEVICE: ${DEVICE:-auto}
       LOW_VRAM_MODE: ${LOW_VRAM_MODE:-true}
       OMP_NUM_THREADS: "4"

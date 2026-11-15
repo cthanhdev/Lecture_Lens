@@ -6,6 +6,8 @@ from typing import Literal
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
+from ai_service.core.prompt_builder import LLMStageConfig, PromptProfile, ResponseFormat
+
 
 class IngestRequest(BaseModel):
     """
@@ -227,3 +229,157 @@ class ExpandedContextResponse(BaseModel):
     """Response payload for GET /internal/v1/ai/chunks/context/{chunk_id}."""
     chunk_id: UUID
     context: list[ExpandedContextItem]
+
+
+# =========================================================================
+# Online RAG & Multi-Pass Gemma 4 ([Q1]–[Q6+]) Schemas
+# =========================================================================
+
+
+class RagCitationItem(BaseModel):
+    """Reranked lecture chunk citation returned alongside generated answers."""
+
+    chunk_id: UUID
+    lecture_id: UUID
+    chunk_index: int
+    start_time_seconds: float
+    end_time_seconds: float
+    start_timestamp_display: str
+    end_timestamp_display: str
+    speaker_label: str = "LECTURER"
+    text_snippet: str
+    content: str
+    dense_score: float = 0.0
+    lexical_rank: int | None = None
+    fuzzy_rank: int | None = None
+    rrf_total_score: float = 0.0
+    rerank_logit: float = 0.0
+    rerank_score: float = 0.0
+    expanded_context: list[ExpandedContextItem] = Field(default_factory=list)
+
+
+class StageOutputItem(BaseModel):
+    """Trace record for one LLM generation pass ([Q5], [Q6], or [Q7+])."""
+
+    stage_id: str
+    profile: str
+    system_prompt: str
+    user_prompt: str
+    response_format: ResponseFormat = "text"
+    output: str
+    model: str
+    engine: str
+    latency_ms: float = 0.0
+
+
+class RagTelemetryMeta(BaseModel):
+    """Per-stage latency and pipeline telemetry for [Q1]–[Q6+]."""
+
+    prompt_hash: str = ""
+    candidates_retrieved: int = 0
+    reranked_count: int = 0
+    embed_ms: float = 0.0
+    cache_ms: float = 0.0
+    retrieval_ms: float = 0.0
+    expand_ms: float = 0.0
+    rerank_ms: float = 0.0
+    llm_ms: float = 0.0
+    total_ms: float = 0.0
+    similarity: float | None = None
+
+
+class RagRetrieveRequest(BaseModel):
+    """Request payload for POST /internal/v1/ai/rag/retrieve ([Q1]–[Q4])."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    lecture_ids: list[UUID] = Field(..., alias="lectureIds")
+    query: str
+    top_k: int = Field(default=5, alias="topK", ge=1, le=25)
+    retrieval_top_k: int = Field(default=25, alias="retrievalTopK", ge=1, le=50)
+    include_context: bool = Field(default=True, alias="includeContext")
+
+
+class RagRetrieveResponse(BaseModel):
+    """Response payload for POST /internal/v1/ai/rag/retrieve ([Q1]–[Q4])."""
+
+    query: str
+    lecture_ids: list[UUID]
+    total_candidates: int
+    total_reranked: int
+    results: list[RagCitationItem]
+    telemetry: RagTelemetryMeta
+
+
+class LlmGenerateRequest(BaseModel):
+    """Request payload for POST /internal/v1/ai/llm/generate ([Q5]–[Q6+])."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    query: str
+    contexts: list[dict] = Field(default_factory=list)
+    draft_system_prompt: str | None = Field(default=None, alias="draftSystemPrompt")
+    system_prompt: str | None = Field(default=None, alias="systemPrompt")
+    prompt_profile: PromptProfile = Field(default="qa_refine", alias="promptProfile")
+    response_format: ResponseFormat | None = Field(default=None, alias="responseFormat")
+    use_expanded_context: bool = Field(default=True, alias="useExpandedContext")
+    temperature: float = Field(default=0.2, ge=0.0, le=2.0)
+    max_new_tokens: int = Field(default=512, alias="maxNewTokens", ge=1, le=4096)
+    extra_stages: list[LLMStageConfig] = Field(default_factory=list, alias="extraStages")
+
+
+class LlmGenerateResponse(BaseModel):
+    """Response payload for POST /internal/v1/ai/llm/generate ([Q5]–[Q6+])."""
+
+    query: str
+    prompt_hash: str
+    draft_answer: str
+    answer: str
+    stage_outputs: list[StageOutputItem]
+    llm_ms: float = 0.0
+
+
+class RagQueryRequest(BaseModel):
+    """Unified Cách 2 Request payload for POST /internal/v1/ai/rag/query ([Q1]–[Q6+])."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    lecture_ids: list[UUID] = Field(..., alias="lectureIds")
+    query: str
+    top_k: int = Field(default=5, alias="topK", ge=1, le=25)
+    retrieval_top_k: int = Field(default=25, alias="retrievalTopK", ge=1, le=50)
+    draft_system_prompt: str | None = Field(default=None, alias="draftSystemPrompt")
+    system_prompt: str | None = Field(default=None, alias="systemPrompt")
+    prompt_profile: PromptProfile = Field(default="qa_refine", alias="promptProfile")
+    response_format: ResponseFormat | None = Field(default=None, alias="responseFormat")
+    use_expanded_context: bool = Field(default=True, alias="useExpandedContext")
+    use_cache: bool = Field(default=True, alias="useCache")
+    temperature: float = Field(default=0.2, ge=0.0, le=2.0)
+    max_new_tokens: int = Field(default=512, alias="maxNewTokens", ge=1, le=4096)
+    extra_stages: list[LLMStageConfig] = Field(default_factory=list, alias="extraStages")
+
+
+class RagQueryResponse(BaseModel):
+    """Unified Cách 2 Response payload for POST /internal/v1/ai/rag/query ([Q1]–[Q6+])."""
+
+    query: str
+    lecture_ids: list[UUID]
+    cache_hit: bool = False
+    draft_answer: str = ""
+    answer: str
+    stage_outputs: list[StageOutputItem] = Field(default_factory=list)
+    citations: list[RagCitationItem] = Field(default_factory=list)
+    telemetry: RagTelemetryMeta = Field(default_factory=RagTelemetryMeta)
+
+
+class RagPresetItem(BaseModel):
+    id: str
+    label: str
+    default_response_format: ResponseFormat
+    description: str
+    system_prompt: str
+
+
+class RagPresetsResponse(BaseModel):
+    default_draft_system_prompt: str
+    presets: list[RagPresetItem]

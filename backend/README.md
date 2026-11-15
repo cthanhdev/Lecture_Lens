@@ -78,7 +78,7 @@ flowchart TD
         subgraph AIService ["⚡ FastAPI AI Service (Container: ai)"]
             direction TB
             INGEST_FLOW["📥 Stage 1 + Stage 2 Ingest Worker<br/>[I4] PhoWhisper-base ➔ transcript.json<br/>➔ [I5] RecursiveTokenChunker (<=512 tok)<br/>➔ Unload ASR ➔ [I6] BgeM3Embedder ➔ chunks.json"]
-            QUERY_FLOW["🔍 Query & Context Engine<br/>BGE-M3 Query ➔ 3-Stream RRF Hybrid Search<br/>➔ Doubly-Linked Context / Reranker"]
+            QUERY_FLOW["🔍 Stage 3 Online RAG & Multi-Pass Engine<br/>[Q1] Cache (prompt_hash) ➔ [Q2] 3-Stream RRF<br/>➔ [Q3] Expand ➔ [Q4] BgeRerankerV2M3<br/>➔ [Q5] Draft ➔ [Q6] Custom System Prompt ➔ [Q7+]"]
         end
 
         subgraph SharedVol ["💾 Shared Volume (/volumes/rag_data)"]
@@ -88,11 +88,11 @@ flowchart TD
         subgraph StorageLayer ["🐘 PostgreSQL 16 + pgvector (Container: db)"]
             direction LR
             SCHEMA_APP[("🗄️ Schema: app<br/>users, roles, classes,<br/>lectures, jobs")]
-            SCHEMA_RAG[("📐 Schema: rag<br/>lecture_chunks: halfvec(1024) HNSW<br/>+ lexical_weights JSONB + tsv_content GIN + prev/next")]
+            SCHEMA_RAG[("📐 Schema: rag<br/>lecture_chunks (halfvec 1024 + lexical_weights)<br/>semantic_query_cache & rag_audit_logs")]
         end
 
-        subgraph LLMRuntime ["🦙 Ollama Local Inference (Container: llm)"]
-            GEMMA["✨ Gemma 4 E4B<br/>(Contextual Answer & Citation Generation)"]
+        subgraph LLMRuntime ["🦙 Local Gemma 4 E4B Runtime (Ollama / Transformers)"]
+            GEMMA["✨ Gemma 4 E4B<br/>([Q5] Grounded Draft -> [Q6] Custom Refiner -> [Q7+])"]
         end
     end
 
@@ -101,9 +101,9 @@ flowchart TD
     AIService -->|Đọc/Ghi artifacts O(1)| VOLUME
     SB -->|JDBC / JPA Connections| SCHEMA_APP
     INGEST_FLOW -->|Batch Upsert Chunks & Dual Vectors| SCHEMA_RAG
-    QUERY_FLOW <-->|3-Stream RRF & Expanded Context RPC| SCHEMA_RAG
-    QUERY_FLOW -->|Prompt Context + Re-ranked Chunks| GEMMA
-    GEMMA -->|Streamed Answer + Timestamp Citations| QUERY_FLOW
+    QUERY_FLOW <-->|3-Stream RRF, Cache & Audit Logs| SCHEMA_RAG
+    QUERY_FLOW -->|Multi-Pass Prompts & Top-K Chunks| GEMMA
+    GEMMA -->|Draft -> Refined Answer + Timestamp Citations| QUERY_FLOW
     AIService -.->|Webhook PUT /internal/v1/jobs/{jobId}/status| SB
 ```
 
@@ -111,6 +111,7 @@ flowchart TD
 > - **Sơ Đồ Kiến Trúc Chi Tiết (2 Trang Draw.io):** [`../docs/KienTrucHeThong.drawio`](../docs/KienTrucHeThong.drawio)
 > - **Single Source of Truth API Reference**: [`../docs/API-REFERENCE.md`](../docs/API-REFERENCE.md)
 > - **Stage 2 Architectural Decision**: [`../docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md`](../docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md)
+> - **Stage 3 Online RAG & Multi-Pass Gemma 4 Decision**: [`../docs/adr/0005-multi-pass-gemma4-rag-and-custom-prompt-chain.md`](../docs/adr/0005-multi-pass-gemma4-rag-and-custom-prompt-chain.md)
 
 ---
 
@@ -128,25 +129,26 @@ flowchart TD
 
 ### 3.2. FastAPI AI & RAG Engine (`ai`)
 - **Ngôn ngữ & Môi trường:** Python 3.10+ / FastAPI 0.111 / Uvicorn (`docs_url="/internal/docs"`, `openapi_url="/internal/openapi.json"`).
-- **Thư viện AI nền tảng:** `torch>=2.3.0`, `transformers>=4.40.0`, `numpy>=1.24.0`, `imageio-ffmpeg>=0.4.9`, `psycopg2-binary>=2.9.9` (`soundfile`, `librosa`, `httpx`, `pydantic-settings`).
-- **Ràng buộc nạp mô hình (`bge-m3`):** Tải trực tiếp qua HuggingFace `transformers` (`AutoTokenizer`, `AutoModel`) kết hợp `torch.load("sparse_linear.pt", weights_only=True)` — **tuyệt đối không phụ thuộc `FlagEmbedding` hay `sentence-transformers`**.
-- **Vai trò:** Thực hiện pipeline xử lý âm thanh, phiên âm, phân đoạn đệ quy (`[I5]`), nhúng kép (`[I6]`), đồng bộ `pgvector` và tìm kiếm 3-Stream RRF + mở rộng ngữ cảnh.
+- **Thư viện AI nền tảng:** `torch>=2.3.0`, `transformers>=4.40.0` (`>=5.x` cho Gemma 4), `numpy>=1.24.0`, `imageio-ffmpeg>=0.4.9`, `psycopg2-binary>=2.9.9` (`soundfile`, `librosa`, `httpx`, `pydantic-settings`).
+- **Ràng buộc nạp mô hình (`bge-m3`, `bge-reranker-v2-m3`, `gemma-4-e4b`):** Tải trực tiếp qua HuggingFace `transformers` (`AutoTokenizer`, `AutoModel`, `AutoModelForSequenceClassification`, `AutoModelForCausalLM`) kết hợp `torch.load("sparse_linear.pt", weights_only=True)` — **tuyệt đối không phụ thuộc `FlagEmbedding` hay `sentence-transformers`**.
+- **Vai trò:** Thực hiện pipeline xử lý âm thanh, phiên âm (`[I1]`–`[I4]`), phân đoạn đệ quy (`[I5]`), nhúng kép (`[I6]`), đồng bộ `pgvector`, tìm kiếm 3-Stream RRF, Cross-Encoder Reranking (`[Q4]`) và Multi-Pass Gemma 4 (`[Q5]`–`[Q6+]`).
 - **Trách nhiệm kỹ thuật:**
-  - **Lazy-Loading & Sequential VRAM Offloading (`LOW_VRAM_MODE=true`):** Các model nặng (`PhoWhisperEngine`, `BgeM3Embedder`) được nạp lười (lazy-load) theo nhu cầu. Dưới khóa `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)`, pipeline gọi `asr_engine.unload()` tại `STT_COMPLETED` (`gc.collect()` + `torch.cuda.empty_cache()`) trước khi nạp `BgeM3Embedder` ở `EMBEDDING` (tối ưu cho GPU 4 GB VRAM như RTX 3050).
+  - **Lazy-Loading & Sequential VRAM Offloading (`LOW_VRAM_MODE=true`):** Các model nặng (`PhoWhisperEngine`, `BgeM3Embedder`, `BgeRerankerV2M3`, `TransformersGemmaClient`) được nạp lười theo nhu cầu. Dưới khóa `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)`, pipeline giải phóng VRAM tuần tự (`unload()` + `gc.collect()` + `torch.cuda.empty_cache()`) giữa các giai đoạn để vận hành an toàn trên GPU 4 GB VRAM.
   - **Background Ingestion Worker:** Chạy bất đồng bộ qua FastAPI `BackgroundTasks` và báo tiến độ về Spring Boot Gateway qua `SpringJobReporter` (`PUT /internal/v1/jobs/{jobId}/status`).
-  - **2-Stage Neural Retrieval & Doubly-Linked Context:** Tìm kiếm lai 3 luồng RRF trong PostgreSQL (`dense_stream` `halfvec(1024)` HNSW + `lexical_stream` `tsv_content` `rag.immutable_unaccent` + `fuzzy_stream` `pg_trgm`), lưu kèm `lexical_weights` (`JSONB`) từ `BgeM3Embedder` và mở rộng ngữ cảnh liền kề (`[PREVIOUS, CURRENT, NEXT]`) bằng con trỏ `prev_chunk_id`/`next_chunk_id` qua `rag.get_expanded_context`.
+  - **Online Hybrid RAG & Multi-Pass Chain (`[Q1]`–`[Q6+]`, không `[Q0]`):** `RagPipelineCoordinator` phối hợp `CompositeTelemetryStore` (`rag.semantic_query_cache` phân vùng theo `prompt_hash`, `rag.rag_audit_logs`), `CompositeChunkStore` (3-Stream RRF + `rag.get_expanded_context`), `BgeRerankerV2M3`, `GroundedPromptBuilder` và `CompositeLLMClient` qua endpoint thống nhất `POST /internal/v1/ai/rag/query` (Cách 2) cùng `/rag/retrieve`, `/llm/generate`, `/rag/presets`.
 
 ### 3.3. PostgreSQL 16 + pgvector Multi-Schema DB (`db`)
 - **Phiên bản:** PostgreSQL 16 (docker image `pgvector/pgvector:pg16`, extension `pgvector 0.7.0+`).
 - **Kiến trúc Multi-Schema:**
   - `Schema app`: Chứa toàn bộ thực thể quan hệ phục vụ nghiệp vụ (Người dùng, lớp học, bài giảng, tác vụ xử lý). Quản lý bởi Spring Data JPA / Hibernate.
-  - `Schema rag`: Chứa dữ liệu tri thức học thuật (`lecture_chunks` với `halfvec(1024)` và `lexical_weights JSONB`). Đồng bộ idempotent từ FastAPI thông qua `PostgresPgVectorChunkStore` (`psycopg2-binary` batch upsert).
-- **Chỉ mục Vector HNSW & Hybrid:** Kết hợp `idx_chunks_hnsw_cosine` (`halfvec_cosine_ops`, `m = 16, ef_construction = 64`), GIN trên `tsv_content` (`idx_chunks_tsv`), GIN trigram trên `content_unaccent` (`idx_chunks_trgm_unaccent`), và B-tree nav `idx_chunks_nav`.
+  - `Schema rag`: Chứa dữ liệu tri thức học thuật (`lecture_chunks` với `halfvec(1024)` và `lexical_weights JSONB`, `semantic_query_cache`, `rag_audit_logs`). Đồng bộ idempotent từ FastAPI thông qua `PostgresPgVectorChunkStore` và `PostgresTelemetryStore` (`psycopg2-binary`).
+- **Chỉ mục Vector HNSW & Hybrid:** Kết hợp `idx_chunks_hnsw_cosine` (`halfvec_cosine_ops`, `m = 16, ef_construction = 64`), GIN trên `tsv_content` (`idx_chunks_tsv`), GIN trigram trên `content_unaccent` (`idx_chunks_trgm_unaccent`), B-tree nav `idx_chunks_nav`, và chỉ mục cache `semantic_query_cache`.
 
-### 3.4. Ollama LLM Runtime Engine (`llm`)
-- **Phiên bản:** Ollama v0.3.x+.
-- **Mô hình phục vụ:** `google/gemma-4-E4B-it` (Gemma 4 Conditional Generation).
-- **Cấu hình Modelfile:** Được cấu hình với nhiệt độ suy luận thấp (`temperature 0.2`) và hình phạt lặp lại (`repeat_penalty 1.15`) nhằm đảm bảo câu trả lời mang tính quy nạp, bám sát tuyệt đối vào ngữ cảnh trích xuất và không suy diễn thông tin ngoài bài giảng.
+### 3.4. Local Gemma 4 E4B Runtime (`OllamaGemmaClient` & `TransformersGemmaClient`)
+- **Chế độ Dual Runtime (`LLM_ENGINE_MODE=auto | ollama | transformers | mock`):**
+  - Ưu tiên kết nối máy chủ **Ollama** cục bộ (`OLLAMA_BASE_URL`, `OLLAMA_MODEL=gemma-4-e4b`).
+  - Nếu Ollama chưa chạy hoặc cấu hình `transformers`, `TransformersGemmaClient` nạp trực tiếp trọng số nội bộ tại `backend/models/gemma-4-e4b` (`Gemma4ForConditionalGeneration`, `local_files_only=True`, `bfloat16` trên CUDA / `float32` trên CPU).
+- **Cấu hình suy luận:** Nhiệt độ mặc định thấp (`temperature=0.2`), cắt bỏ thẻ suy nghĩ nội bộ (`<|channel>thought...<channel|>`) trước khi trả output, đảm bảo tính bám sát ngữ cảnh bài giảng (`[MM:SS]`).
 
 ---
 
@@ -207,9 +209,9 @@ sequenceDiagram
 
 ---
 
-### 4.2. Pipeline Query (Online) — 2-Stage Retrieval & Grounded Generation
+### 4.2. Pipeline Query (Online) — Hybrid RAG, Reranking & Multi-Pass Gemma 4 (`[Q1]`–`[Q6+]`)
 
-Quy trình tìm kiếm ngữ nghĩa chuyên sâu và tổng hợp câu trả lời có dẫn nguồn:
+Quy trình tìm kiếm ngữ nghĩa chuyên sâu và tổng hợp câu trả lời đa bước có dẫn nguồn (không dùng `[Q0]` query rewriting):
 
 ```mermaid
 sequenceDiagram
@@ -217,57 +219,52 @@ sequenceDiagram
     actor SV as 👨‍🎓 Sinh Viên
     participant Client as 📱 Mobile Client
     participant SB as 🍃 Spring Boot
-    participant AI as ⚡ FastAPI
+    participant AI as ⚡ FastAPI (RagPipelineCoordinator)
     participant EMB as 🧠 BGE-M3
     participant DB as 🐘 PostgreSQL (pgvector)
     participant RR as ⚖️ BGE-Reranker-v2-m3
-    participant LLM as 🦙 Ollama (Gemma 4 E4B)
+    participant LLM as 🦙 Gemma 4 E4B (Ollama / Transformers)
 
-    SV->>Client: Nhập câu hỏi: "Thuật toán Gradient Descent hoạt động thế nào?"
-    Client->>SB: POST /api/v1/rag/query (Bearer JWT, lectureId, query)
+    SV->>Client: Nhập câu hỏi + chọn Preset / Custom System Prompt
+    Client->>SB: POST /api/v1/rag/query (Bearer JWT, lectureIds, query, systemPrompt)
     SB->>SB: Kiểm tra phân quyền truy cập bài giảng của sinh viên (RBAC)
-    SB->>AI: POST /internal/v1/ai/search/hybrid (X-Internal-Secret, lectureIds, query, topK)
-    
-    AI->>EMB: [I6] Embed câu hỏi người dùng (BgeM3Embedder)
-    EMB-->>AI: Dense Vector Q ∈ ℝ¹⁰²⁴ (FP16) + Lexical Weights
-    
-    Note over AI,DB: GIAI ĐOẠN 1: 3-Stream Hybrid RRF Retrieval (HNSW halfvec + FTS unaccent + pg_trgm)
-    AI->>DB: SELECT * FROM rag.search_vietnamese_rag_rrf(lectureIds, Q, query, topK)
-    DB-->>AI: Top ứng viên kèm expanded_context [PREVIOUS, CURRENT, NEXT]
-    
-    Note over AI,RR: GIAI ĐOẠN 2: Deep Cross-Encoder Reranking (Target Online RAG Stage)
-    AI->>RR: Chấm điểm cặp [Query, Chunk_i] (i = 1..25)
-    RR-->>AI: Điểm tương quan sâu Relevance Scores s_i ∈ [-10, 10]
-    AI->>AI: Sắp xếp theo s_i & chọn lọc Top 3-5 Chunks xuất sắc nhất (s_i > ngưỡng)
-    
-    Note over AI,LLM: GIAI ĐOẠN 3: Grounded Answer Synthesis
-    AI->>LLM: Gửi Prompt (System Rule + Top 5 Chunks + Question)
-    LLM-->>AI: Streamed Tokens câu trả lời kèm Citations [MM:SS]
-    AI-->>SB: Payload phản hồi hoàn chỉnh
+    SB->>AI: POST /internal/v1/ai/rag/query (X-Internal-Secret, Cách 2 Unified)
+
+    AI->>EMB: [Q1] encode_query(query gốc — không dùng [Q0])
+    EMB-->>AI: Dense Vector Q ∈ ℝ¹⁰²⁴ (FP16)
+    AI->>DB: [Q1] Kiểm tra rag.semantic_query_cache (similarity >= 0.95 + prompt_hash)
+    alt Cache Hit
+        DB-->>AI: Cached Answer + Citations
+        AI-->>SB: RagQueryResponse (cache_hit=true)
+    else Cache Miss
+        Note over AI,DB: [Q2] 3-Stream Hybrid RRF Retrieval (Top 25) + [Q3] Doubly-Linked Expansion
+        AI->>DB: SELECT * FROM rag.search_vietnamese_rag_rrf(lectureIds, Q, query, retrievalTopK=25)
+        DB-->>AI: Top 25 ứng viên + rag.get_expanded_context [PREV, CURR, NEXT]
+
+        Note over AI,RR: [Q4] Cross-Encoder Reranking (Sequential Unload BGE-M3 nếu LOW_VRAM_MODE)
+        AI->>RR: BgeRerankerV2M3 chấm điểm cặp [Query, Expanded_Chunk_i] (i = 1..25)
+        RR-->>AI: Top K Chunks có rerank_score cao nhất
+
+        Note over AI,LLM: [Q5] Pass 1 Draft -> [Q6] Pass 2 Custom Refiner -> [Q7+] Extra Stages
+        AI->>LLM: [Q5] GroundedPromptBuilder.build_rag_draft_prompt (Top K + [MM:SS])
+        LLM-->>AI: draft_answer
+        AI->>LLM: [Q6] build_refinement_prompt (query + draft_answer + Top K + Custom System Prompt)
+        LLM-->>AI: answer (Final Polished / Cornell / Strict JSON)
+        opt extraStages ([Q7+])
+            AI->>LLM: Nối tiếp các stage mở rộng (LLMStageConfig[])
+            LLM-->>AI: Updated answer
+        end
+        AI->>DB: Lưu semantic_query_cache (kèm prompt_hash) + rag_audit_logs
+        AI-->>SB: RagQueryResponse (draft_answer, answer, stage_outputs, citations, telemetry)
+    end
     SB-->>Client: Trả về cho ứng dụng di động hiển thị
 ```
 
-#### Quy chuẩn cấu trúc Prompt suy luận (Grounding Guardrail):
+#### Quy chuẩn cấu trúc Multi-Pass Prompt (`GroundedPromptBuilder`):
 
-```markdown
-[HỆ THỐNG]
-Bạn là Trợ lý Cáo Kitsune của LectureLens — hệ thống hỗ trợ học tập bài giảng tiếng Việt thông minh.
-Nhiệm vụ của bạn là trả lời câu hỏi của người học DỰA TRÊN ngữ cảnh trích xuất dưới đây.
-
-[QUY TẮC BẮT BUỘC]
-1. Chỉ sử dụng thông tin có trong phần [NGỮ CẢNH BÀI GIẢNG]. Tuyệt đối không tự suy diễn thông tin ngoài bài giảng.
-2. Mỗi khi đưa ra một luận điểm hoặc giải thích, PHẢI dẫn nguồn mốc thời gian bài giảng theo định dạng: [MM:SS].
-3. Nếu ngữ cảnh không có thông tin để trả lời, hãy trả lời trung thực: "Bài giảng không đề cập đến nội dung này."
-
-[NGỮ CẢNH BÀI GIẢNG]
-- Đoạn 1 (08:15 - 09:40): Gradient descent cập nhật trọng số ngược chiều gradient của hàm mất mát...
-- Đoạn 2 (14:20 - 15:55): Tốc độ học (learning rate) quyết định bước nhảy của thuật toán...
-
-[CÂU HỎI CỦA SINH VIÊN]
-{user_query}
-
-[CÂU TRẢ LỜI CỦA LECTURELENS]
-```
+- **Pass 1 (`[Q5]` — Grounded Extraction):** Nhận `DEFAULT_RAG_DRAFT_SYSTEM_PROMPT` (hoặc `draftSystemPrompt` tùy chỉnh) + Top K ngữ cảnh kèm `[MM:SS] [Chunk N]` + `query`, chỉ được trích xuất thông tin có trong bài giảng.
+- **Pass 2 (`[Q6]` — Custom System Prompt Refiner):** Nhận `systemPrompt` do người dùng/tính năng chỉ định hoặc preset dựng sẵn (`qa_refine`, `cornell_notes`, `quiz_json`, `custom`), đối chiếu `(query, draft_answer, Top K contexts)` để sửa lỗi chính tả ASR, trau chuốt câu chữ và ép chuẩn định dạng (`text` hoặc `json`).
+- **Pass mở rộng (`[Q7+]` — `extraStages`):** Chuỗi `LLMStageConfig[]` tùy chọn chạy tiếp nối trên output của `[Q6]` để hỗ trợ các tác vụ hậu kỳ mới mà không cần sửa API schema.
 
 ---
 
@@ -583,13 +580,17 @@ ON rag.lecture_chunks (id, prev_chunk_id, next_chunk_id);
 
 | Method & Endpoint | Vai Trò & Dữ Liệu Trả Về |
 | :--- | :--- |
-| `GET /internal/v1/ai/health` | Kiểm tra CUDA/VRAM, `configured_device`, `low_vram_mode`, kết nối `pgvector_connected` và sự tồn tại của trọng số `phowhisper_path_exists`, `bge_m3_path_exists` |
+| `GET /internal/v1/ai/health` | Kiểm tra CUDA/VRAM, `configured_device`, `low_vram_mode`, kết nối `pgvector_connected` và sự tồn tại của trọng số `phowhisper_path_exists`, `bge_m3_path_exists`, `bge_reranker_path_exists`, `gemma4_path_exists` |
 | `POST /internal/v1/ai/ingest` | Kích hoạt bất đồng bộ toàn bộ Stage 1 (FFmpeg + PhoWhisper) & Stage 2 (`[I5]` + `[I6]`), trả về `202 Accepted` (`{"status": "ACCEPTED", "message": "..."}`) |
 | `POST /internal/v1/ai/chunk-and-embed` | Chạy đồng bộ Stage 2 từ `transcript.json` đã có (`jobId`, `lectureId?`, `syncToDb=true`), trả về `ChunkAndEmbedResponse` (`200 OK`) |
 | `GET /internal/v1/ai/audio/{job_id}/manifest` | Tra cứu $O(1)$ tệp `audio/{job_id}/manifest.json` |
 | `GET /internal/v1/ai/chunks/{job_id}` | Tra cứu artifact `chunks/{job_id}/chunks.json` |
 | `POST /internal/v1/ai/search/hybrid` | Nhúng câu truy vấn tiếng Việt (có dấu/không dấu) bằng `BGE-M3` và chạy 3-Stream RRF Hybrid Search + `expanded_context` |
 | `GET /internal/v1/ai/chunks/context/{chunk_id}` | Trả về tối đa 3 chunk `[PREVIOUS, CURRENT, NEXT]` qua liên kết đôi `prev_chunk_id`/`next_chunk_id` |
+| `POST /internal/v1/ai/rag/query` | **Unified Cách 2 (`[Q1]`–`[Q6+]`):** Semantic Cache (`prompt_hash`) $\rightarrow$ 3-Stream RRF $\rightarrow$ Expand $\rightarrow$ `BgeRerankerV2M3` $\rightarrow$ Gemma 4 Pass 1 Draft $\rightarrow$ Pass 2 Custom System Prompt Refiner $\rightarrow$ `[Q7+]` `extraStages` |
+| `POST /internal/v1/ai/rag/retrieve` | Endpoint modular chạy `[Q1]`–`[Q4]` (truy xuất + mở rộng + reranking, không gọi LLM) |
+| `POST /internal/v1/ai/llm/generate` | Endpoint modular chạy `[Q5]`–`[Q6+]` (Multi-Pass Gemma 4 trên ngữ cảnh cho sẵn) |
+| `GET /internal/v1/ai/rag/presets` | Trả về `default_draft_system_prompt` (`[Q5]`) và presets cho `[Q6]` (`qa_refine`, `cornell_notes`, `quiz_json`) |
 
 #### Ví dụ tiêu biểu: `[POST] /internal/v1/ai/ingest`
 - **Header:** `X-Internal-Secret: ${INTERNAL_API_SECRET_KEY}`
@@ -627,7 +628,9 @@ ON rag.lecture_chunks (id, prev_chunk_id, next_chunk_id);
     "pgvector_connected": true,
     "models": {
       "phowhisper_path_exists": true,
-      "bge_m3_path_exists": true
+      "bge_m3_path_exists": true,
+      "bge_reranker_path_exists": true,
+      "gemma4_path_exists": true
     }
   }
   ```

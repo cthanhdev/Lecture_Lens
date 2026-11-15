@@ -20,6 +20,10 @@ Tài liệu đặc tả API chuẩn xác 1:1 với mã nguồn hiện hành cho 
   - [4.5. `GET /internal/v1/ai/chunks/{job_id}`](#45-get-internalv1aichunksjob_id)
   - [4.6. `POST /internal/v1/ai/search/hybrid`](#46-post-internalv1aisearchhybrid)
   - [4.7. `GET /internal/v1/ai/chunks/context/{chunk_id}`](#47-get-internalv1aichunkscontextchunk_id)
+  - [4.8. `POST /internal/v1/ai/rag/query` (Unified Cách 2)](#48-post-internalv1airagquery-unified-cách-2)
+  - [4.9. `POST /internal/v1/ai/rag/retrieve` (`[Q1]–[Q4]`)](#49-post-internalv1airagretrieve-q1q4)
+  - [4.10. `POST /internal/v1/ai/llm/generate` (`[Q5]–[Q6+]`)](#410-post-internalv1aillmgenerate-q5q6)
+  - [4.11. `GET /internal/v1/ai/rag/presets`](#411-get-internalv1airagpresets)
 - [5. Internal Webhook Callback (`FastAPI -> Spring Boot`)](#5-internal-webhook-callback-fastapi---spring-boot)
 - [6. Immutable Artifact Contracts (`volumes/rag_data/`)](#6-immutable-artifact-contracts-volumesrag_data)
 - [7. Vector Database Schema & SQL RPCs (`rag.*`)](#7-vector-database-schema--sql-rpcs-rag)
@@ -121,7 +125,7 @@ Các endpoint công khai dưới tiền tố `/api/v1` là ranh giới duy nhấ
 
 ## 4. Internal AI & RAG Service APIs — FastAPI (`:8000`)
 
-Tất cả endpoint trong mục này nằm tại `backend/ai_service/routers/health.py` và `backend/ai_service/routers/ingest.py`, dùng tiền tố `/internal/v1/ai` và đều yêu cầu header `X-Internal-Secret`. Mọi Pydantic request model đều cấu hình `ConfigDict(populate_by_name=True)`, chấp nhận cả tên trường **camelCase alias** (`jobId`, `lectureId`, `fileExtension`, `syncToDb`, `lectureIds`, `topK`, `includeContext`) lẫn **snake_case** (`job_id`, `lecture_id`, ...).
+Tất cả endpoint trong mục này nằm tại `backend/ai_service/routers/health.py`, `backend/ai_service/routers/ingest.py`, và `backend/ai_service/routers/rag.py`, dùng tiền tố `/internal/v1/ai` và đều yêu cầu header `X-Internal-Secret`. Mọi Pydantic request model đều cấu hình `ConfigDict(populate_by_name=True)`, chấp nhận cả tên trường **camelCase alias** (`jobId`, `lectureId`, `fileExtension`, `syncToDb`, `lectureIds`, `topK`, `retrievalTopK`, `includeContext`, `draftSystemPrompt`, `systemPrompt`, `promptProfile`, `responseFormat`, `useExpandedContext`, `useCache`, `maxNewTokens`, `extraStages`) lẫn **snake_case** (`job_id`, `lecture_id`, ...).
 
 ---
 
@@ -147,7 +151,9 @@ Trả về trạng thái dịch vụ AI, phần cứng CUDA/VRAM, cấu hình `L
   "pgvector_connected": true,
   "models": {
     "phowhisper_path_exists": true,
-    "bge_m3_path_exists": true
+    "bge_m3_path_exists": true,
+    "bge_reranker_path_exists": true,
+    "gemma4_path_exists": true
   }
 }
 ```
@@ -402,6 +408,247 @@ Truy xuất ngữ cảnh 3 chiều (`PREVIOUS`, `CURRENT`, `NEXT`) của một `
 - **Error Responses:**
   - `401 Unauthorized`
   - `404 Not Found`: `{"detail": "Chunk '{chunk_id}' not found."}`
+
+---
+
+### 4.8. `POST /internal/v1/ai/rag/query` (Unified Cách 2)
+
+Endpoint thống nhất thực thi trọn vẹn chuỗi **Online RAG & Multi-Pass Gemma 4 (`[Q1]`–`[Q6+]`)** dưới `GLOBAL_GPU_SEMAPHORE` (không có `[Q0]` query rewriting):
+1. `[Q1]` Nhúng `query` gốc bằng `BgeM3Embedder` (`halfvec(1024)`), kiểm tra `rag.semantic_query_cache` (lọc theo `lectureIds` + `prompt_hash`, ngưỡng `RAG_CACHE_SIMILARITY_THRESHOLD=0.95`). Nếu cache hit, trả về ngay kết quả kèm `citations` mà không chạy `[Q2]`–`[Q7+]`.
+2. `[Q2]` Hybrid 3-Stream Retrieval + RRF (`search_vietnamese_rag_rrf`, lấy Top `retrievalTopK=25`).
+3. `[Q3]` Doubly-Linked Context Expansion (`get_expanded_context`, nối `PREV`/`CURR`/`NEXT`).
+4. `[Q4]` Cross-Encoder Reranking (`BgeRerankerV2M3` chấm điểm `(query, expanded_text)`, giữ Top `topK=5`).
+5. `[Q5]` Gemma 4 Pass 1 — Grounded RAG Draft: tạo `draft_answer` bám sát Top K ngữ cảnh kèm trích dẫn `[MM:SS]`.
+6. `[Q6]` Gemma 4 Pass 2 — Custom System Prompt Refiner: nhận `(query, draft_answer, Top K RAG contexts)` cùng `systemPrompt` tùy chỉnh hoặc preset (`qa_refine`, `cornell_notes`, `quiz_json`, `custom`) và `responseFormat` (`text` | `json`) để sửa câu chữ/chính tả ASR và ép định dạng đầu ra.
+7. `[Q7+]` Chạy tuần tự danh sách `extraStages` (nếu có), sau đó ghi cache và nhật ký audit `rag.rag_audit_logs`.
+
+- **Headers:** `X-Internal-Secret: <INTERNAL_API_SECRET_KEY>`
+- **Request Body (`RagQueryRequest`):**
+```json
+{
+  "lectureIds": ["a9010344-77bb-4e32-9112-229988776655"],
+  "query": "Giải thích không gian vector và tổ hợp tuyến tính trong bài giảng?",
+  "topK": 5,
+  "retrievalTopK": 25,
+  "draftSystemPrompt": null,
+  "systemPrompt": "Bạn là trợ giảng đại học. Hãy sửa lỗi chính tả ASR, giữ nguyên các mốc [MM:SS] và trình bày súc tích bằng gạch đầu dòng.",
+  "promptProfile": "qa_refine",
+  "responseFormat": "text",
+  "useExpandedContext": true,
+  "useCache": true,
+  "temperature": 0.2,
+  "maxNewTokens": 512,
+  "extraStages": [
+    {
+      "stageId": "Q7_KeyTakeaways",
+      "systemPrompt": "Tóm tắt thêm 3 ý cốt lõi ở cuối câu trả lời.",
+      "temperature": 0.2,
+      "maxNewTokens": 256,
+      "responseFormat": "text",
+      "enabled": true
+    }
+  ]
+}
+```
+> **Lưu ý:** `draftSystemPrompt` nếu `null` sẽ dùng `DEFAULT_RAG_DRAFT_SYSTEM_PROMPT`; `systemPrompt` nếu `null` sẽ lấy từ preset tương ứng với `promptProfile` (`qa_refine` | `cornell_notes` | `quiz_json` | `custom`). `responseFormat` nếu `null` tự suy diễn theo `promptProfile` (`quiz_json` -> `json`, các profile khác -> `text`).
+
+- **Response Body (`200 OK` — `RagQueryResponse`):**
+```json
+{
+  "query": "Giải thích không gian vector và tổ hợp tuyến tính trong bài giảng?",
+  "lecture_ids": ["a9010344-77bb-4e32-9112-229988776655"],
+  "cache_hit": false,
+  "draft_answer": "[02:15] Không gian vector là tập hợp các phần tử...",
+  "answer": "- **Khái niệm [02:15]:** Không gian vector là tập hợp các phần tử đóng với phép cộng và nhân vô hướng...",
+  "stage_outputs": [
+    {
+      "stage_id": "q5_rag_draft",
+      "profile": "rag_draft",
+      "system_prompt": "...",
+      "user_prompt": "...",
+      "response_format": "text",
+      "output": "[02:15] Không gian vector...",
+      "model": "gemma-4-e4b",
+      "engine": "ollama",
+      "latency_ms": 1420.5
+    },
+    {
+      "stage_id": "q6_custom_refine",
+      "profile": "qa_refine",
+      "system_prompt": "...",
+      "user_prompt": "...",
+      "response_format": "text",
+      "output": "- **Khái niệm [02:15]:** ...",
+      "model": "gemma-4-e4b",
+      "engine": "ollama",
+      "latency_ms": 980.2
+    }
+  ],
+  "citations": [
+    {
+      "chunk_id": "c7a129e4-3f02-4a62-8871-901234abcdef",
+      "lecture_id": "a9010344-77bb-4e32-9112-229988776655",
+      "chunk_index": 2,
+      "start_time_seconds": 135.0,
+      "end_time_seconds": 182.5,
+      "start_timestamp_display": "02:15",
+      "end_timestamp_display": "03:02",
+      "speaker_label": "LECTURER",
+      "text_snippet": "Không gian vector là tập hợp...",
+      "content": "Không gian vector là tập hợp các phần tử...",
+      "dense_score": 0.8921,
+      "lexical_rank": 1,
+      "fuzzy_rank": 2,
+      "rrf_total_score": 0.0491,
+      "rerank_logit": 4.82,
+      "rerank_score": 0.992,
+      "expanded_context": []
+    }
+  ],
+  "telemetry": {
+    "prompt_hash": "e3b0c44298fc1c14...",
+    "candidates_retrieved": 25,
+    "reranked_count": 5,
+    "embed_ms": 34.1,
+    "cache_ms": 6.4,
+    "retrieval_ms": 18.2,
+    "expand_ms": 5.9,
+    "rerank_ms": 165.0,
+    "llm_ms": 2400.7,
+    "total_ms": 2630.3,
+    "similarity": null
+  }
+}
+```
+- **Error Responses:**
+  - `401 Unauthorized`: Thiếu hoặc sai `X-Internal-Secret`.
+  - `503 Service Unavailable`: LLM engine cục bộ (Ollama hoặc `backend/models/gemma-4-e4b`) không khả dụng hoặc hết thời gian chờ.
+
+---
+
+### 4.9. `POST /internal/v1/ai/rag/retrieve` (`[Q1]`–`[Q4]`)
+
+Endpoint modular chỉ chạy bước truy xuất và reranking (`BgeM3Embedder` -> 3-Stream Hybrid RRF -> `get_expanded_context` -> `BgeRerankerV2M3`) mà **không** gọi Gemma 4. Hữu ích khi Spring Boot Gateway cần lấy trích dẫn nhanh hoặc tự kiểm soát bước sinh câu trả lời.
+
+- **Headers:** `X-Internal-Secret: <INTERNAL_API_SECRET_KEY>`
+- **Request Body (`RagRetrieveRequest`):**
+```json
+{
+  "lectureIds": ["a9010344-77bb-4e32-9112-229988776655"],
+  "query": "không gian vector độc lập tuyến tính",
+  "topK": 5,
+  "retrievalTopK": 25,
+  "includeContext": true
+}
+```
+- **Response Body (`200 OK` — `RagRetrieveResponse`):**
+```json
+{
+  "query": "không gian vector độc lập tuyến tính",
+  "lecture_ids": ["a9010344-77bb-4e32-9112-229988776655"],
+  "total_candidates": 25,
+  "total_reranked": 5,
+  "results": [
+    { "...RagCitationItem..." }
+  ],
+  "telemetry": {
+    "prompt_hash": "",
+    "candidates_retrieved": 25,
+    "reranked_count": 5,
+    "embed_ms": 31.0,
+    "retrieval_ms": 16.5,
+    "expand_ms": 4.2,
+    "rerank_ms": 152.3,
+    "total_ms": 204.0
+  }
+}
+```
+
+---
+
+### 4.10. `POST /internal/v1/ai/llm/generate` (`[Q5]`–`[Q6+]`)
+
+Endpoint modular chạy riêng chuỗi **Multi-Pass Gemma 4 (`[Q5]` Draft -> `[Q6]` Custom System Prompt Refiner -> `[Q7+]` `extraStages`)** trên danh sách `contexts` do client cung cấp trực tiếp.
+
+- **Headers:** `X-Internal-Secret: <INTERNAL_API_SECRET_KEY>`
+- **Request Body (`LlmGenerateRequest`):**
+```json
+{
+  "query": "Tạo 3 câu hỏi trắc nghiệm từ ngữ cảnh này",
+  "contexts": [
+    {
+      "chunk_index": 2,
+      "start_timestamp_display": "[02:15]",
+      "end_timestamp_display": "[03:02]",
+      "content": "Không gian vector là tập hợp..."
+    }
+  ],
+  "draftSystemPrompt": null,
+  "systemPrompt": null,
+  "promptProfile": "quiz_json",
+  "responseFormat": "json",
+  "useExpandedContext": true,
+  "temperature": 0.2,
+  "maxNewTokens": 768,
+  "extraStages": []
+}
+```
+- **Response Body (`200 OK` — `LlmGenerateResponse`):**
+```json
+{
+  "query": "Tạo 3 câu hỏi trắc nghiệm từ ngữ cảnh này",
+  "prompt_hash": "9f86d081884c7d65...",
+  "draft_answer": "...",
+  "answer": "{\"questions\": [...]}",
+  "stage_outputs": [ "...StageOutputItem..." ],
+  "llm_ms": 2150.4
+}
+```
+- **Error Responses:** `401 Unauthorized`, `503 Service Unavailable`.
+
+---
+
+### 4.11. `GET /internal/v1/ai/rag/presets`
+
+Trả về `default_draft_system_prompt` (`[Q5]`) và danh sách các cấu hình System Prompt dựng sẵn cho Pass 2 (`[Q6]`): `qa_refine`, `cornell_notes`, `quiz_json`.
+
+- **Headers:** `X-Internal-Secret: <INTERNAL_API_SECRET_KEY>`
+- **Response Body (`200 OK` — `RagPresetsResponse`):**
+```json
+{
+  "default_draft_system_prompt": "Bạn là trợ lý học tập AI của LectureLens...",
+  "presets": [
+    {
+      "id": "qa_refine",
+      "label": "Hỏi đáp học thuật (QA Refine)",
+      "default_response_format": "text",
+      "description": "Biên tập câu chữ tiếng Việt mượt mà, sửa lỗi chính tả ASR và giữ nguyên citation [MM:SS].",
+      "system_prompt": "..."
+    },
+    {
+      "id": "cornell_notes",
+      "label": "Ghi chú Cornell Notes",
+      "default_response_format": "text",
+      "description": "Định dạng thành 3 phần Summary, Cues và Notes kèm mốc thời gian [MM:SS].",
+      "system_prompt": "..."
+    },
+    {
+      "id": "quiz_json",
+      "label": "Bộ câu hỏi trắc nghiệm (JSON)",
+      "default_response_format": "json",
+      "description": "Sinh JSON câu hỏi ôn tập có đáp án, giải thích và timestamp [MM:SS].",
+      "system_prompt": "..."
+    },
+    {
+      "id": "custom",
+      "label": "Tùy biến System Prompt riêng",
+      "default_response_format": "text",
+      "description": "Dùng trực tiếp System Prompt tùy chỉnh do bạn nhập cho Pass 2 ([Q6]).",
+      "system_prompt": "..."
+    }
+  ]
+}
+```
 
 ---
 
@@ -766,4 +1013,19 @@ with httpx.Client(base_url=AI_BASE, headers=HEADERS, timeout=30.0) as client:
         first_chunk_id = hits["results"][0]["chunk_id"]
         ctx = client.get(f"/chunks/context/{first_chunk_id}").raise_for_status().json()
         print("Expanded context positions:", [item["position"] for item in ctx["context"]])
+
+    # Unified Cách 2 Online RAG + Multi-Pass Gemma 4 ([Q1]–[Q6+], no [Q0])
+    rag_res = client.post(
+        "/rag/query",
+        json={
+            "lectureIds": [LECTURE_ID],
+            "query": "Giải thích khái niệm không gian vector trong bài giảng",
+            "topK": 5,
+            "promptProfile": "qa_refine",
+            "systemPrompt": "Trình bày súc tích, giữ nguyên mốc [MM:SS] và sửa lỗi chính tả ASR.",
+        },
+        timeout=120.0,
+    ).raise_for_status().json()
+    print("Pass 1 Draft:", rag_res["draft_answer"])
+    print("Pass 2 Final:", rag_res["answer"])
 ```

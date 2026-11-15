@@ -191,5 +191,25 @@ Hợp đồng dữ liệu bất biến đầu ra của Giai đoạn 2 lưu trên
 _Avoid_: Embedding dump, Vector cache file, Temp chunk list.
 
 **Sequential VRAM Offloading**:
-Chiến lược giải phóng tuần tự mô hình khỏi bộ nhớ GPU (`LOW_VRAM_MODE`) giữa Giai đoạn 1 (PhoWhisper ASR) và Giai đoạn 2 (BGE-M3 Dual Embedder) để vận hành an toàn trên phần cứng 4 GB VRAM.
+Chiến lược giải phóng tuần tự mô hình khỏi bộ nhớ GPU (`LOW_VRAM_MODE`) giữa Giai đoạn 1 (`PhoWhisperEngine`), Giai đoạn 2 (`BgeM3Embedder`), và Giai đoạn 3 (`BgeM3Embedder` -> `BgeRerankerV2M3` -> `Gemma 4 E4B`) dưới `GLOBAL_GPU_SEMAPHORE` để vận hành an toàn trên phần cứng 4 GB VRAM.
 _Avoid_: Simultaneous model pinning, Multi-GPU sharding, Model eviction hack.
+
+---
+
+## 7. Online RAG & Multi-Pass Gemma 4 (`[Q1]`–`[Q6+]`)
+
+**Semantic Query Cache (`[Q1]`)**:
+Bộ đệm ngữ nghĩa lưu tại bảng `rag.semantic_query_cache` khớp câu hỏi đầu vào (`query_embedding halfvec(1024)`) theo ngưỡng cosine similarity (`>= 0.95`), phạm vi `lecture_ids`, và mã băm cấu hình prompt (`prompt_hash` trong `cached_citations`) nhằm bỏ qua `[Q2]`–`[Q7+]` khi lặp lại truy vấn cùng System Prompt.
+_Avoid_: Global text cache, Unpartitioned answer cache.
+
+**Cross-Encoder Reranker (`[Q4]`)**:
+Thành phần chấm điểm lại (`BgeRerankerV2M3`, `bge-reranker-v2-m3`) đọc cặp `(query, expanded_text)` của Top 25 ứng viên RRF và sắp xếp lại để chọn Top K ngữ cảnh chuẩn xác nhất trước khi đưa vào LLM.
+_Avoid_: Bi-encoder rescoring, Heuristic keyword filter.
+
+**GroundedPromptBuilder & Custom System Prompt Injection**:
+Module xây dựng prompt có cấu trúc (`backend/ai_service/core/prompt_builder.py`) gắn trích dẫn `[MM:SS] [Chunk N]` vào ngữ cảnh RAG và tiêm System Prompt tùy biến của người dùng hoặc preset (`qa_refine`, `cornell_notes`, `quiz_json`) vào chuỗi sinh câu trả lời, đồng thời tính `prompt_hash` để chống nhiễm cache.
+_Avoid_: String concatenation prompt, Hardcoded system string.
+
+**Multi-Pass Gemma 4 Chain (`[Q5]`–`[Q6+]`)**:
+Chuỗi sinh nội dung đa bước trên Gemma 4 E4B (không dùng `[Q0]` query rewriting): `[Q5]` Pass 1 (Grounded RAG Draft) tạo bản nháp bám sát Top K ngữ cảnh `[MM:SS]`; `[Q6]` Pass 2 (Custom System Prompt Refiner) tinh chỉnh lỗi chính tả ASR, câu chữ và ép định dạng đầu ra theo System Prompt của người dùng; `[Q7+]` `extraStages` cho phép nối thêm các pass mở rộng tuần tự qua `RagPipelineCoordinator`.
+_Avoid_: Single-shot ungrounded prompt, Query rewriting Q0.

@@ -76,6 +76,11 @@ services:
       TORCH_NUM_THREADS: "4"
       MODEL_PATH_PHOWHISPER: /models/phowhisper-base
       MODEL_PATH_BGE_M3: /models/bge-m3
+      MODEL_PATH_RERANKER: /models/bge-reranker-v2-m3
+      MODEL_PATH_GEMMA: /models/gemma-4-e4b
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma-4-e4b}
+      LLM_ENGINE_MODE: ${LLM_ENGINE_MODE:-auto}
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
       POSTGRES_DB: ${POSTGRES_DB:-lecturelens_db}

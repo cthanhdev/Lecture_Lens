@@ -10,3 +10,4 @@ This directory records architectural decisions for the LectureLens project. Form
 | [0002](./0002-audio-ingest-storage-and-transcript.md) | Shared Volume Audio Ingestion & Transcript Artifact Handshake (`jobId`) | Accepted |
 | [0003](./0003-native-mobile-architecture-expo-sdk58.md) | Native Mobile Client on Expo SDK 58 (Web Client Archived) | Accepted |
 | [0004](./0004-recursive-chunking-and-bge-m3-halfvec-indexing.md) | Recursive Token Chunking, BGE-M3 Dual Embedding (`halfvec(1024)` + Lexical Weights), and Sequential VRAM Offloading | Accepted |
+| [0005](./0005-multi-pass-gemma4-rag-and-custom-prompt-chain.md) | Online Hybrid RAG, Cross-Encoder Reranking, and Multi-Pass Gemma 4 Prompt Chain (`[Q1]`–`[Q6+]`) | Accepted |

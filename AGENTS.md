@@ -33,14 +33,20 @@ Tài liệu này là **Hiến Chương Kỹ Thuật (Constitution)** bắt buộ
   - **`[I5]` Recursive Token Chunker (`text_chunker.py`)**: `RecursiveTokenChunker` phân đoạn `transcript.json` với `CHUNK_MAX_TOKENS=512`, `CHUNK_OVERLAP_TOKENS=64` và liên kết hai chiều `prev_chunk_id`/`next_chunk_id` (Doubly-Linked Chunks).
   - **`[I6]` BGE-M3 Dual Embedder (`embedder.py`)**: `BgeM3Embedder` nạp trực tiếp qua `transformers` (`AutoTokenizer`, `AutoModel`) + `sparse_linear.pt` (`weights_only=True`, không dùng `FlagEmbedding`), xuất đồng thời Dense Vector (`halfvec(1024)` FP16 chuẩn hóa L2) và `lexical_weights` (`JSONB`).
   - **Chunk Store (`chunk_store.py`)**: `CompositeChunkStore` ghi `chunks/{job_id}/chunks.json` bất biến và đồng bộ batch vào `rag.lecture_chunks` trên PostgreSQL/`pgvector`.
+- **Stage 3 Pipeline Modules (`backend/ai_service/core/`, `pipeline/`, `routers/`)**:
+  - **`[Q4]` Cross-Encoder Reranker (`reranker.py`)**: `BgeRerankerV2M3` nạp trực tiếp qua `transformers` (`AutoModelForSequenceClassification`, `local_files_only=True`) chấm điểm `(query, expanded_text)` và hỗ trợ `unload()`.
+  - **`[Q5]`–`[Q7+]` Grounded Prompt Builder (`prompt_builder.py`)**: `GroundedPromptBuilder` dựng `[Q5]` RAG Draft Prompt (`[MM:SS]`), `[Q6]` Custom System Prompt Refiner (`qa_refine`, `cornell_notes`, `quiz_json` hoặc `systemPrompt` tùy biến), `[Q7+]` `extra_stages` (`LLMStageConfig`), và `compute_pipeline_prompt_hash()`.
+  - **Gemma 4 Dual Client (`llm_client.py`)**: `CompositeLLMClient` hỗ trợ chế độ `"auto"` (ưu tiên `OllamaGemmaClient` cục bộ, fallback `TransformersGemmaClient` nạp trực tiếp `backend/models/gemma-4-e4b` qua `transformers`) và `FakeLLMClient` cho test/mock.
+  - **Telemetry & Semantic Cache Store (`telemetry_store.py`)**: `CompositeTelemetryStore` đồng bộ `rag.semantic_query_cache` (phân vùng theo `prompt_hash`) và `rag.rag_audit_logs`.
+  - **Online RAG Coordinator & Router (`pipeline/rag_pipeline.py`, `routers/rag.py`)**: `RagPipelineCoordinator` điều phối `[Q1]`–`[Q6+]` (không `[Q0]`), phục vụ unified `POST /internal/v1/ai/rag/query` (Cách 2) cùng `/rag/retrieve`, `/llm/generate`, `/rag/presets`.
 - **Vector Database**: PostgreSQL 16 + `pgvector` 0.7+ (Chỉ mục HNSW `halfvec_cosine_ops` `idx_chunks_hnsw_cosine`, GIN trên `tsv_content` & `content_unaccent` `pg_trgm`, B-tree nav `idx_chunks_nav`, 3-Stream RRF, schema phân vùng `app` và `rag`)
 - **Local AI Models & VRAM Management (`LOW_VRAM_MODE`)**:
   - Cấu hình Docker dev chuẩn (`backend/docker-compose.ai-dev.yml`): **`16 vCPU / 16 GB RAM / 4 GB VRAM`** (`LOW_VRAM_MODE=true`, `OMP_NUM_THREADS=4`, `MKL_NUM_THREADS=4`, `TORCH_NUM_THREADS=4`, `ai` `6.0` CPU / `6G` RAM, `db` `2.0` CPU / `1536M` RAM / `256mb` shm).
-  - **Sequential VRAM Offloading**: `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)` buộc `PhoWhisperEngine.unload()` giải phóng VRAM ở `STT_COMPLETED` trước khi nạp `BgeM3Embedder` ở giai đoạn `EMBEDDING` (tương thích GPU 4 GB VRAM hoặc fallback CPU).
+  - **Sequential VRAM Offloading**: `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)` buộc giải phóng tuần tự VRAM giữa các mô hình (`PhoWhisperEngine.unload()` -> `BgeM3Embedder.unload()` -> `BgeRerankerV2M3.unload()` -> `CompositeLLMClient.unload()`), tương thích GPU 4 GB VRAM hoặc fallback CPU.
   - ASR Tiếng Việt: `phowhisper-base` (tự động gán timestamp `[MM:SS]`)
   - Dense + Sparse Embedding: `bge-m3` (`halfvec(1024)` + `lexical_weights JSONB`)
   - Cross-Encoder Reranker: `bge-reranker-v2-m3`
-  - Contextual LLM: `gemma-4-e4b` chạy trên máy chủ Ollama cục bộ
+  - Contextual LLM: `gemma-4-e4b` chạy trên máy chủ Ollama cục bộ hoặc nạp trực tiếp qua `transformers` (`Gemma4ForConditionalGeneration`)
 
 ---
 
@@ -87,14 +93,18 @@ Mọi mã nguồn giao diện được sinh ra trong thư mục `mobile/` bắt 
 4. **Recursive Chunking, Dual Vector & Sequential VRAM Offloading ([ADR 0004](./docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md)):**
    - Phân đoạn đệ quy `[I5]` (`<=512` tokens, `64` token overlap, `prev_chunk_id`/`next_chunk_id`) xuất bản hợp đồng bất biến `chunks/{job_id}/chunks.json`.
    - Nhúng kép `[I6]` bằng `BgeM3Embedder` trực tiếp qua `transformers` + `sparse_linear.pt` (`halfvec(1024)` FP16 + `lexical_weights JSONB`, tuyệt đối không phụ thuộc `FlagEmbedding`).
-   - Toàn bộ tác vụ nặng chạy dưới `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)` và `LOW_VRAM_MODE=true` để giải phóng VRAM PhoWhisper ở `STT_COMPLETED` trước khi nạp BGE-M3.
-5. **Tuân Thủ Hợp Đồng API Nội Bộ & Gateway ([API-REFERENCE.md](./docs/API-REFERENCE.md)):**
+   - Toàn bộ tác vụ nặng chạy dưới `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)` và `LOW_VRAM_MODE=true` để giải phóng VRAM tuần tự giữa các stage AI.
+5. **Online Hybrid RAG & Multi-Pass Gemma 4 Chain ([ADR 0005](./docs/adr/0005-multi-pass-gemma4-rag-and-custom-prompt-chain.md)):**
+   - Endpoint thống nhất chính là `POST /internal/v1/ai/rag/query` (Cách 2), đi kèm các endpoint modular `/rag/retrieve`, `/llm/generate`, `/rag/presets`.
+   - Tuyệt đối **không dùng `[Q0]` query rewriting**; câu hỏi gốc đi thẳng vào `[Q1]` Semantic Query Cache (phân vùng theo `prompt_hash`) và `[Q2]` 3-Stream Hybrid RRF -> `[Q3]` Doubly-Linked Context Expansion -> `[Q4]` `BgeRerankerV2M3`.
+   - Chuỗi LLM Multi-Pass trên Gemma 4 E4B: `[Q5]` Pass 1 sinh `draft_answer` bám sát Top K ngữ cảnh `[MM:SS]`, `[Q6]` Pass 2 nhận Custom System Prompt / Preset (`qa_refine`, `cornell_notes`, `quiz_json`) để sửa câu chữ và ép định dạng đầu ra, cùng `[Q7+]` `extraStages` có thể mở rộng.
+6. **Tuân Thủ Hợp Đồng API Nội Bộ & Gateway ([API-REFERENCE.md](./docs/API-REFERENCE.md)):**
    - Mọi endpoint, JSON field, header (`Bearer JWT` / `X-Internal-Secret`), trạng thái job (`QUEUED -> PROCESSING_STT -> STT_COMPLETED -> CHUNKING -> EMBEDDING -> READY | FAILED`), webhook (`PUT /internal/v1/jobs/{jobId}/status`), và SQL RPCs đều phải đối chiếu với [`docs/API-REFERENCE.md`](./docs/API-REFERENCE.md) làm Single Source of Truth.
-6. **Tuân Thủ Ngôn Ngữ Miền (Ubiquitous Language):**
+7. **Tuân Thủ Ngôn Ngữ Miền (Ubiquitous Language):**
    - Luôn đọc và đối chiếu thuật ngữ với [GLOSSARY.md](./GLOSSARY.md).
-   - Dùng đúng `LectureLens` (không dùng `SmartLecture`, `LectureApp`), dùng đúng `Kitsune Soft`, `Kitsune Fox Companion`, `Capsule Audio Player`, `Cornell Notes`, `2-Stage Neural RAG`, `Recursive Token Chunker ([I5])`, `BGE-M3 Dual Embedder ([I6])`, `Doubly-Linked Chunks`, `Sequential VRAM Offloading`.
-7. **Bảo Tồn Ranh Giới (Seams):**
-   - Client (`mobile/`) không bao giờ truy vấn trực tiếp cơ sở dữ liệu hoặc AI model weights. Mọi luồng đi qua Gateway hoặc Backend API; mọi persistence backend đi qua Protocol Seams (`AudioStoreProtocol`, `ChunkStoreProtocol`, `EmbedderProtocol`, `JobReporterProtocol`).
+   - Dùng đúng `LectureLens` (không dùng `SmartLecture`, `LectureApp`), dùng đúng `Kitsune Soft`, `Kitsune Fox Companion`, `Capsule Audio Player`, `Cornell Notes`, `2-Stage Neural RAG`, `Recursive Token Chunker ([I5])`, `BGE-M3 Dual Embedder ([I6])`, `Doubly-Linked Chunks`, `Cross-Encoder Reranker ([Q4])`, `Semantic Query Cache ([Q1])`, `Multi-Pass Gemma 4 Chain ([Q5]–[Q6+])`, `GroundedPromptBuilder`, `Sequential VRAM Offloading`.
+8. **Bảo Tồn Ranh Giới (Seams):**
+   - Client (`mobile/`) không bao giờ truy vấn trực tiếp cơ sở dữ liệu hoặc AI model weights. Mọi luồng đi qua Gateway hoặc Backend API; mọi thành phần AI & persistence backend đi qua Protocol Seams (`AudioStoreProtocol`, `ChunkStoreProtocol`, `EmbedderProtocol`, `JobReporterProtocol`, `RerankerProtocol`, `LLMClientProtocol`, `TelemetryStoreProtocol`).
 
 ---
 
