@@ -2,6 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   AUTH_BASE_ORB_SIZE,
+  AUTH_CARD_DECK_SPEC,
   AUTH_PAGER_MAX_PROGRESS,
   AUTH_REFERENCE_WIDTH,
   authKeyFromStep,
@@ -9,6 +10,8 @@ import {
   buildAuthOrbTracks,
   buildAuthParallaxElements,
   clampAuthProgress,
+  computeAuthCardDeckTransform,
+  detectAuthSwipeHapticPhase,
   resolveAuthScreenKey,
 } from '../authPagerMotion.ts'
 
@@ -101,5 +104,91 @@ describe('Auth Pager Motion Seam (05 <-> 06)', () => {
 
     const safeFallback = buildAuthParallaxElements(-10)
     assert.equal(safeFallback.length, elements.length)
+  })
+
+  it('computes neutral identity flashcard deck transforms when page is centered at rest', () => {
+    const signInAtRest = computeAuthCardDeckTransform(0, 0)
+    assert.deepEqual(signInAtRest, {
+      scale: 1,
+      rotateZDeg: 0,
+      rotateYDeg: 0,
+      translateX: 0,
+      translateY: 0,
+      opacity: 1,
+    })
+
+    const createAccountAtRest = computeAuthCardDeckTransform(1, 1)
+    assert.deepEqual(createAccountAtRest, {
+      scale: 1,
+      rotateZDeg: 0,
+      rotateYDeg: 0,
+      translateX: 0,
+      translateY: 0,
+      opacity: 1,
+    })
+  })
+
+  it('keeps symmetric vertical height/scale/opacity and opposite lateral tilt at midpoint (progress = 0.5)', () => {
+    const leftCard = computeAuthCardDeckTransform(0.5, 0)
+    const rightCard = computeAuthCardDeckTransform(0.5, 1)
+
+    assert.equal(leftCard.scale, AUTH_CARD_DECK_SPEC.midScale)
+    assert.equal(rightCard.scale, AUTH_CARD_DECK_SPEC.midScale)
+    assert.equal(leftCard.translateY, AUTH_CARD_DECK_SPEC.midTranslateY)
+    assert.equal(rightCard.translateY, AUTH_CARD_DECK_SPEC.midTranslateY)
+    assert.equal(leftCard.opacity, AUTH_CARD_DECK_SPEC.midOpacity)
+    assert.equal(rightCard.opacity, AUTH_CARD_DECK_SPEC.midOpacity)
+
+    assert.equal(leftCard.rotateZDeg, -AUTH_CARD_DECK_SPEC.midRotateZDeg)
+    assert.equal(rightCard.rotateZDeg, AUTH_CARD_DECK_SPEC.midRotateZDeg)
+    assert.equal(leftCard.rotateYDeg, AUTH_CARD_DECK_SPEC.midRotateYDeg)
+    assert.equal(rightCard.rotateYDeg, -AUTH_CARD_DECK_SPEC.midRotateYDeg)
+    assert.equal(leftCard.translateX, AUTH_CARD_DECK_SPEC.midTranslateX)
+    assert.equal(rightCard.translateX, -AUTH_CARD_DECK_SPEC.midTranslateX)
+  })
+
+  it('interpolates smoothly at quarter progress and reaches full off-screen card depth bounds', () => {
+    const quarterSignIn = computeAuthCardDeckTransform(0.25, 0)
+    assert.equal(quarterSignIn.scale, 0.984)
+    assert.equal(quarterSignIn.translateY, 3)
+    assert.equal(quarterSignIn.opacity, 0.95)
+    assert.equal(quarterSignIn.rotateZDeg, -0.55)
+    assert.equal(quarterSignIn.rotateYDeg, 1.5)
+    assert.equal(quarterSignIn.translateX, 4)
+
+    const offscreenSignIn = computeAuthCardDeckTransform(1, 0)
+    assert.deepEqual(offscreenSignIn, {
+      scale: AUTH_CARD_DECK_SPEC.minScale,
+      rotateZDeg: -AUTH_CARD_DECK_SPEC.maxRotateZDeg,
+      rotateYDeg: AUTH_CARD_DECK_SPEC.maxRotateYDeg,
+      translateX: AUTH_CARD_DECK_SPEC.maxTranslateX,
+      translateY: AUTH_CARD_DECK_SPEC.maxTranslateY,
+      opacity: AUTH_CARD_DECK_SPEC.minOpacity,
+    })
+
+    const offscreenCreate = computeAuthCardDeckTransform(0, 1)
+    assert.deepEqual(offscreenCreate, {
+      scale: AUTH_CARD_DECK_SPEC.minScale,
+      rotateZDeg: AUTH_CARD_DECK_SPEC.maxRotateZDeg,
+      rotateYDeg: -AUTH_CARD_DECK_SPEC.maxRotateYDeg,
+      translateX: -AUTH_CARD_DECK_SPEC.maxTranslateX,
+      translateY: AUTH_CARD_DECK_SPEC.maxTranslateY,
+      opacity: AUTH_CARD_DECK_SPEC.minOpacity,
+    })
+  })
+
+  it('detects 3-stage soft haptic swipe phases across lift, midpoint, and settle thresholds', () => {
+    assert.equal(detectAuthSwipeHapticPhase(0, 0.05), 'lift')
+    assert.equal(detectAuthSwipeHapticPhase(1, 0.95), 'lift')
+
+    assert.equal(detectAuthSwipeHapticPhase(0.47, 0.51), 'midpoint')
+    assert.equal(detectAuthSwipeHapticPhase(0.52, 0.49), 'midpoint')
+
+    assert.equal(detectAuthSwipeHapticPhase(0.05, 0.01), 'settle')
+    assert.equal(detectAuthSwipeHapticPhase(0.95, 0.99), 'settle')
+
+    assert.equal(detectAuthSwipeHapticPhase(0.15, 0.25), 'none')
+    assert.equal(detectAuthSwipeHapticPhase(0, 0), 'none')
+    assert.equal(detectAuthSwipeHapticPhase(1, 1), 'none')
   })
 })

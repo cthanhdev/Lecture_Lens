@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react'
 import {
   KeyboardAvoidingView,
   Platform,
@@ -25,13 +25,19 @@ import { Button } from '../ui/button/Button'
 import { Icon } from '../ui/icons'
 import { FormInputPill } from '../ui/input/FormInputPill'
 import { AuthErrorBanner, AuthOrDivider } from './AuthFormPrimitives'
-import { AuthMascotHero, authPaneStyles } from './authPaneStyles'
+import {
+  AuthFlashcardStage,
+  AuthMascotHero,
+  authPaneStyles,
+} from './authPaneStyles'
 import { useAuthSubmission } from './useAuthSubmission'
 
 export interface SignInPaneProps {
   width: number
   scrollProgress: SharedValue<number>
   fillDemoSignal: number
+  isActive?: boolean
+  swipeResetTrigger?: number
   onSwitchToCreateAccount: () => void
   onOpenLegal: (tab: LegalDocumentTab) => void
   onOpenForgotPassword: (currentEmail: string) => void
@@ -48,6 +54,8 @@ export const SignInPane: React.FC<SignInPaneProps> = ({
   width,
   scrollProgress,
   fillDemoSignal,
+  isActive = true,
+  swipeResetTrigger = 0,
   onSwitchToCreateAccount,
   onOpenLegal,
   onOpenForgotPassword,
@@ -60,6 +68,16 @@ export const SignInPane: React.FC<SignInPaneProps> = ({
   const [showPassword, setShowPassword] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<SignInFormErrors>({})
   const handledSignalRef = useRef(fillDemoSignal)
+  const scrollViewRef = useRef<ComponentRef<typeof ScrollView> | null>(null)
+  const hasMountedRef = useRef(false)
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true
+      return
+    }
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+  }, [isActive, swipeResetTrigger])
 
   const { submitError, setSubmitError, submittingProvider, runSubmission } =
     useAuthSubmission({
@@ -116,6 +134,7 @@ export const SignInPane: React.FC<SignInPaneProps> = ({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={authPaneStyles.slideScrollContent}
         showsVerticalScrollIndicator={false}
@@ -130,164 +149,166 @@ export const SignInPane: React.FC<SignInPaneProps> = ({
           onOpenInspector={onOpenInspector}
         />
 
-        <View style={authPaneStyles.formCard}>
-          <AuthErrorBanner message={submitError} />
+        <AuthFlashcardStage pageIndex={0} scrollProgress={scrollProgress}>
+          <View style={[authPaneStyles.formCard, authPaneStyles.formCardSignIn]}>
+            <AuthErrorBanner message={submitError} />
 
-          <FormInputPill
-            label="University email"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text)
-              setFieldErrors((prev) => ({ ...prev, email: undefined }))
-              setSubmitError(null)
-            }}
-            placeholder={DEMO_CREDENTIALS.email}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            textContentType="emailAddress"
-            returnKeyType="next"
-            leftIcon={
-              <Icon
-                name="mail"
-                size={16}
-                strokeColor={KITSUNE_COLORS.kitsuneCoralDark}
-              />
-            }
-            leftIconBadgeTone="coral"
-            isValid={isEmailValid}
-            validBadgeTone="coral"
-            surfaceTone="glass"
-            error={fieldErrors.email}
-            containerStyle={styles.fieldGap}
-          />
-
-          <FormInputPill
-            label="Password"
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text)
-              setFieldErrors((prev) => ({ ...prev, password: undefined }))
-              setSubmitError(null)
-            }}
-            placeholder="Enter your password"
-            secureTextEntry={!showPassword}
-            autoCapitalize="none"
-            autoCorrect={false}
-            textContentType="password"
-            returnKeyType="done"
-            onSubmitEditing={handleSignIn}
-            leftIcon={
-              <Icon name="lock" size={16} strokeColor={KITSUNE_COLORS.plumInk} />
-            }
-            leftIconBadgeTone="sakura"
-            surfaceTone="tint"
-            rightIcon={
-              <Pressable
-                onPress={() => setShowPassword((prev) => !prev)}
-                hitSlop={10}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  showPassword ? 'Hide password' : 'Show password'
-                }
-              >
+            <FormInputPill
+              label="University email"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text)
+                setFieldErrors((prev) => ({ ...prev, email: undefined }))
+                setSubmitError(null)
+              }}
+              placeholder={DEMO_CREDENTIALS.email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="emailAddress"
+              returnKeyType="next"
+              leftIcon={
                 <Icon
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={18}
-                  strokeColor={KITSUNE_COLORS.plumInkMuted}
+                  name="mail"
+                  size={16}
+                  strokeColor={KITSUNE_COLORS.kitsuneCoralDark}
                 />
+              }
+              leftIconBadgeTone="coral"
+              isValid={isEmailValid}
+              validBadgeTone="coral"
+              surfaceTone="tint"
+              error={fieldErrors.email}
+              containerStyle={styles.fieldGap}
+            />
+
+            <FormInputPill
+              label="Password"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text)
+                setFieldErrors((prev) => ({ ...prev, password: undefined }))
+                setSubmitError(null)
+              }}
+              placeholder="Enter your password"
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="password"
+              returnKeyType="done"
+              onSubmitEditing={handleSignIn}
+              leftIcon={
+                <Icon name="lock" size={16} strokeColor={KITSUNE_COLORS.plumInk} />
+              }
+              leftIconBadgeTone="sakura"
+              surfaceTone="tint"
+              rightIcon={
+                <Pressable
+                  onPress={() => setShowPassword((prev) => !prev)}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    showPassword ? 'Hide password' : 'Show password'
+                  }
+                >
+                  <Icon
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={18}
+                    strokeColor={KITSUNE_COLORS.plumInkMuted}
+                  />
+                </Pressable>
+              }
+              error={fieldErrors.password}
+            />
+
+            <View style={styles.forgotRow}>
+              <Pressable
+                onPress={() => onOpenForgotPassword(email)}
+                accessibilityRole="button"
+                accessibilityLabel="Forgot password"
+                style={({ pressed }) => [
+                  styles.forgotButton,
+                  pressed && authPaneStyles.pressedLink,
+                ]}
+              >
+                <Text style={styles.forgotText}>Forgot password?</Text>
               </Pressable>
-            }
-            error={fieldErrors.password}
-          />
+            </View>
 
-          <View style={styles.forgotRow}>
-            <Pressable
-              onPress={() => onOpenForgotPassword(email)}
-              accessibilityRole="button"
-              accessibilityLabel="Forgot password"
-              style={({ pressed }) => [
-                styles.forgotButton,
-                pressed && authPaneStyles.pressedLink,
-              ]}
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              isLoading={submittingProvider === 'email'}
+              disabled={submittingProvider !== null}
+              rightIcon={<Icon name="arrow-right" size={18} strokeColor="#FFFFFF" />}
+              onPress={handleSignIn}
             >
-              <Text style={styles.forgotText}>Forgot password?</Text>
-            </Pressable>
+              Sign in
+            </Button>
           </View>
 
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            isLoading={submittingProvider === 'email'}
-            disabled={submittingProvider !== null}
-            rightIcon={<Icon name="arrow-right" size={18} strokeColor="#FFFFFF" />}
-            onPress={handleSignIn}
-          >
-            Sign in
-          </Button>
-        </View>
+          <AuthOrDivider />
 
-        <AuthOrDivider />
-
-        <View style={authPaneStyles.socialStack}>
-          <Button
-            variant="dark"
-            size="lg"
-            fullWidth
-            isLoading={submittingProvider === 'apple'}
-            disabled={submittingProvider !== null}
-            leftIcon={<Icon name="apple" size={18} strokeColor="#FFFFFF" />}
-            onPress={() => handleSocialSignIn('apple')}
-          >
-            Continue with Apple
-          </Button>
-
-          <Button
-            variant="surface"
-            size="lg"
-            fullWidth
-            isLoading={submittingProvider === 'google'}
-            disabled={submittingProvider !== null}
-            leftIcon={<Icon name="google" size={18} />}
-            onPress={() => handleSocialSignIn('google')}
-          >
-            Continue with Google
-          </Button>
-        </View>
-
-        <View style={styles.footerBlock}>
-          <View style={authPaneStyles.switchRow}>
-            <Text style={authPaneStyles.switchPrompt}>New to Kitsune?</Text>
-            <Pressable
-              onPress={onSwitchToCreateAccount}
-              hitSlop={{ top: 10, bottom: 10, left: 6, right: 8 }}
-              accessibilityRole="button"
-              accessibilityLabel="Create account"
-              style={({ pressed }) => [pressed && authPaneStyles.pressedLink]}
+          <View style={authPaneStyles.socialStack}>
+            <Button
+              variant="dark"
+              size="lg"
+              fullWidth
+              isLoading={submittingProvider === 'apple'}
+              disabled={submittingProvider !== null}
+              leftIcon={<Icon name="apple" size={18} strokeColor="#FFFFFF" />}
+              onPress={() => handleSocialSignIn('apple')}
             >
-              <Text style={authPaneStyles.switchAction}>Create account</Text>
-            </Pressable>
+              Continue with Apple
+            </Button>
+
+            <Button
+              variant="surface"
+              size="lg"
+              fullWidth
+              isLoading={submittingProvider === 'google'}
+              disabled={submittingProvider !== null}
+              leftIcon={<Icon name="google" size={18} />}
+              onPress={() => handleSocialSignIn('google')}
+            >
+              Continue with Google
+            </Button>
           </View>
 
-          <Text style={styles.legalText}>
-            By continuing you agree to our{' '}
-            <Text
-              style={styles.legalLink}
-              onPress={() => onOpenLegal('terms')}
-            >
-              Terms
-            </Text>{' '}
-            and{' '}
-            <Text
-              style={styles.legalLink}
-              onPress={() => onOpenLegal('privacy')}
-            >
-              Privacy Policy
+          <View style={styles.footerBlock}>
+            <View style={authPaneStyles.switchRow}>
+              <Text style={authPaneStyles.switchPrompt}>New to Kitsune?</Text>
+              <Pressable
+                onPress={onSwitchToCreateAccount}
+                hitSlop={{ top: 10, bottom: 10, left: 6, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Create account"
+                style={({ pressed }) => [pressed && authPaneStyles.pressedLink]}
+              >
+                <Text style={authPaneStyles.switchAction}>Create account</Text>
+              </Pressable>
+            </View>
+
+            <Text style={styles.legalText}>
+              By continuing you agree to our{' '}
+              <Text
+                style={styles.legalLink}
+                onPress={() => onOpenLegal('terms')}
+              >
+                Terms
+              </Text>{' '}
+              and{' '}
+              <Text
+                style={styles.legalLink}
+                onPress={() => onOpenLegal('privacy')}
+              >
+                Privacy Policy
+              </Text>
+              .
             </Text>
-            .
-          </Text>
-        </View>
+          </View>
+        </AuthFlashcardStage>
       </ScrollView>
     </KeyboardAvoidingView>
   )

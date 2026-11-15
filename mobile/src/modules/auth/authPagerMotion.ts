@@ -166,6 +166,7 @@ const PARALLAX_ELEMENT_TEMPLATES: readonly ParallaxElementTemplate[] = [
 
 /** Clamp horizontal pager progress strictly inside [0, 1]. */
 export function clampAuthProgress(progress: number): number {
+  'worklet'
   if (!Number.isFinite(progress)) return 0
   if (progress <= 0) return 0
   if (progress >= AUTH_PAGER_MAX_PROGRESS) return AUTH_PAGER_MAX_PROGRESS
@@ -263,4 +264,131 @@ export function buildAuthParallaxElements(
     scale: [...template.scale] as [number, number, number],
     opacity: [...template.opacity] as [number, number, number],
   }))
+}
+
+export interface AuthCardDeckTransform {
+  readonly scale: number
+  readonly rotateZDeg: number
+  readonly rotateYDeg: number
+  readonly translateX: number
+  readonly translateY: number
+  readonly opacity: number
+}
+
+export const AUTH_CARD_DECK_SPEC = {
+  perspective: 1100,
+  minScale: 0.945,
+  midScale: 0.968,
+  maxRotateZDeg: 1.6,
+  midRotateZDeg: 1.1,
+  maxRotateYDeg: 4.5,
+  midRotateYDeg: 3.0,
+  maxTranslateY: 10,
+  midTranslateY: 6,
+  maxTranslateX: 14,
+  midTranslateX: 8,
+  minOpacity: 0.78,
+  midOpacity: 0.9,
+} as const
+
+export type AuthSwipeHapticPhase = 'none' | 'lift' | 'midpoint' | 'settle'
+
+function normalizeMetric(value: number): number {
+  'worklet'
+  return value === 0 ? 0 : Number(value.toFixed(4))
+}
+
+/**
+ * Compute continuous Mochi Flashcard deck 2.5D transforms for Screen 05 / Screen 06
+ * given the horizontal pager progress [0..1] and the card's pageIndex (0 | 1).
+ */
+export function computeAuthCardDeckTransform(
+  progress: number,
+  pageIndex: AuthScreenStep
+): AuthCardDeckTransform {
+  'worklet'
+  const clamped = clampAuthProgress(progress)
+  const rawDelta = clamped - pageIndex
+  const delta = Math.max(-1, Math.min(1, rawDelta))
+  const absDelta = Math.abs(delta)
+  const sign = delta === 0 ? 0 : delta > 0 ? 1 : -1
+
+  if (absDelta <= 0.5) {
+    const t = absDelta / 0.5
+    return {
+      scale: normalizeMetric(1 + (AUTH_CARD_DECK_SPEC.midScale - 1) * t),
+      rotateZDeg: normalizeMetric(
+        -sign * AUTH_CARD_DECK_SPEC.midRotateZDeg * t
+      ),
+      rotateYDeg: normalizeMetric(sign * AUTH_CARD_DECK_SPEC.midRotateYDeg * t),
+      translateX: normalizeMetric(sign * AUTH_CARD_DECK_SPEC.midTranslateX * t),
+      translateY: normalizeMetric(AUTH_CARD_DECK_SPEC.midTranslateY * t),
+      opacity: normalizeMetric(1 + (AUTH_CARD_DECK_SPEC.midOpacity - 1) * t),
+    }
+  }
+
+  const t = (absDelta - 0.5) / 0.5
+  return {
+    scale: normalizeMetric(
+      AUTH_CARD_DECK_SPEC.midScale +
+        (AUTH_CARD_DECK_SPEC.minScale - AUTH_CARD_DECK_SPEC.midScale) * t
+    ),
+    rotateZDeg: normalizeMetric(
+      -sign *
+        (AUTH_CARD_DECK_SPEC.midRotateZDeg +
+          (AUTH_CARD_DECK_SPEC.maxRotateZDeg -
+            AUTH_CARD_DECK_SPEC.midRotateZDeg) *
+            t)
+    ),
+    rotateYDeg: normalizeMetric(
+      sign *
+        (AUTH_CARD_DECK_SPEC.midRotateYDeg +
+          (AUTH_CARD_DECK_SPEC.maxRotateYDeg -
+            AUTH_CARD_DECK_SPEC.midRotateYDeg) *
+            t)
+    ),
+    translateX: normalizeMetric(
+      sign *
+        (AUTH_CARD_DECK_SPEC.midTranslateX +
+          (AUTH_CARD_DECK_SPEC.maxTranslateX -
+            AUTH_CARD_DECK_SPEC.midTranslateX) *
+            t)
+    ),
+    translateY: normalizeMetric(
+      AUTH_CARD_DECK_SPEC.midTranslateY +
+        (AUTH_CARD_DECK_SPEC.maxTranslateY -
+          AUTH_CARD_DECK_SPEC.midTranslateY) *
+          t
+    ),
+    opacity: normalizeMetric(
+      AUTH_CARD_DECK_SPEC.midOpacity +
+        (AUTH_CARD_DECK_SPEC.minOpacity - AUTH_CARD_DECK_SPEC.midOpacity) * t
+    ),
+  }
+}
+
+/**
+ * Detect soft tactile haptic phase transitions as pager progress moves between 0 and 1.
+ */
+export function detectAuthSwipeHapticPhase(
+  prevProgress: number,
+  nextProgress: number
+): AuthSwipeHapticPhase {
+  'worklet'
+  const prev = clampAuthProgress(prevProgress)
+  const next = clampAuthProgress(nextProgress)
+
+  if ((prev < 0.5 && next >= 0.5) || (prev > 0.5 && next <= 0.5)) {
+    return 'midpoint'
+  }
+
+  if ((prev > 0.02 && next <= 0.02) || (prev < 0.98 && next >= 0.98)) {
+    return 'settle'
+  }
+
+  if ((prev <= 0.04 && next > 0.04) || (prev >= 0.96 && next < 0.96)) {
+    return 'lift'
+  }
+
+  return 'none'
 }
