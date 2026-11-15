@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react'
 import {
   KeyboardAvoidingView,
   Platform,
@@ -26,13 +26,19 @@ import { FormInputPill } from '../ui/input/FormInputPill'
 import { KawaiiCheckbox } from '../ui/input/KawaiiCheckbox'
 import { AuthErrorBanner, AuthOrDivider } from './AuthFormPrimitives'
 import { PasswordStrengthMeter } from './PasswordStrengthMeter'
-import { AuthMascotHero, authPaneStyles } from './authPaneStyles'
+import {
+  AuthFlashcardStage,
+  AuthMascotHero,
+  authPaneStyles,
+} from './authPaneStyles'
 import { useAuthSubmission } from './useAuthSubmission'
 
 export interface CreateAccountPaneProps {
   width: number
   scrollProgress: SharedValue<number>
   fillDemoSignal: number
+  isActive?: boolean
+  swipeResetTrigger?: number
   onSwitchToSignIn: () => void
   onOpenLegal: (tab: LegalDocumentTab) => void
   onOpenInspector: () => void
@@ -48,6 +54,8 @@ export const CreateAccountPane: React.FC<CreateAccountPaneProps> = ({
   width,
   scrollProgress,
   fillDemoSignal,
+  isActive = true,
+  swipeResetTrigger = 0,
   onSwitchToSignIn,
   onOpenLegal,
   onOpenInspector,
@@ -61,6 +69,16 @@ export const CreateAccountPane: React.FC<CreateAccountPaneProps> = ({
   const [showPassword, setShowPassword] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<RegistrationFormErrors>({})
   const handledSignalRef = useRef(fillDemoSignal)
+  const scrollViewRef = useRef<ComponentRef<typeof ScrollView> | null>(null)
+  const hasMountedRef = useRef(false)
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true
+      return
+    }
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+  }, [isActive, swipeResetTrigger])
 
   const { submitError, setSubmitError, submittingProvider, runSubmission } =
     useAuthSubmission({
@@ -131,6 +149,7 @@ export const CreateAccountPane: React.FC<CreateAccountPaneProps> = ({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={authPaneStyles.slideScrollContent}
         showsVerticalScrollIndicator={false}
@@ -146,191 +165,198 @@ export const CreateAccountPane: React.FC<CreateAccountPaneProps> = ({
           compact
         />
 
-        <View style={authPaneStyles.formCard}>
-          <AuthErrorBanner message={submitError} />
+        <AuthFlashcardStage pageIndex={1} scrollProgress={scrollProgress}>
+          <View
+            style={[
+              authPaneStyles.formCard,
+              authPaneStyles.formCardCreateAccount,
+            ]}
+          >
+            <AuthErrorBanner message={submitError} />
 
-          <FormInputPill
-            label="Full name"
-            value={fullName}
-            onChangeText={(text) => {
-              setFullName(text)
-              setFieldErrors((prev) => ({ ...prev, fullName: undefined }))
-              setSubmitError(null)
-            }}
-            placeholder="Minh Tran"
-            autoCapitalize="words"
-            autoCorrect={false}
-            textContentType="name"
-            returnKeyType="next"
-            leftIcon={
-              <Icon
-                name="profile"
-                size={16}
-                strokeColor={KITSUNE_COLORS.kitsuneCoralDark}
-              />
-            }
-            leftIconBadgeTone="sakura"
-            surfaceTone="tint"
-            error={fieldErrors.fullName}
-            containerStyle={styles.fieldGap}
-          />
-
-          <FormInputPill
-            label="University email"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text)
-              setFieldErrors((prev) => ({ ...prev, email: undefined }))
-              setSubmitError(null)
-            }}
-            placeholder="minh.tran@university.edu"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            textContentType="emailAddress"
-            returnKeyType="next"
-            leftIcon={
-              <Icon name="mail" size={16} strokeColor={KITSUNE_COLORS.plumInk} />
-            }
-            leftIconBadgeTone="sky"
-            isValid={isEmailValid}
-            validBadgeTone="sky"
-            surfaceTone="tint"
-            error={fieldErrors.email}
-            containerStyle={styles.fieldGap}
-          />
-
-          <FormInputPill
-            label="Password"
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text)
-              setFieldErrors((prev) => ({ ...prev, password: undefined }))
-              setSubmitError(null)
-            }}
-            placeholder="Create a strong password"
-            secureTextEntry={!showPassword}
-            autoCapitalize="none"
-            autoCorrect={false}
-            textContentType="newPassword"
-            returnKeyType="done"
-            onSubmitEditing={handleCreateAccount}
-            leftIcon={
-              <Icon name="lock" size={16} strokeColor={KITSUNE_COLORS.plumInk} />
-            }
-            leftIconBadgeTone="sakura"
-            surfaceTone="tint"
-            rightIcon={
-              <Pressable
-                onPress={() => setShowPassword((prev) => !prev)}
-                hitSlop={10}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  showPassword ? 'Hide password' : 'Show password'
-                }
-              >
-                <Icon
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={18}
-                  strokeColor={KITSUNE_COLORS.plumInkMuted}
-                />
-              </Pressable>
-            }
-            error={fieldErrors.password}
-          />
-
-          <PasswordStrengthMeter password={password} />
-
-          <View style={styles.termsBlock}>
-            <KawaiiCheckbox
-              checked={agreeTerms}
-              onChange={(next) => {
-                setAgreeTerms(next)
-                setFieldErrors((prev) => ({
-                  ...prev,
-                  agreeTerms: undefined,
-                }))
+            <FormInputPill
+              label="Full name"
+              value={fullName}
+              onChangeText={(text) => {
+                setFullName(text)
+                setFieldErrors((prev) => ({ ...prev, fullName: undefined }))
                 setSubmitError(null)
               }}
-              label={
-                <Text style={styles.termsLabelText}>
-                  I agree to the{' '}
-                  <Text
-                    style={styles.termsLink}
-                    onPress={() => onOpenLegal('terms')}
-                  >
-                    Terms
-                  </Text>{' '}
-                  and{' '}
-                  <Text
-                    style={styles.termsLink}
-                    onPress={() => onOpenLegal('privacy')}
-                  >
-                    Privacy Policy
-                  </Text>
-                </Text>
+              placeholder="Minh Tran"
+              autoCapitalize="words"
+              autoCorrect={false}
+              textContentType="name"
+              returnKeyType="next"
+              leftIcon={
+                <Icon
+                  name="profile"
+                  size={16}
+                  strokeColor={KITSUNE_COLORS.kitsuneCoralDark}
+                />
               }
+              leftIconBadgeTone="sakura"
+              surfaceTone="tint"
+              error={fieldErrors.fullName}
+              containerStyle={styles.fieldGap}
             />
-            {fieldErrors.agreeTerms ? (
-              <Text style={styles.termsErrorText}>
-                {fieldErrors.agreeTerms}
-              </Text>
-            ) : null}
+
+            <FormInputPill
+              label="University email"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text)
+                setFieldErrors((prev) => ({ ...prev, email: undefined }))
+                setSubmitError(null)
+              }}
+              placeholder="minh.tran@university.edu"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="emailAddress"
+              returnKeyType="next"
+              leftIcon={
+                <Icon name="mail" size={16} strokeColor={KITSUNE_COLORS.plumInk} />
+              }
+              leftIconBadgeTone="sky"
+              isValid={isEmailValid}
+              validBadgeTone="sky"
+              surfaceTone="tint"
+              error={fieldErrors.email}
+              containerStyle={styles.fieldGap}
+            />
+
+            <FormInputPill
+              label="Password"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text)
+                setFieldErrors((prev) => ({ ...prev, password: undefined }))
+                setSubmitError(null)
+              }}
+              placeholder="Create a strong password"
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="newPassword"
+              returnKeyType="done"
+              onSubmitEditing={handleCreateAccount}
+              leftIcon={
+                <Icon name="lock" size={16} strokeColor={KITSUNE_COLORS.plumInk} />
+              }
+              leftIconBadgeTone="sakura"
+              surfaceTone="tint"
+              rightIcon={
+                <Pressable
+                  onPress={() => setShowPassword((prev) => !prev)}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    showPassword ? 'Hide password' : 'Show password'
+                  }
+                >
+                  <Icon
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={18}
+                    strokeColor={KITSUNE_COLORS.plumInkMuted}
+                  />
+                </Pressable>
+              }
+              error={fieldErrors.password}
+            />
+
+            <PasswordStrengthMeter password={password} />
+
+            <View style={styles.termsBlock}>
+              <KawaiiCheckbox
+                checked={agreeTerms}
+                onChange={(next) => {
+                  setAgreeTerms(next)
+                  setFieldErrors((prev) => ({
+                    ...prev,
+                    agreeTerms: undefined,
+                  }))
+                  setSubmitError(null)
+                }}
+                label={
+                  <Text style={styles.termsLabelText}>
+                    I agree to the{' '}
+                    <Text
+                      style={styles.termsLink}
+                      onPress={() => onOpenLegal('terms')}
+                    >
+                      Terms
+                    </Text>{' '}
+                    and{' '}
+                    <Text
+                      style={styles.termsLink}
+                      onPress={() => onOpenLegal('privacy')}
+                    >
+                      Privacy Policy
+                    </Text>
+                  </Text>
+                }
+              />
+              {fieldErrors.agreeTerms ? (
+                <Text style={styles.termsErrorText}>
+                  {fieldErrors.agreeTerms}
+                </Text>
+              ) : null}
+            </View>
+
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              isLoading={submittingProvider === 'email'}
+              disabled={submittingProvider !== null}
+              rightIcon={<Icon name="arrow-right" size={18} strokeColor="#FFFFFF" />}
+              onPress={handleCreateAccount}
+            >
+              Create account
+            </Button>
           </View>
 
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            isLoading={submittingProvider === 'email'}
-            disabled={submittingProvider !== null}
-            rightIcon={<Icon name="arrow-right" size={18} strokeColor="#FFFFFF" />}
-            onPress={handleCreateAccount}
-          >
-            Create account
-          </Button>
-        </View>
+          <AuthOrDivider />
 
-        <AuthOrDivider />
+          <View style={authPaneStyles.socialStack}>
+            <Button
+              variant="dark"
+              size="lg"
+              fullWidth
+              isLoading={submittingProvider === 'apple'}
+              disabled={submittingProvider !== null}
+              leftIcon={<Icon name="apple" size={18} strokeColor="#FFFFFF" />}
+              onPress={() => handleSocialSignUp('apple')}
+            >
+              Sign up with Apple
+            </Button>
 
-        <View style={authPaneStyles.socialStack}>
-          <Button
-            variant="dark"
-            size="lg"
-            fullWidth
-            isLoading={submittingProvider === 'apple'}
-            disabled={submittingProvider !== null}
-            leftIcon={<Icon name="apple" size={18} strokeColor="#FFFFFF" />}
-            onPress={() => handleSocialSignUp('apple')}
-          >
-            Sign up with Apple
-          </Button>
+            <Button
+              variant="surface"
+              size="lg"
+              fullWidth
+              isLoading={submittingProvider === 'google'}
+              disabled={submittingProvider !== null}
+              leftIcon={<Icon name="google" size={18} />}
+              onPress={() => handleSocialSignUp('google')}
+            >
+              Sign up with Google
+            </Button>
+          </View>
 
-          <Button
-            variant="surface"
-            size="lg"
-            fullWidth
-            isLoading={submittingProvider === 'google'}
-            disabled={submittingProvider !== null}
-            leftIcon={<Icon name="google" size={18} />}
-            onPress={() => handleSocialSignUp('google')}
-          >
-            Sign up with Google
-          </Button>
-        </View>
-
-        <View style={styles.footerRow}>
-          <Text style={authPaneStyles.switchPrompt}>Already have an account?</Text>
-          <Pressable
-            onPress={onSwitchToSignIn}
-            hitSlop={{ top: 10, bottom: 10, left: 6, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel="Sign in"
-            style={({ pressed }) => [pressed && authPaneStyles.pressedLink]}
-          >
-            <Text style={authPaneStyles.switchAction}>Sign in</Text>
-          </Pressable>
-        </View>
+          <View style={styles.footerRow}>
+            <Text style={authPaneStyles.switchPrompt}>Already have an account?</Text>
+            <Pressable
+              onPress={onSwitchToSignIn}
+              hitSlop={{ top: 10, bottom: 10, left: 6, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Sign in"
+              style={({ pressed }) => [pressed && authPaneStyles.pressedLink]}
+            >
+              <Text style={authPaneStyles.switchAction}>Sign in</Text>
+            </Pressable>
+          </View>
+        </AuthFlashcardStage>
       </ScrollView>
     </KeyboardAvoidingView>
   )

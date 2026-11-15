@@ -7,6 +7,7 @@ import Animated, {
   useSharedValue,
   type SharedValue,
 } from 'react-native-reanimated'
+import { AUTH_CARD_DECK_SPEC, type AuthScreenStep } from '../../modules/auth'
 import { KITSUNE_COLORS, KITSUNE_RADII, KITSUNE_SHADOWS } from '../../theme/tokens'
 import { FramedBrandLogo } from '../onboarding/FramedBrandLogo'
 
@@ -91,6 +92,118 @@ export const AuthMascotHero: React.FC<AuthMascotHeroProps> = ({
   )
 }
 
+export interface AuthFlashcardStageProps {
+  readonly pageIndex: AuthScreenStep
+  readonly scrollProgress: SharedValue<number>
+  readonly children: React.ReactNode
+}
+
+/**
+ * Scroll-linked 2.5D Mochi Flashcard deck wrapper giving Auth cards soft lift,
+ * gentle lateral magnetic pull, depth scale, and cushioned card-tilt kinematics.
+ */
+export const AuthFlashcardStage: React.FC<AuthFlashcardStageProps> = ({
+  pageIndex,
+  scrollProgress,
+  children,
+}) => {
+  const flashcardAnimatedStyle = useAnimatedStyle(() => {
+    const delta = scrollProgress.value - pageIndex
+    const input = [-1, -0.5, 0, 0.5, 1]
+
+    const translateX = interpolate(
+      delta,
+      input,
+      [
+        -AUTH_CARD_DECK_SPEC.maxTranslateX,
+        -AUTH_CARD_DECK_SPEC.midTranslateX,
+        0,
+        AUTH_CARD_DECK_SPEC.midTranslateX,
+        AUTH_CARD_DECK_SPEC.maxTranslateX,
+      ],
+      Extrapolation.CLAMP
+    )
+    const translateY = interpolate(
+      delta,
+      input,
+      [
+        AUTH_CARD_DECK_SPEC.maxTranslateY,
+        AUTH_CARD_DECK_SPEC.midTranslateY,
+        0,
+        AUTH_CARD_DECK_SPEC.midTranslateY,
+        AUTH_CARD_DECK_SPEC.maxTranslateY,
+      ],
+      Extrapolation.CLAMP
+    )
+    const scale = interpolate(
+      delta,
+      input,
+      [
+        AUTH_CARD_DECK_SPEC.minScale,
+        AUTH_CARD_DECK_SPEC.midScale,
+        1,
+        AUTH_CARD_DECK_SPEC.midScale,
+        AUTH_CARD_DECK_SPEC.minScale,
+      ],
+      Extrapolation.CLAMP
+    )
+    const rotateZDeg = interpolate(
+      delta,
+      input,
+      [
+        AUTH_CARD_DECK_SPEC.maxRotateZDeg,
+        AUTH_CARD_DECK_SPEC.midRotateZDeg,
+        0,
+        -AUTH_CARD_DECK_SPEC.midRotateZDeg,
+        -AUTH_CARD_DECK_SPEC.maxRotateZDeg,
+      ],
+      Extrapolation.CLAMP
+    )
+    const rotateYDeg = interpolate(
+      delta,
+      input,
+      [
+        -AUTH_CARD_DECK_SPEC.maxRotateYDeg,
+        -AUTH_CARD_DECK_SPEC.midRotateYDeg,
+        0,
+        AUTH_CARD_DECK_SPEC.midRotateYDeg,
+        AUTH_CARD_DECK_SPEC.maxRotateYDeg,
+      ],
+      Extrapolation.CLAMP
+    )
+    const opacity = interpolate(
+      delta,
+      input,
+      [
+        AUTH_CARD_DECK_SPEC.minOpacity,
+        AUTH_CARD_DECK_SPEC.midOpacity,
+        1,
+        AUTH_CARD_DECK_SPEC.midOpacity,
+        AUTH_CARD_DECK_SPEC.minOpacity,
+      ],
+      Extrapolation.CLAMP
+    )
+
+    return {
+      opacity,
+      transform: [
+        { perspective: AUTH_CARD_DECK_SPEC.perspective },
+        { translateX },
+        { translateY },
+        { scale },
+        { rotateZ: `${rotateZDeg}deg` as const },
+        { rotateY: `${rotateYDeg}deg` as const },
+      ],
+    }
+  }, [pageIndex, scrollProgress])
+
+  return (
+    <Animated.View style={[authPaneStyles.flashcardStage, flashcardAnimatedStyle]}>
+      {children}
+    </Animated.View>
+  )
+}
+
 export const authPaneStyles = StyleSheet.create({
   slideScrollContent: {
     flexGrow: 1,
@@ -100,14 +213,18 @@ export const authPaneStyles = StyleSheet.create({
   },
   heroBlock: {
     alignItems: 'center',
+    justifyContent: 'flex-start',
+    minHeight: 186,
     marginTop: 2,
-    marginBottom: 18,
+    marginBottom: 16,
   },
   heroBlockCompact: {
+    minHeight: 186,
+    marginTop: 2,
     marginBottom: 16,
   },
   heroTitle: {
-    marginTop: 14,
+    marginTop: 12,
     fontSize: 26,
     lineHeight: 32,
     color: KITSUNE_COLORS.plumInk,
@@ -116,11 +233,13 @@ export const authPaneStyles = StyleSheet.create({
   },
   heroTitleCompact: {
     marginTop: 12,
-    fontSize: 25,
-    lineHeight: 31,
+    fontSize: 26,
+    lineHeight: 32,
   },
   heroSubtitle: {
     marginTop: 4,
+    maxWidth: 320,
+    minHeight: 38,
     fontSize: 13.5,
     lineHeight: 19,
     color: KITSUNE_COLORS.plumInkMuted,
@@ -128,7 +247,11 @@ export const authPaneStyles = StyleSheet.create({
     textAlign: 'center',
   },
   heroSubtitleCompact: {
-    maxWidth: 278,
+    maxWidth: 320,
+    minHeight: 38,
+  },
+  flashcardStage: {
+    width: '100%',
   },
   formCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.80)',
@@ -137,6 +260,14 @@ export const authPaneStyles = StyleSheet.create({
     borderColor: KITSUNE_COLORS.mirukuBorder,
     padding: 20,
     ...KITSUNE_SHADOWS.miruku,
+  },
+  formCardSignIn: {
+    minHeight: 316,
+    paddingVertical: 22,
+    justifyContent: 'space-between',
+  },
+  formCardCreateAccount: {
+    paddingVertical: 20,
   },
   socialStack: {
     gap: 10,

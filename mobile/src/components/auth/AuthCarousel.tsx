@@ -23,8 +23,10 @@ import {
   authKeyFromStep,
   authStepFromKey,
   clampAuthProgress,
+  detectAuthSwipeHapticPhase,
   type AuthScreenKey,
   type AuthScreenStep,
+  type AuthSwipeHapticPhase,
   type LegalDocumentTab,
 } from '../../modules/auth'
 import { useAppNavigation } from '../../navigation'
@@ -73,10 +75,13 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
   const lastFrameWidthRef = useRef<number>(frameWidth)
   const hasAlignedInitialRef = useRef<boolean>(initialStep === 0)
   const webSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastHapticTimestampRef = useRef<number>(0)
 
   const scrollRef = useRef<Animated.ScrollView | null>(null)
   const scrollProgress = useSharedValue<number>(initialStep)
+  const previousProgress = useSharedValue<number>(initialStep)
 
+  const [swipeResetTrigger, setSwipeResetTrigger] = useState(0)
   const [forgotModalState, setForgotModalState] = useState<{
     open: boolean
     initialEmail: string
@@ -105,8 +110,9 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
     const nextStep = authStepFromKey(initialScreen)
     activeStepRef.current = nextStep
     scrollProgress.set(nextStep)
+    previousProgress.set(nextStep)
     alignPagerToStep(nextStep, false)
-  }, [initialScreen, alignPagerToStep, scrollProgress])
+  }, [initialScreen, alignPagerToStep, scrollProgress, previousProgress])
 
   useEffect(() => {
     if (lastFrameWidthRef.current !== frameWidth) {
@@ -123,6 +129,28 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
     }
   }, [])
 
+  const triggerFlashcardHaptic = useCallback((phase: AuthSwipeHapticPhase) => {
+    if (phase === 'none') return
+    const now = Date.now()
+    if (phase !== 'midpoint' && now - lastHapticTimestampRef.current < 55) {
+      return
+    }
+    lastHapticTimestampRef.current = now
+
+    if (phase === 'lift') {
+      setSwipeResetTrigger((prev) => prev + 1)
+    }
+
+    if (phase === 'midpoint') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+        () => undefined
+      )
+      return
+    }
+
+    void Haptics.selectionAsync().catch(() => undefined)
+  }, [])
+
   const handleUserDragStart = useCallback(() => {
     Keyboard.dismiss()
     programmaticTargetRef.current = null
@@ -136,7 +164,6 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
     if (activeStepRef.current === nextStep) return
     activeStepRef.current = nextStep
     setActiveStep(nextStep)
-    void Haptics.selectionAsync().catch(() => {})
   }, [])
 
   const handleMomentumSettled = useCallback((settledStep: AuthScreenStep) => {
@@ -146,41 +173,6 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
       setActiveStep(settledStep)
     }
   }, [])
-
-  const scrollToScreen = useCallback(
-    (targetStep: AuthScreenStep) => {
-      Keyboard.dismiss()
-      if (!isReady) {
-        activeStepRef.current = targetStep
-        setActiveStep(targetStep)
-        scrollProgress.set(targetStep)
-        return
-      }
-
-      if (targetStep === activeStepRef.current) {
-        alignPagerToStep(targetStep, true)
-        return
-      }
-
-      programmaticTargetRef.current = targetStep
-      activeStepRef.current = targetStep
-      setActiveStep(targetStep)
-      void Haptics.selectionAsync().catch(() => {})
-      alignPagerToStep(targetStep, true)
-
-      if (Platform.OS === 'web') {
-        if (webSettleTimerRef.current) {
-          clearTimeout(webSettleTimerRef.current)
-        }
-        // Guarantees final progress locks cleanly to target even if Web smooth scroll skips intermediate ticks
-        webSettleTimerRef.current = setTimeout(() => {
-          programmaticTargetRef.current = null
-          scrollProgress.set(targetStep)
-        }, 340)
-      }
-    },
-    [alignPagerToStep, isReady, scrollProgress]
-  )
 
   const handleWebProgressSync = useCallback(
     (_progress: number, roundedStep: AuthScreenStep) => {
@@ -195,26 +187,73 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
     [handleStepThresholdCrossed]
   )
 
-  const { hostRef: webPagerHostRef } = useWebAuthPager({
-    enabled: isReady,
-    frameWidth,
-    scrollProgress,
-    activeStepRef,
-    onProgressSync: handleWebProgressSync,
-    onRequestSnapToStep: (targetStep) => {
+  const handleWebRequestSnapToStep = useCallback((targetStep: AuthScreenStep) => {
+    programmaticTargetRef.current = targetStep
+    activeStepRef.current = targetStep
+    setActiveStep(targetStep)
+  }, [])
+
+  const { hostRef: webPagerHostRef, animateToStep: animateWebToStep } =
+    useWebAuthPager({
+      enabled: isReady,
+      frameWidth,
+      scrollProgress,
+      previousProgress,
+      activeStepRef,
+      onProgressSync: handleWebProgressSync,
+      onHapticPhase: triggerFlashcardHaptic,
+      onRequestSnapToStep: handleWebRequestSnapToStep,
+    })
+
+  const scrollToScreen = useCallback(
+    (targetStep: AuthScreenStep) => {
+      Keyboard.dismiss()
+      if (!isReady) {
+        activeStepRef.current = targetStep
+        setActiveStep(targetStep)
+        scrollProgress.set(targetStep)
+        previousProgress.set(targetStep)
+        return
+      }
+
+      if (targetStep === activeStepRef.current) {
+        alignPagerToStep(targetStep, true)
+        return
+      }
+
       programmaticTargetRef.current = targetStep
       activeStepRef.current = targetStep
       setActiveStep(targetStep)
-      alignPagerToStep(targetStep, true)
-      if (webSettleTimerRef.current) {
-        clearTimeout(webSettleTimerRef.current)
+      triggerFlashcardHaptic('lift')
+
+      if (Platform.OS === 'web') {
+        if (webSettleTimerRef.current) {
+          clearTimeout(webSettleTimerRef.current)
+        }
+        const didSpring = animateWebToStep(targetStep)
+        if (!didSpring) {
+          alignPagerToStep(targetStep, true)
+          // Guarantees final progress locks cleanly to target even if Web smooth scroll skips intermediate ticks
+          webSettleTimerRef.current = setTimeout(() => {
+            programmaticTargetRef.current = null
+            scrollProgress.set(targetStep)
+            previousProgress.set(targetStep)
+          }, 340)
+        }
+        return
       }
-      webSettleTimerRef.current = setTimeout(() => {
-        programmaticTargetRef.current = null
-        scrollProgress.set(targetStep)
-      }, 320)
+
+      alignPagerToStep(targetStep, true)
     },
-  })
+    [
+      alignPagerToStep,
+      animateWebToStep,
+      isReady,
+      previousProgress,
+      scrollProgress,
+      triggerFlashcardHaptic,
+    ]
+  )
 
   const handleBackNavigation = useCallback(() => {
     Keyboard.dismiss()
@@ -243,7 +282,14 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
       onScroll: (event) => {
         if (frameWidth <= 0) return
         const nextProgress = clampAuthProgress(event.contentOffset.x / frameWidth)
+        const prev = previousProgress.value
+        previousProgress.set(nextProgress)
         scrollProgress.set(nextProgress)
+
+        const phase = detectAuthSwipeHapticPhase(prev, nextProgress)
+        if (phase !== 'none') {
+          scheduleOnRN(triggerFlashcardHaptic, phase)
+        }
 
         const roundedStep: AuthScreenStep = nextProgress >= 0.5 ? 1 : 0
         const target = programmaticTargetRef.current
@@ -258,15 +304,25 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
       onMomentumEnd: (event) => {
         if (frameWidth <= 0) return
         const progress = clampAuthProgress(event.contentOffset.x / frameWidth)
+        const prev = previousProgress.value
         const settledStep: AuthScreenStep = progress >= 0.5 ? 1 : 0
+        previousProgress.set(settledStep)
         scrollProgress.set(settledStep)
+
+        const settlePhase = detectAuthSwipeHapticPhase(prev, settledStep)
+        if (settlePhase !== 'none') {
+          scheduleOnRN(triggerFlashcardHaptic, settlePhase)
+        }
+
         scheduleOnRN(handleMomentumSettled, settledStep)
       },
     },
     [
       frameWidth,
       scrollProgress,
+      previousProgress,
       handleUserDragStart,
+      triggerFlashcardHaptic,
       clearProgrammaticTarget,
       handleStepThresholdCrossed,
       handleMomentumSettled,
@@ -279,10 +335,11 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
       const offsetX = event.nativeEvent.contentOffset.x
       const progress = clampAuthProgress(offsetX / frameWidth)
       scrollProgress.set(progress)
+      previousProgress.set(progress)
       const settled: AuthScreenStep = progress >= 0.5 ? 1 : 0
       handleMomentumSettled(settled)
     },
-    [frameWidth, handleMomentumSettled, scrollProgress]
+    [frameWidth, handleMomentumSettled, previousProgress, scrollProgress]
   )
 
   const handlePagerContentSizeChange = useCallback(
@@ -394,6 +451,8 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
                   width={frameWidth}
                   scrollProgress={scrollProgress}
                   fillDemoSignal={demoSignals.signIn}
+                  isActive={activeStep === 0}
+                  swipeResetTrigger={swipeResetTrigger}
                   onSwitchToCreateAccount={() => scrollToScreen(1)}
                   onOpenLegal={(tab) => setLegalTab(tab)}
                   onOpenForgotPassword={(currentEmail) =>
@@ -411,6 +470,8 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
                   width={frameWidth}
                   scrollProgress={scrollProgress}
                   fillDemoSignal={demoSignals.createAccount}
+                  isActive={activeStep === 1}
+                  swipeResetTrigger={swipeResetTrigger}
                   onSwitchToSignIn={() => scrollToScreen(0)}
                   onOpenLegal={(tab) => setLegalTab(tab)}
                   onOpenInspector={() => setInspectorOpen(true)}

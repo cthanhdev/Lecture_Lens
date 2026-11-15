@@ -1,17 +1,27 @@
-import { useEffect, useRef, type ComponentRef, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, type ComponentRef, type RefObject } from 'react'
 import { Keyboard, Platform, type View } from 'react-native'
-import type { SharedValue } from 'react-native-reanimated'
+import { withSpring, type SharedValue } from 'react-native-reanimated'
 import {
   clampAuthProgress,
+  detectAuthSwipeHapticPhase,
   type AuthScreenStep,
+  type AuthSwipeHapticPhase,
 } from '../../modules/auth'
+
+const MOCHI_SPRING_CONFIG = {
+  damping: 22,
+  stiffness: 210,
+  mass: 0.85,
+} as const
 
 interface UseWebAuthPagerOptions {
   enabled: boolean
   frameWidth: number
   scrollProgress: SharedValue<number>
+  previousProgress: SharedValue<number>
   activeStepRef: RefObject<AuthScreenStep>
   onProgressSync: (nextProgress: number, roundedStep: AuthScreenStep) => void
+  onHapticPhase: (phase: AuthSwipeHapticPhase) => void
   onRequestSnapToStep: (targetStep: AuthScreenStep) => void
 }
 
@@ -79,23 +89,116 @@ export function useWebAuthPager({
   enabled,
   frameWidth,
   scrollProgress,
+  previousProgress,
   activeStepRef,
   onProgressSync,
+  onHapticPhase,
   onRequestSnapToStep,
 }: UseWebAuthPagerOptions) {
   const hostRef = useRef<ComponentRef<typeof View> | null>(null)
   const lastDragEndTimeRef = useRef(0)
+  const animateToStepRef = useRef<(targetStep: AuthScreenStep) => boolean>(
+    () => false
+  )
 
   useEffect(() => {
-    if (Platform.OS !== 'web' || !enabled || frameWidth <= 0) return undefined
+    if (Platform.OS !== 'web' || !enabled || frameWidth <= 0) {
+      animateToStepRef.current = () => false
+      return undefined
+    }
 
     const host = hostRef.current
-    if (!isHtmlElement(host)) return undefined
+    if (!isHtmlElement(host)) {
+      animateToStepRef.current = () => false
+      return undefined
+    }
 
     const originalHostUserSelect = host.style.userSelect
     host.style.userSelect = 'none'
 
     const resolvePagerScrollEl = () => findHorizontalScrollContainer(host)
+
+    let isSpringAnimating = false
+    let springRafId: number | null = null
+    let springTargetEl: HTMLElement | null = null
+    let springSavedSnapType = ''
+    let springStartTime = 0
+
+    const cancelSpring = () => {
+      if (springRafId !== null && typeof window !== 'undefined') {
+        window.cancelAnimationFrame(springRafId)
+        springRafId = null
+      }
+      if (springTargetEl) {
+        springTargetEl.style.scrollSnapType = springSavedSnapType
+        springTargetEl = null
+      }
+      isSpringAnimating = false
+    }
+
+    const startSpringSnap = (
+      pagerEl: HTMLElement,
+      targetStep: AuthScreenStep
+    ): boolean => {
+      if (typeof window === 'undefined') return false
+      cancelSpring()
+
+      isSpringAnimating = true
+      springTargetEl = pagerEl
+      springSavedSnapType = pagerEl.style.scrollSnapType
+      springStartTime = Date.now()
+      pagerEl.style.scrollSnapType = 'none'
+
+      scrollProgress.set(withSpring(targetStep, MOCHI_SPRING_CONFIG))
+
+      const stepSpring = () => {
+        if (!isSpringAnimating || !springTargetEl) return
+
+        const rawProgress = scrollProgress.value
+        const clamped = clampAuthProgress(rawProgress)
+        const prev = previousProgress.value
+        previousProgress.set(clamped)
+
+        const phase = detectAuthSwipeHapticPhase(prev, clamped)
+        if (phase !== 'none') {
+          onHapticPhase(phase)
+        }
+
+        const rounded: AuthScreenStep = clamped >= 0.5 ? 1 : 0
+        onProgressSync(clamped, rounded)
+        springTargetEl.scrollLeft = clamped * frameWidth
+
+        const elapsed = Date.now() - springStartTime
+        const settled =
+          (Math.abs(rawProgress - targetStep) < 0.002 &&
+            Math.abs(prev - targetStep) < 0.002) ||
+          elapsed > 520
+
+        if (settled) {
+          const finishedEl = springTargetEl
+          isSpringAnimating = false
+          springRafId = null
+          springTargetEl = null
+          scrollProgress.set(targetStep)
+          previousProgress.set(targetStep)
+          finishedEl.scrollLeft = targetStep * frameWidth
+          finishedEl.style.scrollSnapType = springSavedSnapType
+          onProgressSync(targetStep, targetStep)
+          return
+        }
+
+        springRafId = window.requestAnimationFrame(stepSpring)
+      }
+
+      springRafId = window.requestAnimationFrame(stepSpring)
+      return true
+    }
+
+    animateToStepRef.current = (targetStep) => {
+      const pagerEl = resolvePagerScrollEl()
+      if (!pagerEl) return false
+      return startSpringSnap(pagerEl, targetStep)
+    }
 
     // Align initial offset cleanly once DOM metrics exist
     const initialPagerEl = resolvePagerScrollEl()
@@ -104,18 +207,28 @@ export function useWebAuthPager({
       if (Math.abs(initialPagerEl.scrollLeft - initialTargetX) > 2) {
         initialPagerEl.scrollLeft = initialTargetX
         scrollProgress.set(activeStepRef.current)
+        previousProgress.set(activeStepRef.current)
       }
     }
 
     const syncFromScrollEl = (scrollEl: HTMLElement) => {
       if (scrollEl.scrollWidth <= scrollEl.clientWidth + 4) return
       const nextProgress = clampAuthProgress(scrollEl.scrollLeft / frameWidth)
+      const prev = previousProgress.value
+      previousProgress.set(nextProgress)
       scrollProgress.set(nextProgress)
+
+      const phase = detectAuthSwipeHapticPhase(prev, nextProgress)
+      if (phase !== 'none') {
+        onHapticPhase(phase)
+      }
+
       const rounded: AuthScreenStep = nextProgress >= 0.5 ? 1 : 0
       onProgressSync(nextProgress, rounded)
     }
 
     const handleCaptureScroll = (event: Event) => {
+      if (isSpringAnimating) return
       const target = event.target
       if (!isHtmlElement(target) || typeof window === 'undefined') return
       const overflowX = window.getComputedStyle(target).overflowX
@@ -143,6 +256,7 @@ export function useWebAuthPager({
       const pagerEl = resolvePagerScrollEl()
       if (!pagerEl) return
 
+      cancelSpring()
       activePagerEl = pagerEl
       isDragging = true
       didPanHorizontally = false
@@ -183,11 +297,13 @@ export function useWebAuthPager({
       const pagerEl = activePagerEl
       activePagerEl = null
       document.body.style.userSelect = priorUserSelect
-      if (pagerEl) {
-        pagerEl.style.scrollSnapType = priorSnapType
-      }
 
-      if (!didPanHorizontally || !pagerEl) return
+      if (!didPanHorizontally || !pagerEl) {
+        if (pagerEl) {
+          pagerEl.style.scrollSnapType = priorSnapType
+        }
+        return
+      }
       lastDragEndTimeRef.current = Date.now()
 
       const dx = event.clientX - startX
@@ -205,6 +321,8 @@ export function useWebAuthPager({
         targetStep = startStep
       }
 
+      pagerEl.style.scrollSnapType = priorSnapType
+      startSpringSnap(pagerEl, targetStep)
       onRequestSnapToStep(targetStep)
     }
 
@@ -226,6 +344,8 @@ export function useWebAuthPager({
     host.addEventListener('click', swallowSyntheticClickAfterDrag, true)
 
     return () => {
+      animateToStepRef.current = () => false
+      cancelSpring()
       host.style.userSelect = originalHostUserSelect
       document.body.style.userSelect = priorUserSelect
       if (activePagerEl) {
@@ -242,10 +362,17 @@ export function useWebAuthPager({
     enabled,
     frameWidth,
     scrollProgress,
+    previousProgress,
     activeStepRef,
     onProgressSync,
+    onHapticPhase,
     onRequestSnapToStep,
   ])
 
-  return { hostRef }
+  const animateToStep = useCallback(
+    (targetStep: AuthScreenStep) => animateToStepRef.current(targetStep),
+    []
+  )
+
+  return { hostRef, animateToStep }
 }
