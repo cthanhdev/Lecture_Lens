@@ -6,6 +6,7 @@ import {
   ONBOARDING_SLIDES,
   ONBOARDING_STORAGE_KEY,
   clampOnboardingStep,
+  clearOnboardingCompleted,
   completeOnboarding,
   hydrateLaunchRoute,
   isOnboardingCompleted,
@@ -14,9 +15,13 @@ import {
 } from '../launchOrchestrator.ts'
 
 describe('Onboarding & Launch Orchestrator Seam', () => {
-  it('resolveLaunchRoute ánh xạ đúng 3 nhánh Zone 1 của UX Navigation Flow', () => {
+  it('resolveLaunchRoute luôn trả về Onboarding khi chưa có session và chỉ vào Home khi đã xác thực & hoàn tất', () => {
     assert.equal(
       resolveLaunchRoute({ onboardingCompleted: false, hasSession: false }),
+      '/(onboarding)/step-1'
+    )
+    assert.equal(
+      resolveLaunchRoute({ onboardingCompleted: true, hasSession: false }),
       '/(onboarding)/step-1'
     )
     assert.equal(
@@ -24,16 +29,12 @@ describe('Onboarding & Launch Orchestrator Seam', () => {
       '/(onboarding)/step-1'
     )
     assert.equal(
-      resolveLaunchRoute({ onboardingCompleted: true, hasSession: false }),
-      '/(auth)/sign-in'
-    )
-    assert.equal(
       resolveLaunchRoute({ onboardingCompleted: true, hasSession: true }),
       '/(tabs)/home'
     )
   })
 
-  it('đọc/ghi trạng thái hoàn tất onboarding qua KeyValueStorage seam', async () => {
+  it('đọc/ghi/xóa trạng thái hoàn tất onboarding qua KeyValueStorage seam', async () => {
     const storage = new MemoryStorageAdapter()
 
     assert.equal(await isOnboardingCompleted(storage), false)
@@ -41,6 +42,10 @@ describe('Onboarding & Launch Orchestrator Seam', () => {
     await markOnboardingCompleted(storage)
     assert.equal(await storage.getItem(ONBOARDING_STORAGE_KEY), 'true')
     assert.equal(await isOnboardingCompleted(storage), true)
+
+    await clearOnboardingCompleted(storage)
+    assert.equal(await storage.getItem(ONBOARDING_STORAGE_KEY), null)
+    assert.equal(await isOnboardingCompleted(storage), false)
   })
 
   it('xử lý an toàn khi storage lỗi hoặc dữ liệu không hợp lệ', async () => {
@@ -55,32 +60,36 @@ describe('Onboarding & Launch Orchestrator Seam', () => {
       async setItem(): Promise<void> {
         throw new Error('Storage unavailable')
       },
-      async removeItem(): Promise<void> {},
+      async removeItem(): Promise<void> {
+        throw new Error('Storage unavailable')
+      },
       async clear(): Promise<void> {},
     }
 
     assert.equal(await isOnboardingCompleted(throwingStorage), false)
+    await assert.doesNotReject(() => clearOnboardingCompleted(throwingStorage))
   })
 
-  it('hydrateLaunchRoute điều phối đúng cho lần đầu, quay lại chưa đăng nhập, và đã đăng nhập', async () => {
+  it('hydrateLaunchRoute luôn mở lại trang 2, 3, 4 khi chưa đăng nhập (kể cả khi cờ cũ từng lưu true) và vào Home khi đã đăng nhập', async () => {
     const storage = new MemoryStorageAdapter()
     const authStorage = new MemoryStorageAdapter()
     const authSeam = new MockAuthAdapter(authStorage, 0)
 
-    // 1. Lần đầu mở app
+    // 1. Lần đầu mở app (chưa có session)
     assert.equal(
       await hydrateLaunchRoute({ storage, authSeam }),
       '/(onboarding)/step-1'
     )
 
-    // 2. Đã qua onboarding nhưng chưa đăng nhập -> /(auth)/sign-in
+    // 2. Storage từng lưu cờ hoàn tất cũ nhưng chưa đăng nhập -> dọn sạch cờ và vẫn mở /(onboarding)/step-1
     await markOnboardingCompleted(storage)
     assert.equal(
       await hydrateLaunchRoute({ storage, authSeam }),
-      '/(auth)/sign-in'
+      '/(onboarding)/step-1'
     )
+    assert.equal(await isOnboardingCompleted(storage), false)
 
-    // 3. Đã qua onboarding và đã có session -> /(tabs)/home
+    // 3. Đã đăng nhập -> đánh dấu hoàn tất và mở /(tabs)/home
     await authSeam.signIn({
       email: 'minh.tran@university.edu',
       password: 'KitsuneSecret99',
@@ -89,9 +98,18 @@ describe('Onboarding & Launch Orchestrator Seam', () => {
       await hydrateLaunchRoute({ storage, authSeam }),
       '/(tabs)/home'
     )
+    assert.equal(await isOnboardingCompleted(storage), true)
+
+    // 4. Sau khi đăng xuất -> mở app lại quay về /(onboarding)/step-1
+    await authSeam.signOut()
+    assert.equal(
+      await hydrateLaunchRoute({ storage, authSeam }),
+      '/(onboarding)/step-1'
+    )
+    assert.equal(await isOnboardingCompleted(storage), false)
   })
 
-  it('hydrateLaunchRoute không treo khi authSeam throw error', async () => {
+  it('hydrateLaunchRoute fail-safe về Onboarding khi authSeam throw error', async () => {
     const storage = new MemoryStorageAdapter()
     await markOnboardingCompleted(storage)
 
@@ -103,17 +121,23 @@ describe('Onboarding & Launch Orchestrator Seam', () => {
 
     assert.equal(
       await hydrateLaunchRoute({ storage, authSeam: failingAuth }),
-      '/(auth)/sign-in'
+      '/(onboarding)/step-1'
     )
   })
 
-  it('completeOnboarding lưu cờ hoàn tất và trả về đích đúng theo session', async () => {
+  it('completeOnboarding chuyển tới Sign In khi chưa đăng nhập mà không khóa trang 2, 3, 4 ở lần mở app sau', async () => {
     const storage = new MemoryStorageAdapter()
     const authSeam = new MockAuthAdapter(new MemoryStorageAdapter(), 0)
 
     const nextUnauth = await completeOnboarding({ storage, authSeam })
     assert.equal(nextUnauth, '/(auth)/sign-in')
-    assert.equal(await isOnboardingCompleted(storage), true)
+    assert.equal(await isOnboardingCompleted(storage), false)
+
+    // Mở app lại khi vẫn chưa đăng nhập -> phải hiện lại trang 2, 3, 4
+    assert.equal(
+      await hydrateLaunchRoute({ storage, authSeam }),
+      '/(onboarding)/step-1'
+    )
 
     await authSeam.createAccount({
       fullName: 'Anh Nguyen',
@@ -123,6 +147,7 @@ describe('Onboarding & Launch Orchestrator Seam', () => {
     })
     const nextAuth = await completeOnboarding({ storage, authSeam })
     assert.equal(nextAuth, '/(tabs)/home')
+    assert.equal(await isOnboardingCompleted(storage), true)
   })
 
   it('ONBOARDING_SLIDES dùng 100% Tiếng Anh đúng mẫu 02-04, không chứa nút Skip và clamp bước an toàn', () => {

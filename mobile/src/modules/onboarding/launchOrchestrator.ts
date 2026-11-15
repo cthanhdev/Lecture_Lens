@@ -2,6 +2,7 @@
 // Resolves S01 -> S02 / S05 / S08 transitions per docs/UX-NAVIGATION-FLOW.md
 import {
   ONBOARDING_STORAGE_KEY,
+  clearOnboardingCompleted,
   isOnboardingCompleted,
   markOnboardingCompleted,
 } from './onboardingStorage.ts'
@@ -13,22 +14,27 @@ import type {
   OnboardingStepIndex,
 } from './types.ts'
 
-export { ONBOARDING_SLIDES, ONBOARDING_STORAGE_KEY, isOnboardingCompleted, markOnboardingCompleted }
+export {
+  ONBOARDING_SLIDES,
+  ONBOARDING_STORAGE_KEY,
+  clearOnboardingCompleted,
+  isOnboardingCompleted,
+  markOnboardingCompleted,
+}
 
 /**
  * Pure launch decision matrix matching Zone 1 of UX Navigation Flow:
- * - First launch (`!onboardingCompleted`) -> Onboarding Step 1
- * - Returning & unauthenticated -> Auth Sign In (S05)
- * - Returning & authenticated -> Home Study Hub (S08)
+ * - Unauthenticated (`!hasSession`) or incomplete onboarding (`!onboardingCompleted`) -> Onboarding Step 1 (Screens 02-04)
+ * - Authenticated (`hasSession`) & completed onboarding -> Home Study Hub (S08)
  */
 export function resolveLaunchRoute({
   onboardingCompleted,
   hasSession,
 }: LaunchResolutionInput): LaunchTargetRoute {
-  if (!onboardingCompleted) {
+  if (!hasSession || !onboardingCompleted) {
     return '/(onboarding)/step-1'
   }
-  return hasSession ? '/(tabs)/home' : '/(auth)/sign-in'
+  return '/(tabs)/home'
 }
 
 /**
@@ -53,28 +59,37 @@ async function safeHasSession(
 
 /**
  * Hydrates onboarding and auth session state during Splash (01) bootstrap.
+ * Unauthenticated launches always clear stale onboarding flags and present Screens 02-04.
  */
 export async function hydrateLaunchRoute({
   storage,
   authSeam,
 }: LaunchOrchestratorDeps): Promise<LaunchTargetRoute> {
-  const [onboardingCompleted, hasSession] = await Promise.all([
-    isOnboardingCompleted(storage),
-    safeHasSession(authSeam),
-  ])
+  const hasSession = await safeHasSession(authSeam)
+  if (!hasSession) {
+    await clearOnboardingCompleted(storage)
+    return '/(onboarding)/step-1'
+  }
 
-  return resolveLaunchRoute({ onboardingCompleted, hasSession })
+  await markOnboardingCompleted(storage)
+  return '/(tabs)/home'
 }
 
 /**
- * Persists onboarding completion when pressing "Get started" on Step 3 (04)
- * and resolves the terminal replace target (`/(auth)/sign-in` or `/(tabs)/home`).
+ * Resolves the terminal replace target when pressing "Get started" on Step 3 (04):
+ * - Unauthenticated -> clears stale lock so Screens 02-04 reappear until signed in, and goes to `/(auth)/sign-in`
+ * - Authenticated -> persists completion and goes to `/(tabs)/home`
  */
 export async function completeOnboarding({
   storage,
   authSeam,
 }: LaunchOrchestratorDeps): Promise<LaunchTargetRoute> {
-  await markOnboardingCompleted(storage)
   const hasSession = await safeHasSession(authSeam)
-  return resolveLaunchRoute({ onboardingCompleted: true, hasSession })
+  if (hasSession) {
+    await markOnboardingCompleted(storage)
+    return '/(tabs)/home'
+  }
+
+  await clearOnboardingCompleted(storage)
+  return '/(auth)/sign-in'
 }

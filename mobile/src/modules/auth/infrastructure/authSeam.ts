@@ -10,6 +10,7 @@ import type {
 } from '../domain/auth.types.ts'
 import type { KeyValueStorage } from '../../storage/types.ts'
 import { MemoryStorageAdapter } from '../../storage/MemoryStorageAdapter.ts'
+import { ONBOARDING_STORAGE_KEY } from '../../onboarding/onboardingStorage.ts'
 
 export interface AuthSeam {
   readonly mode: AuthAdapterMode
@@ -91,6 +92,7 @@ async function readAuthSession(
 async function clearAuthSession(storage: KeyValueStorage): Promise<void> {
   await storage.removeItem(AUTH_SESSION_KEY)
   await storage.removeItem(AUTH_TOKEN_KEY)
+  await storage.removeItem(ONBOARDING_STORAGE_KEY)
 }
 
 function normalizeApiV1BaseUrl(rawUrl: string): string {

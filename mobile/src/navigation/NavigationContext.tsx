@@ -40,6 +40,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   // Theo dõi số bước di chuyển nội bộ trong phiên
   const [historyDepth, setHistoryDepth] = useState<number>(0)
   const isFirstRender = useRef<boolean>(true)
+  const isReplaceNavigationRef = useRef<boolean>(false)
 
   // Danh sách các Guard đang kích hoạt
   const guardsRef = useRef<Map<string, GuardConfig>>(new Map())
@@ -61,10 +62,14 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     message: '',
   })
 
-  // Cập nhật độ sâu lịch sử khi đổi pathname
+  // Cập nhật độ sâu lịch sử khi đổi pathname (bỏ qua các chuyển tiếp replace)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false
+      return
+    }
+    if (isReplaceNavigationRef.current) {
+      isReplaceNavigationRef.current = false
       return
     }
     setHistoryDepth((prev) => prev + 1)
@@ -147,6 +152,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
       }
 
       if (options?.replace) {
+        isReplaceNavigationRef.current = true
         router.replace(route as any)
       } else {
         router.push(route as any)
