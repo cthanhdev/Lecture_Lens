@@ -87,10 +87,12 @@ describe('AuthSeam Persistence & Spring Boot Readiness', () => {
     assert.equal(duplicate.success, false)
     assert.equal(duplicate.errorCode, 'EMAIL_ALREADY_EXISTS')
 
-    // Sign out clears active session + token, while created account persists for future sign-in
+    // Sign out clears active session, token, and stale onboarding completion flag, while created account persists for future sign-in
+    await storage.setItem('lecturelens.onboarding.completed', 'true')
     await firstAdapter.signOut()
     assert.equal(await firstAdapter.getCurrentSession(), null)
     assert.equal(await storage.getItem('lecturelens_auth_token'), null)
+    assert.equal(await storage.getItem('lecturelens.onboarding.completed'), null)
 
     const freshAdapterInstance = new MockAuthAdapter(storage, 0)
     const loggedIn = await freshAdapterInstance.signIn({

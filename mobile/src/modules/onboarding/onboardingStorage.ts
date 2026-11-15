@@ -26,3 +26,17 @@ export async function markOnboardingCompleted(
 ): Promise<void> {
   await storage.setItem(ONBOARDING_STORAGE_KEY, 'true')
 }
+
+/**
+ * Clears the onboarding completion flag via the KeyValueStorage seam.
+ * Fails safe if storage removal throws.
+ */
+export async function clearOnboardingCompleted(
+  storage: KeyValueStorage
+): Promise<void> {
+  try {
+    await storage.removeItem(ONBOARDING_STORAGE_KEY)
+  } catch {
+    // Fail safe if storage removeItem throws
+  }
+}

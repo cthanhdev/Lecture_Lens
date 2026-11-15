@@ -11,6 +11,7 @@ export {
 } from './onboardingSlides.ts'
 export {
   ONBOARDING_STORAGE_KEY,
+  clearOnboardingCompleted,
   isOnboardingCompleted,
   markOnboardingCompleted,
   resolveLaunchRoute,

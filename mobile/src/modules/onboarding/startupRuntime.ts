@@ -7,6 +7,7 @@ import { networkMonitor, type NetworkProvider } from '../../services/networkMoni
 import type { NetworkStatus } from '../../services/types'
 import { appStorage } from '../storage'
 import { getAuthSeam } from '../auth'
+import { initAuthRuntime } from '../auth/infrastructure/authRuntime'
 import { runLaunchBootstrap } from './launchPreflight'
 import type {
   LaunchBootstrapResult,
@@ -88,6 +89,9 @@ export async function runLaunchPreflightRuntime(
     storage: appStorage,
     timeoutMs: options?.stepTimeoutMs ?? 1200,
   })
+
+  // Ensure persistent AuthSeam adapter (appStorage) is initialized before reading session state
+  await initAuthRuntime().catch(() => {})
 
   return runLaunchBootstrap({
     storage: appStorage,

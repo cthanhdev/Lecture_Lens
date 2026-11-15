@@ -222,7 +222,7 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
       scrollToScreen(0)
       return true
     }
-    nav.goBack()
+    nav.goTo('/(onboarding)/step-1', { replace: true })
     return true
   }, [nav, scrollToScreen])
 
