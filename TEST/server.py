@@ -38,16 +38,36 @@ from ai_service.core.chunk_store import (
     PostgresPgVectorChunkStore,
 )
 from ai_service.core.embedder import BgeM3Embedder, FakeEmbedder
+from ai_service.core.llm_client import (
+    CompositeLLMClient,
+    EngineMode,
+    FakeLLMClient,
+    OllamaGemmaClient,
+    TransformersGemmaClient,
+)
 from ai_service.core.preprocessing import (
     FakeAudioPreprocessor,
     FFmpegAudioPreprocessor,
     resolve_ffmpeg_binary,
 )
+from ai_service.core.prompt_builder import (
+    GroundedPromptBuilder,
+    LLMStageConfig,
+    PromptProfile,
+    ResponseFormat,
+)
+from ai_service.core.reranker import BgeRerankerV2M3, FakeReranker
 from ai_service.core.schemas import (
+    RagQueryRequest,
     TranscriptAudioMeta,
     TranscriptGeneratedMeta,
     TranscriptSchema,
     TranscriptSegment,
+)
+from ai_service.core.telemetry_store import (
+    CompositeTelemetryStore,
+    InMemoryTelemetryStore,
+    PostgresTelemetryStore,
 )
 from ai_service.core.text_chunker import (
     BgeM3TokenizerAdapter,
@@ -56,6 +76,7 @@ from ai_service.core.text_chunker import (
 )
 from ai_service.core.vad_chunker import EnergyVadChunker
 from ai_service.pipeline.ingest_pipeline import IngestPipelineCoordinator
+from ai_service.pipeline.rag_pipeline import RagPipelineCoordinator
 
 logging.basicConfig(
     level=logging.INFO,
@@ -79,6 +100,20 @@ def _resolve_bge_m3_path() -> Path:
     if env_path and Path(env_path).exists():
         return Path(env_path)
     return PROJECT_ROOT / "backend" / "models" / "bge-m3"
+
+
+def _resolve_reranker_path() -> Path:
+    env_path = os.getenv("MODEL_PATH_RERANKER")
+    if env_path and Path(env_path).exists():
+        return Path(env_path)
+    return PROJECT_ROOT / "backend" / "models" / "bge-reranker-v2-m3"
+
+
+def _resolve_gemma_path() -> Path:
+    env_path = os.getenv("MODEL_PATH_GEMMA")
+    if env_path and Path(env_path).exists():
+        return Path(env_path)
+    return PROJECT_ROOT / "backend" / "models" / "gemma-4-e4b"
 
 
 def _resolve_phowhisper_path(model_variant: str) -> Path:
@@ -131,9 +166,56 @@ chunk_store = CompositeChunkStore(
     enable_pgvector=settings.ENABLE_PGVECTOR_SYNC,
 )
 
-# Cached lazy-loaded Stage 2 real adapters (shared across sample runs & search)
+# Cached lazy-loaded Stage 2 & Online RAG adapters
 _real_tokenizer: BgeM3TokenizerAdapter | None = None
 _real_embedder: BgeM3Embedder | None = None
+_real_reranker: BgeRerankerV2M3 | None = None
+_fake_embedder = FakeEmbedder()
+_fake_reranker = FakeReranker()
+_prompt_builder = GroundedPromptBuilder()
+
+telemetry_store = CompositeTelemetryStore(
+    memory_store=InMemoryTelemetryStore(),
+    postgres_store=(
+        PostgresTelemetryStore(
+            host=settings.POSTGRES_HOST,
+            port=settings.POSTGRES_PORT,
+            dbname=settings.POSTGRES_DB,
+            user=settings.POSTGRES_USER,
+            password=settings.POSTGRES_PASSWORD,
+        )
+        if settings.ENABLE_PGVECTOR_SYNC
+        else None
+    ),
+    enable_pgvector=settings.ENABLE_PGVECTOR_SYNC,
+)
+
+_ollama_client = OllamaGemmaClient(
+    base_url=os.getenv("OLLAMA_BASE_URL", settings.OLLAMA_BASE_URL),
+    model=os.getenv("OLLAMA_MODEL", settings.OLLAMA_MODEL),
+)
+_transformers_gemma = TransformersGemmaClient(
+    model_path=_resolve_gemma_path(),
+    device=_resolve_runtime_device(),
+)
+_llm_client = CompositeLLMClient(
+    mode="auto",
+    ollama_client=_ollama_client,
+    transformers_client=_transformers_gemma,
+    mock_client=FakeLLMClient(),
+)
+
+rag_coordinator = RagPipelineCoordinator(
+    embedder=_fake_embedder,
+    chunk_store=chunk_store,
+    reranker=_fake_reranker,
+    prompt_builder=_prompt_builder,
+    llm_client=_llm_client,
+    telemetry_store=telemetry_store,
+    low_vram_mode=settings.LOW_VRAM_MODE,
+    default_retrieval_top_k=settings.RAG_RETRIEVAL_TOP_K,
+    query_prep_model=os.getenv("OLLAMA_QUERY_PREP_MODEL", settings.OLLAMA_QUERY_PREP_MODEL),
+)
 
 # In-memory progress state tracker: job_id -> { ... }
 job_state_tracker: dict[str, dict] = {}
@@ -160,6 +242,17 @@ def get_real_embedder() -> BgeM3Embedder:
             max_length=settings.CHUNK_MAX_TOKENS,
         )
     return _real_embedder
+
+
+def get_real_reranker() -> BgeRerankerV2M3:
+    global _real_reranker
+    device = _resolve_runtime_device()
+    if _real_reranker is None:
+        _real_reranker = BgeRerankerV2M3(
+            model_path=_resolve_reranker_path(),
+            device=device,
+        )
+    return _real_reranker
 
 
 def _build_silent_wav_bytes(duration_sec: float = 0.25, sample_rate: int = 16000) -> bytes:
@@ -328,11 +421,16 @@ async def get_system_diagnostics():
     medium_path = PROJECT_ROOT / "backend" / "models" / "phowhisper-medium"
     base_path = _resolve_phowhisper_path("base")
     bge_m3_path = _resolve_bge_m3_path()
+    reranker_path = _resolve_reranker_path()
+    gemma_path = _resolve_gemma_path()
 
     medium_exists = (medium_path / "pytorch_model.bin").exists() or (medium_path / "model.safetensors").exists()
     base_exists = (base_path / "pytorch_model.bin").exists() or (base_path / "model.safetensors").exists()
     bge_m3_exists = (bge_m3_path / "pytorch_model.bin").exists() or (bge_m3_path / "model.safetensors").exists()
     bge_m3_sparse_exists = (bge_m3_path / "sparse_linear.pt").exists()
+    reranker_exists = (reranker_path / "model.safetensors").exists() or (reranker_path / "pytorch_model.bin").exists()
+    gemma4_exists = _transformers_gemma.is_model_present()
+    ollama_available = _ollama_client.is_available(timeout_seconds=0.8)
 
     pg_connected = chunk_store.is_postgres_connected()
 
@@ -356,10 +454,17 @@ async def get_system_diagnostics():
             "base_exists": base_exists,
             "bge_m3_exists": bge_m3_exists,
             "bge_m3_sparse_linear_exists": bge_m3_sparse_exists,
+            "reranker_exists": reranker_exists,
+            "gemma4_exists": gemma4_exists,
+            "ollama_available": ollama_available,
+            "ollama_url": _ollama_client.base_url,
+            "ollama_model": _ollama_client.model,
             "active_default": "PhoWhisper-medium" if medium_exists else "PhoWhisper-base",
             "medium_path": str(medium_path),
             "base_path": str(base_path),
             "bge_m3_path": str(bge_m3_path),
+            "reranker_path": str(reranker_path),
+            "gemma4_path": str(gemma_path),
         },
         "database": {
             "postgres_pgvector_connected": pg_connected,
@@ -770,6 +875,87 @@ async def stream_audio(job_id: uuid.UUID):
             return FileResponse(path=str(incoming), media_type=f"audio/{ext}")
 
     raise HTTPException(status_code=404, detail="Audio file not found.")
+
+
+class TestRagQueryRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    lecture_id: uuid.UUID = Field(..., alias="lectureId")
+    query: str = Field(..., min_length=1)
+    top_k: int = Field(default=5, alias="topK", ge=1, le=25)
+    retrieval_top_k: int = Field(default=25, alias="retrievalTopK", ge=1, le=50)
+    query_system_prompt: str | None = Field(default=None, alias="querySystemPrompt")
+    system_prompt: str | None = Field(default=None, alias="systemPrompt")
+    prompt_profile: PromptProfile = Field(default="qa_refine", alias="promptProfile")
+    response_format: ResponseFormat | None = Field(default=None, alias="responseFormat")
+    use_expanded_context: bool = Field(default=True, alias="useExpandedContext")
+    temperature: float = Field(default=0.2, ge=0.0, le=2.0)
+    max_new_tokens: int = Field(default=512, alias="maxNewTokens", ge=1, le=4096)
+    extra_stages: list[LLMStageConfig] = Field(default_factory=list, alias="extraStages")
+    embedder_mode: Literal["real", "mock"] = Field(default="real", alias="embedderMode")
+    reranker_mode: Literal["real", "mock"] = Field(default="real", alias="rerankerMode")
+    llm_engine: EngineMode = Field(default="auto", alias="llmEngine")
+
+
+@app.get("/api/rag/presets")
+async def get_rag_presets():
+    """Returns built-in Pass 1 ([Q1] query prep) and Pass 2 ([Q5] Gemma 4 + RAG) prompt presets."""
+    return _prompt_builder.get_presets()
+
+
+@app.post("/api/rag/query")
+async def execute_test_rag_query(request: TestRagQueryRequest):
+    """
+    Runs the unified 2-Pass Pre-RAG Gemma 4 pipeline ([Q1]–[Q6+], no Semantic Cache)
+    with selectable real/mock adapters for BGE-M3, Reranker, and Gemma 4.
+    """
+    _ensure_lecture_loaded_in_store(request.lecture_id)
+
+    embedder = get_real_embedder() if request.embedder_mode == "real" else _fake_embedder
+    reranker = get_real_reranker() if request.reranker_mode == "real" else _fake_reranker
+
+    rag_req = RagQueryRequest(
+        lecture_ids=[request.lecture_id],
+        query=request.query,
+        top_k=request.top_k,
+        retrieval_top_k=request.retrieval_top_k,
+        query_system_prompt=request.query_system_prompt,
+        system_prompt=request.system_prompt,
+        prompt_profile=request.prompt_profile,
+        response_format=request.response_format,
+        use_expanded_context=request.use_expanded_context,
+        temperature=request.temperature,
+        max_new_tokens=request.max_new_tokens,
+        extra_stages=request.extra_stages,
+    )
+
+    try:
+        response = await rag_coordinator.run_query(
+            rag_req,
+            embedder_override=embedder,
+            reranker_override=reranker,
+            engine_override=request.llm_engine,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    payload = response.model_dump(mode="json")
+    payload["backend"] = "postgres_pgvector" if chunk_store.is_postgres_connected() else "in_memory_fallback"
+    payload["adapters"] = {
+        "embedder": request.embedder_mode,
+        "reranker": request.reranker_mode,
+        "llm_engine": request.llm_engine,
+    }
+    return payload
+
+
+@app.get("/api/rag/telemetry")
+async def get_rag_telemetry(lecture_id: uuid.UUID | None = Query(None)):
+    """Returns RAG Audit Logs (`rag.rag_audit_logs`)."""
+    return {
+        "backend": "postgres_pgvector" if chunk_store.is_postgres_connected() else "in_memory_fallback",
+        "audit_logs": telemetry_store.list_audit_logs(lecture_id=lecture_id, limit=50),
+    }
 
 
 if __name__ == "__main__":

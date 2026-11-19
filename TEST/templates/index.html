@@ -73,9 +73,9 @@
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-2xl font-extrabold text-plum-ink tracking-tight">LectureLens</h1>
             <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-kitsune-coral text-white shadow-xs">TEST STUDIO</span>
-            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-matcha-mint/70 text-plum-ink border border-matcha-mint">Stage 1 ASR + Stage 2 [I5]/[I6]</span>
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-matcha-mint/70 text-plum-ink border border-matcha-mint">Stage 1 + Stage 2 + 2-Pass Pre-RAG [Q1]–[Q6+]</span>
           </div>
-          <p class="text-xs text-plum-muted font-medium mt-0.5">PhoWhisper ASR ➔ [I5] Recursive Chunking (≤512 tok) ➔ [I6] BGE-M3 halfvec(1024) + Lexical Weights ➔ 3-Stream Hybrid RRF</p>
+          <p class="text-xs text-plum-muted font-medium mt-0.5">PhoWhisper ASR ➔ [I5] Chunking ➔ [I6] BGE-M3 ➔ [Q1] Gemma 4 E2B Prep ➔ [Q2–Q4] RRF + Reranker ➔ [Q5–Q6+] Gemma 4 + RAG</p>
         </div>
       </div>
 
@@ -84,7 +84,7 @@
       </button>
     </div>
 
-    <!-- 5 Diagnostics Pills -->
+    <!-- 7 Diagnostics Pills -->
     <div class="flex flex-wrap items-center gap-2">
       <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
         <span>🎬 FFmpeg:</span> <span id="ffmpegStatus" class="font-bold text-plum-muted">Đang quét...</span>
@@ -97,6 +97,12 @@
       </div>
       <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
         <span>🧠 BGE-M3:</span> <span id="bgeM3Status" class="font-bold text-plum-muted">Đang quét...</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
+        <span>⚖️ Reranker:</span> <span id="rerankerStatus" class="font-bold text-plum-muted">Đang quét...</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
+        <span>🦙 Gemma 4 E4B:</span> <span id="gemmaStatus" class="font-bold text-plum-muted">Đang quét...</span>
       </div>
       <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
         <span>🐘 PgVector DB:</span> <span id="dbStatus" class="font-bold text-plum-muted">Đang quét...</span>
@@ -302,7 +308,7 @@
         </div>
       </div>
 
-      <!-- 6 Navigation Tabs -->
+      <!-- 7 Navigation Tabs -->
       <div class="flex items-center gap-2 border-b border-sakura-pink/40 pb-3 mb-6 overflow-x-auto text-xs font-semibold">
         <button id="tabBtn-tab-transcript" class="tab-btn px-4 py-2 rounded-full bg-kitsune-coral text-white shadow-xs mochi-press whitespace-nowrap" onclick="switchTab('tab-transcript', this)">
           📜 Lời Thoại ASR (Segments)
@@ -313,6 +319,9 @@
         <button id="tabBtn-tab-search" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-search', this)">
           🔍 Tìm Kiếm 3-Stream Hybrid RRF
         </button>
+        <button id="tabBtn-tab-gemma" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-gemma', this)">
+          🦙 2-Pass Pre-RAG &amp; Gemma 4 ([Q1]–[Q6+])
+        </button>
         <button id="tabBtn-tab-json" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-json', this)">
           📄 JSON Artifacts
         </button>
@@ -320,7 +329,7 @@
           🏷️ File manifest.json
         </button>
         <button id="tabBtn-tab-db" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-db', this)">
-          🐘 Database (app.jobs &amp; rag.lecture_chunks)
+          🐘 Database (pgvector &amp; Audit)
         </button>
       </div>
 
@@ -369,6 +378,147 @@
         <div id="searchResultsContainer" class="space-y-4 max-h-[560px] overflow-y-auto pr-2">
           <div class="p-6 rounded-2xl bg-white/60 border border-sakura-pink/30 text-center text-xs text-plum-muted">
             Nhập truy vấn ở trên để thử nghiệm tìm kiếm lai 3 luồng (Dense Vector HNSW + Lexical TSVECTOR + Fuzzy Trigram RRF) và mở rộng ngữ cảnh 3 chiều (PREVIOUS / CURRENT / NEXT).
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3.5: 2-Pass Pre-RAG & Gemma 4 ([Q1]–[Q6+], No Cache) -->
+      <div id="tab-gemma" class="tab-pane hidden space-y-5">
+        <!-- Query + Engine Bar -->
+        <div class="p-4 rounded-2xl bg-white/80 border border-sakura-pink/55 space-y-3">
+          <div class="flex flex-col lg:flex-row gap-2">
+            <input id="ragQueryInput" type="text" placeholder="Nhập câu hỏi bài giảng để chạy 2-Pass Pre-RAG (vd: ad gpo agdlp dung lam gi?)..."
+              class="flex-1 text-xs p-3 rounded-full border border-sakura-pink/70 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral"
+              onkeydown="if(event.key==='Enter') runMultiPassRag()">
+            <button id="runRagBtn" onclick="runMultiPassRag()" class="px-5 py-2.5 rounded-full bg-kitsune-coral hover:bg-kitsune-hover text-white text-xs font-bold mochi-press shadow-md whitespace-nowrap">
+              🦙 Chạy 2-Pass Pre-RAG ([Q1]–[Q6+])
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span class="font-bold text-plum-muted">Câu hỏi mẫu:</span>
+            <button onclick="setRagQuery('thuat toan gradient descent va learning rate hoat dong nhu the nao?')" class="px-2.5 py-1 rounded-full bg-sakura-pink/25 hover:bg-sakura-pink/45 text-plum-ink font-medium mochi-press">Gradient Descent &amp; learning rate (không dấu)</button>
+            <button onclick="setRagQuery('ad gpo agdlp trong active directory dung lam gi?')" class="px-2.5 py-1 rounded-full bg-mist-sky/35 hover:bg-mist-sky/60 text-plum-ink font-medium mochi-press">AD, GPO &amp; AGDLP</button>
+            <button onclick="setRagQuery('Độc lập tuyến tính, cơ sở basis và phép đo Cosine Similarity với BGE-M3 là gì?')" class="px-2.5 py-1 rounded-full bg-matcha-mint/45 hover:bg-matcha-mint/70 text-plum-ink font-medium mochi-press">Không gian vector &amp; BGE-M3</button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 text-xs">
+            <div class="p-2.5 rounded-xl bg-washi-cream border border-sakura-pink/40">
+              <label class="block text-[10px] font-bold uppercase text-plum-muted mb-1">[Q2] Embedder (BGE-M3)</label>
+              <select id="ragEmbedderMode" class="w-full text-xs font-semibold p-1.5 rounded-lg border border-sakura-pink/60 bg-white">
+                <option value="real" selected>🧠 Real BGE-M3</option>
+                <option value="mock">⚡ Mock Embedder</option>
+              </select>
+            </div>
+            <div class="p-2.5 rounded-xl bg-washi-cream border border-sakura-pink/40">
+              <label class="block text-[10px] font-bold uppercase text-plum-muted mb-1">[Q4] Reranker</label>
+              <select id="ragRerankerMode" class="w-full text-xs font-semibold p-1.5 rounded-lg border border-sakura-pink/60 bg-white">
+                <option value="real" selected>⚖️ Real bge-reranker-v2-m3</option>
+                <option value="mock">⚡ Mock Reranker</option>
+              </select>
+            </div>
+            <div class="p-2.5 rounded-xl bg-washi-cream border border-sakura-pink/40">
+              <label class="block text-[10px] font-bold uppercase text-plum-muted mb-1">[Q1 &amp; Q5+] Gemma 4 Engine</label>
+              <select id="ragLlmEngine" class="w-full text-xs font-semibold p-1.5 rounded-lg border border-sakura-pink/60 bg-white">
+                <option value="auto" selected>🦙 Auto (Ollama → Transformers)</option>
+                <option value="ollama">🦙 Ollama (gemma4:e2b)</option>
+                <option value="transformers">🤗 Transformers Local</option>
+                <option value="mock">🧪 Mock Gemma 4 (&lt;50ms)</option>
+              </select>
+            </div>
+            <div class="p-2.5 rounded-xl bg-washi-cream border border-sakura-pink/40 flex flex-col justify-between gap-1">
+              <div class="flex items-center justify-between gap-2">
+                <label class="text-[10px] font-bold uppercase text-plum-muted">Top K Rerank</label>
+                <select id="ragTopK" class="text-xs font-semibold px-2 py-0.5 rounded-lg border border-sakura-pink/60 bg-white">
+                  <option value="3">Top 3</option>
+                  <option value="5" selected>Top 5</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <label class="flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer">
+                  <input type="checkbox" id="ragUseExpanded" checked class="accent-kitsune-coral"> Expand [Q3]
+                </label>
+                <span class="text-[10px] font-bold text-emerald-700">No Cache • Live Audit</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Prompt Configuration ([Q1] Pass 1 Query Prep, [Q5] Pass 2 Gemma 4 + RAG, [Q6+]) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- [Q1] Pass 1 -->
+          <div class="p-4 rounded-2xl bg-white/75 border border-sakura-pink/50 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-extrabold text-plum-ink">📝 [Q1] Pass 1 — System Prompt Chuẩn hóa Câu hỏi (Gemma 4 E2B Pre-RAG)</span>
+              <button onclick="resetQueryPrepSystemPrompt()" class="text-[11px] font-semibold text-kitsune-coral hover:underline">Khôi phục mặc định</button>
+            </div>
+            <textarea id="ragQueryPrepPromptInput" rows="5" class="w-full text-[11px] font-mono p-3 rounded-xl border border-sakura-pink/60 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral"></textarea>
+          </div>
+
+          <!-- [Q5] Pass 2 -->
+          <div class="p-4 rounded-2xl bg-white/75 border border-kitsune-coral/50 space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-extrabold text-plum-ink">✨ [Q5] Pass 2 — System Prompt Trả lời (Gemma 4 E2B + RAG ➔ Output chuẩn)</span>
+              <div class="flex items-center gap-1.5">
+                <select id="ragPresetSelect" onchange="applyRagPreset()" class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-sakura-pink/70 bg-white"></select>
+                <select id="ragResponseFormat" class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-sakura-pink/70 bg-white">
+                  <option value="text" selected>Text</option>
+                  <option value="json">JSON</option>
+                </select>
+              </div>
+            </div>
+            <textarea id="ragAnswerPromptInput" rows="5" class="w-full text-[11px] font-mono p-3 rounded-xl border border-kitsune-coral/60 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral"></textarea>
+          </div>
+        </div>
+
+        <!-- [Q6+] Extensible Stages -->
+        <div class="p-4 rounded-2xl bg-white/70 border border-sakura-pink/45 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="text-xs font-extrabold text-plum-ink">🧩 [Q6+] Chuỗi Bước Mở Rộng Gemma 4 (extraStages)</span>
+              <p class="text-[11px] text-plum-muted">Gắn thêm các pass Gemma 4 nối tiếp sau [Q5] (ví dụ: kiểm tra chính tả, dịch thuật, xuất JSON flashcard...)</p>
+            </div>
+            <button onclick="addExtraStageRow()" class="px-3.5 py-1.5 rounded-full bg-plum-ink hover:bg-plum-muted text-white text-xs font-bold mochi-press">
+              + Thêm Bước Gemma 4 ([Q6+])
+            </button>
+          </div>
+          <div id="extraStagesContainer" class="space-y-2"></div>
+        </div>
+
+        <!-- Telemetry & 6-Step Progress Strip -->
+        <div id="ragResultsWrapper" class="hidden space-y-4">
+          <div id="ragTelemetryStrip" class="p-3.5 rounded-2xl bg-white/85 border border-sakura-pink/50 space-y-2"></div>
+
+          <!-- Pass 1 vs Pass 2 Side-by-Side Comparison -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="p-4 rounded-2xl bg-white/85 border border-mist-sky/70 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-plum-ink">🧠 Output Pass 1 ([Q1] Câu hỏi đã chuẩn hóa bởi Gemma 4)</span>
+                <button onclick="copyContent('ragPreparedQueryOutput')" class="px-2.5 py-0.5 rounded-full bg-white border border-sakura-pink text-[10px] font-semibold mochi-press">📋 Copy</button>
+              </div>
+              <pre id="ragPreparedQueryOutput" class="whitespace-pre-wrap text-xs leading-relaxed text-plum-ink bg-washi-cream p-3.5 rounded-xl border border-sakura-pink/35 max-h-[340px] overflow-y-auto font-sans"></pre>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white/95 border-2 border-kitsune-coral/60 space-y-2 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-kitsune-hover">✨ Output Chuẩn ([Q5/Q6+] Gemma 4 + RAG)</span>
+                <button onclick="copyContent('ragFinalOutput')" class="px-2.5 py-0.5 rounded-full bg-kitsune-coral text-white text-[10px] font-semibold mochi-press">📋 Copy</button>
+              </div>
+              <pre id="ragFinalOutput" class="whitespace-pre-wrap text-xs leading-relaxed text-plum-ink bg-washi-cream p-3.5 rounded-xl border border-sakura-pink/35 max-h-[340px] overflow-y-auto font-sans"></pre>
+              <div id="ragCitationPills" class="flex flex-wrap gap-1.5 pt-1"></div>
+            </div>
+          </div>
+
+          <!-- Top Ranked Citations & Reranker Scores -->
+          <div class="p-4 rounded-2xl bg-white/80 border border-sakura-pink/50 space-y-3">
+            <h3 class="text-xs font-extrabold text-plum-ink uppercase tracking-wider">⚖️ Top Đoạn RAG &amp; Điểm Cross-Encoder Reranker ([Q2]–[Q4])</h3>
+            <div id="ragRerankedList" class="space-y-2.5"></div>
+          </div>
+
+          <!-- Stage Trace Accordion -->
+          <div class="p-4 rounded-2xl bg-white/80 border border-sakura-pink/50 space-y-2">
+            <h3 class="text-xs font-extrabold text-plum-ink uppercase tracking-wider">🔍 Soi Prompt &amp; Output Từng Stage (stage_outputs)</h3>
+            <div id="ragStageOutputsList" class="space-y-2"></div>
           </div>
         </div>
       </div>
@@ -459,6 +609,26 @@
             </table>
           </div>
         </div>
+
+        <div class="p-4 rounded-2xl bg-white/75 border border-sakura-pink/40 space-y-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-plum-ink uppercase tracking-wider">3. <code>rag.rag_audit_logs</code> (Latency &amp; Retrieval Audit — No Semantic Cache)</h3>
+            <button onclick="refreshRagTelemetry()" class="text-[11px] font-semibold text-kitsune-coral hover:underline">🔄 Làm mới</button>
+          </div>
+          <div class="overflow-x-auto max-h-[260px]">
+            <table class="w-full text-left text-[11px] font-mono">
+              <thead class="bg-mochi-yellow/45 text-plum-ink">
+                <tr>
+                  <th class="p-2 rounded-l-lg">query_text</th>
+                  <th class="p-2">ret_ms</th>
+                  <th class="p-2">rr_ms</th>
+                  <th class="p-2 rounded-r-lg">llm_ms</th>
+                </tr>
+              </thead>
+              <tbody id="dbAuditTableBody" class="divide-y divide-sakura-pink/20"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -520,6 +690,8 @@
         const deviceEl = document.getElementById('aiDeviceStatus');
         const modelEl = document.getElementById('aiModelStatus');
         const bgeEl = document.getElementById('bgeM3Status');
+        const rerankerEl = document.getElementById('rerankerStatus');
+        const gemmaEl = document.getElementById('gemmaStatus');
         const dbEl = document.getElementById('dbStatus');
 
         if (diag.ffmpeg && diag.ffmpeg.available) {
@@ -566,6 +738,28 @@
           bgeEl.className = "font-bold text-rose-500";
         }
 
+        if (diag.models && diag.models.reranker_exists) {
+          rerankerEl.textContent = "✅ bge-reranker-v2-m3";
+          rerankerEl.className = "font-bold text-emerald-600";
+        } else {
+          rerankerEl.textContent = "❌ Thiếu weights";
+          rerankerEl.className = "font-bold text-rose-500";
+        }
+
+        if (diag.models && diag.models.ollama_available && diag.models.gemma4_exists) {
+          gemmaEl.textContent = "✅ Ollama + Local";
+          gemmaEl.className = "font-bold text-emerald-600";
+        } else if (diag.models && diag.models.ollama_available) {
+          gemmaEl.textContent = `✅ Ollama (${diag.models.ollama_model})`;
+          gemmaEl.className = "font-bold text-emerald-600";
+        } else if (diag.models && diag.models.gemma4_exists) {
+          gemmaEl.textContent = "✅ Local Transformers (Chưa bật Ollama)";
+          gemmaEl.className = "font-bold text-sky-700";
+        } else {
+          gemmaEl.textContent = "❌ Thiếu Gemma 4";
+          gemmaEl.className = "font-bold text-rose-500";
+        }
+
         if (diag.database && diag.database.postgres_pgvector_connected) {
           dbEl.textContent = `✅ Postgres pgvector (${diag.database.host}:${diag.database.port})`;
           dbEl.className = "font-bold text-emerald-600";
@@ -581,7 +775,10 @@
         console.error("Diagnostics load error", err);
       }
     }
-    window.addEventListener('DOMContentLoaded', loadDiagnostics);
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDiagnostics();
+      loadRagPresets();
+    });
 
     function setMode(mode) {
       currentMode = mode;
@@ -591,10 +788,16 @@
         mockBtn.className = "px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press";
         realBtn.className = "px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press";
         document.getElementById('searchModeSelect').value = 'mock';
+        document.getElementById('ragEmbedderMode').value = 'mock';
+        document.getElementById('ragRerankerMode').value = 'mock';
+        document.getElementById('ragLlmEngine').value = 'mock';
       } else {
         realBtn.className = "px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press";
         mockBtn.className = "px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press";
         document.getElementById('searchModeSelect').value = 'real';
+        document.getElementById('ragEmbedderMode').value = 'real';
+        document.getElementById('ragRerankerMode').value = 'real';
+        document.getElementById('ragLlmEngine').value = 'auto';
       }
     }
 
@@ -665,6 +868,10 @@
         updateProgress(100, data.message || `Hoàn tất Stage 2 (${data.total_chunks} chunks trong ${data.processing_seconds}s)`, "READY");
 
         document.getElementById('searchModeSelect').value = mode;
+        const ragEmb = document.getElementById('ragEmbedderMode');
+        const ragRrk = document.getElementById('ragRerankerMode');
+        if (ragEmb) ragEmb.value = mode === 'mock' ? 'mock' : 'real';
+        if (ragRrk) ragRrk.value = mode === 'mock' ? 'mock' : 'real';
         await fetchFinalResults(currentJobId, false);
         switchTab('tab-chunks', document.getElementById('tabBtn-tab-chunks'));
         loadDiagnostics();
@@ -1102,6 +1309,246 @@
           `;
           tbodyChunks.appendChild(tr);
         });
+      }
+      refreshRagTelemetry();
+    }
+
+    // =====================================================================
+    // 2-Pass Pre-RAG & Gemma 4 ([Q1]–[Q6+]) Controls (No Semantic Cache)
+    // =====================================================================
+    let ragPresetsCache = null;
+    let extraStageCounter = 0;
+
+    async function loadRagPresets() {
+      try {
+        const res = await fetch('/api/rag/presets');
+        if (!res.ok) return;
+        ragPresetsCache = await res.json();
+        const prepEl = document.getElementById('ragQueryPrepPromptInput');
+        if (prepEl && !prepEl.value.trim()) {
+          prepEl.value = ragPresetsCache.default_query_system_prompt || '';
+        }
+        const selectEl = document.getElementById('ragPresetSelect');
+        if (selectEl && Array.isArray(ragPresetsCache.presets)) {
+          selectEl.innerHTML = ragPresetsCache.presets.map(p =>
+            `<option value="${escapeHtml(p.id)}">${escapeHtml(p.label)}</option>`
+          ).join('');
+          applyRagPreset();
+        }
+      } catch (err) {
+        console.error('Failed to load RAG presets', err);
+      }
+    }
+
+    function resetQueryPrepSystemPrompt() {
+      if (ragPresetsCache && ragPresetsCache.default_query_system_prompt) {
+        document.getElementById('ragQueryPrepPromptInput').value = ragPresetsCache.default_query_system_prompt;
+      }
+    }
+
+    function applyRagPreset() {
+      if (!ragPresetsCache || !Array.isArray(ragPresetsCache.presets)) return;
+      const selectedId = document.getElementById('ragPresetSelect').value;
+      const preset = ragPresetsCache.presets.find(p => p.id === selectedId);
+      if (!preset) return;
+      document.getElementById('ragAnswerPromptInput').value = preset.system_prompt || '';
+      document.getElementById('ragResponseFormat').value = preset.default_response_format || 'text';
+    }
+
+    function addExtraStageRow() {
+      extraStageCounter += 1;
+      const idx = extraStageCounter;
+      const container = document.getElementById('extraStagesContainer');
+      const row = document.createElement('div');
+      row.className = "extra-stage-row p-3 rounded-xl bg-white/90 border border-sakura-pink/55 space-y-2";
+      row.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="flex items-center gap-1 font-bold text-plum-ink">
+              <input type="checkbox" class="stage-enabled accent-kitsune-coral" checked>
+              Stage ID:
+            </label>
+            <input type="text" class="stage-id font-mono text-xs px-2.5 py-1 rounded-lg border border-sakura-pink/60 bg-white w-36" value="q${5 + idx}_custom">
+            <select class="stage-format text-xs font-semibold px-2 py-1 rounded-lg border border-sakura-pink/60 bg-white">
+              <option value="text" selected>Text</option>
+              <option value="json">JSON</option>
+            </select>
+            <label class="text-[11px] text-plum-muted">Temp:
+              <input type="number" step="0.1" min="0" max="1.5" value="0.2" class="stage-temp w-14 px-1.5 py-0.5 rounded border border-sakura-pink/60 bg-white font-mono">
+            </label>
+          </div>
+          <button onclick="this.closest('.extra-stage-row').remove()" class="px-2.5 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold">✕ Xóa</button>
+        </div>
+        <textarea rows="2" class="stage-prompt w-full text-[11px] font-mono p-2 rounded-lg border border-sakura-pink/60 bg-white" placeholder="Nhập System Prompt cho bước Gemma 4 mở rộng này...">Kiểm tra lại toàn bộ thuật ngữ chuyên ngành và thêm một dòng tóm tắt chốt ý ở cuối, giữ nguyên mốc [MM:SS].</textarea>
+      `;
+      container.appendChild(row);
+    }
+
+    function collectExtraStages() {
+      const rows = document.querySelectorAll('#extraStagesContainer .extra-stage-row');
+      const stages = [];
+      rows.forEach((row, i) => {
+        const stageId = (row.querySelector('.stage-id').value || `q${6 + i}_extra`).trim();
+        const sysPrompt = (row.querySelector('.stage-prompt').value || '').trim();
+        const respFmt = row.querySelector('.stage-format').value || 'text';
+        const temp = Number(row.querySelector('.stage-temp').value || 0.2);
+        const enabled = Boolean(row.querySelector('.stage-enabled').checked);
+        if (sysPrompt) {
+          stages.push({
+            stageId: stageId,
+            systemPrompt: sysPrompt,
+            responseFormat: respFmt,
+            temperature: temp,
+            maxNewTokens: 512,
+            enabled: enabled
+          });
+        }
+      });
+      return stages;
+    }
+
+    function setRagQuery(q) {
+      document.getElementById('ragQueryInput').value = q;
+      runMultiPassRag();
+    }
+
+    async function runMultiPassRag() {
+      if (!currentLectureId) {
+        alert("Hãy chạy Stage 2 hoặc Full Pipeline trước để có dữ liệu lecture_id!");
+        return;
+      }
+      const query = document.getElementById('ragQueryInput').value.trim();
+      if (!query) return;
+
+      const btn = document.getElementById('runRagBtn');
+      const wrapper = document.getElementById('ragResultsWrapper');
+      btn.disabled = true;
+      btn.textContent = "⏳ Đang chạy [Q1]–[Q6+]...";
+
+      try {
+        const payload = {
+          lectureId: currentLectureId,
+          query: query,
+          topK: Number(document.getElementById('ragTopK').value || 5),
+          retrievalTopK: 25,
+          querySystemPrompt: document.getElementById('ragQueryPrepPromptInput').value.trim() || null,
+          systemPrompt: document.getElementById('ragAnswerPromptInput').value.trim() || null,
+          promptProfile: document.getElementById('ragPresetSelect').value || 'qa_refine',
+          responseFormat: document.getElementById('ragResponseFormat').value || 'text',
+          useExpandedContext: document.getElementById('ragUseExpanded').checked,
+          extraStages: collectExtraStages(),
+          embedderMode: document.getElementById('ragEmbedderMode').value,
+          rerankerMode: document.getElementById('ragRerankerMode').value,
+          llmEngine: document.getElementById('ragLlmEngine').value
+        };
+
+        const res = await fetch('/api/rag/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        renderRagResults(data);
+        wrapper.classList.remove('hidden');
+        refreshRagTelemetry();
+      } catch (err) {
+        alert("Lỗi 2-Pass Pre-RAG: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "🦙 Chạy 2-Pass Pre-RAG ([Q1]–[Q6+])";
+      }
+    }
+
+    function renderRagResults(data) {
+      const tel = data.telemetry || {};
+
+      document.getElementById('ragTelemetryStrip').innerHTML = `
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-3 py-1 rounded-full bg-mist-sky/60 text-plum-ink font-bold">🔄 2-PASS PRE-RAG (NO CACHE)</span>
+            <span class="px-2.5 py-1 rounded-full bg-sakura-pink/35 font-mono font-bold text-plum-ink">Total: ${tel.total_ms ?? 0} ms</span>
+            <span class="px-2.5 py-1 rounded-full bg-white border border-sakura-pink/50 font-mono text-[11px]">Backend: ${escapeHtml(data.backend || '')}</span>
+          </div>
+          <span class="font-mono text-[10px] text-plum-muted">Stages: ${(data.stage_outputs || []).length} passes</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-[11px] font-mono pt-1">
+          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q1] Gemma Prep</strong><div>${tel.query_prep_ms ?? 0} ms</div></div>
+          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q2] BGE-M3 Embed</strong><div>${tel.embed_ms ?? 0} ms</div></div>
+          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q2] 3-Stream RRF</strong><div>${tel.retrieval_ms ?? 0} ms (${tel.candidates_retrieved ?? 0} hits)</div></div>
+          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q3] 3-Way Expand</strong><div>${tel.expand_ms ?? 0} ms</div></div>
+          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q4] Reranker</strong><div>${tel.rerank_ms ?? 0} ms (Top ${tel.reranked_count ?? 0})</div></div>
+          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q5+] Gemma + RAG</strong><div>${tel.llm_ms ?? 0} ms</div></div>
+        </div>
+      `;
+
+      document.getElementById('ragPreparedQueryOutput').textContent = data.prepared_query || data.query || '(Không có đầu ra Pass 1)';
+      document.getElementById('ragFinalOutput').textContent = data.answer || '';
+
+      const citations = data.citations || [];
+      document.getElementById('ragCitationPills').innerHTML = citations.map(c =>
+        `<button onclick="seekAudio(${Number(c.start_time_seconds)})" class="px-2.5 py-1 rounded-full bg-matcha-mint/70 hover:bg-matcha-mint text-plum-ink font-mono text-[11px] font-bold mochi-press">
+          ▶ [${escapeHtml(c.start_timestamp_display)} - ${escapeHtml(c.end_timestamp_display)}] (Rerank ${Number(c.rerank_score).toFixed(3)})
+        </button>`
+      ).join('');
+
+      const rrList = document.getElementById('ragRerankedList');
+      rrList.innerHTML = citations.length ? citations.map((c, idx) => `
+        <div class="p-3 rounded-xl bg-washi-cream border border-sakura-pink/40 space-y-1.5">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-full bg-plum-ink text-white font-bold">#${idx + 1} (Chunk #${c.chunk_index})</span>
+              <button onclick="seekAudio(${Number(c.start_time_seconds)})" class="px-2 py-0.5 rounded-full bg-matcha-mint/70 font-bold text-plum-ink">🕒 ${escapeHtml(c.start_timestamp_display)} → ${escapeHtml(c.end_timestamp_display)}</button>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="px-2 py-0.5 rounded-full bg-kitsune-coral/15 text-kitsune-hover font-bold">Rerank: ${Number(c.rerank_score).toFixed(4)} (logit ${Number(c.rerank_logit).toFixed(2)})</span>
+              <span class="px-2 py-0.5 rounded-full bg-mist-sky/45">RRF: ${Number(c.rrf_total_score).toFixed(5)}</span>
+              <span class="px-2 py-0.5 rounded-full bg-sakura-pink/35">Dense: ${Number(c.dense_score).toFixed(4)}</span>
+            </div>
+          </div>
+          <p class="text-xs text-plum-ink leading-relaxed">${escapeHtml(c.content)}</p>
+        </div>
+      `).join('') : '<div class="text-xs text-plum-muted">Không có citation nào được trích xuất.</div>';
+
+      const stagesList = document.getElementById('ragStageOutputsList');
+      stagesList.innerHTML = (data.stage_outputs || []).map(st => `
+        <details class="p-3 rounded-xl bg-washi-cream border border-sakura-pink/40 text-xs">
+          <summary class="cursor-pointer font-bold text-plum-ink flex flex-wrap items-center justify-between gap-2">
+            <span>🦙 ${escapeHtml(st.stage_id)} (${escapeHtml(st.profile)} • format=${escapeHtml(st.response_format)})</span>
+            <span class="font-mono text-[11px] text-plum-muted">${escapeHtml(st.engine)} / ${escapeHtml(st.model)} • ${st.latency_ms} ms</span>
+          </summary>
+          <div class="mt-2 space-y-2 text-[11px]">
+            <div><strong>System Prompt:</strong><pre class="mt-1 p-2 rounded-lg bg-white border border-sakura-pink/30 whitespace-pre-wrap font-mono">${escapeHtml(st.system_prompt)}</pre></div>
+            <div><strong>User Prompt:</strong><pre class="mt-1 p-2 rounded-lg bg-white border border-sakura-pink/30 whitespace-pre-wrap font-mono max-h-[180px] overflow-y-auto">${escapeHtml(st.user_prompt)}</pre></div>
+            <div><strong>Output:</strong><pre class="mt-1 p-2 rounded-lg bg-plum-ink text-emerald-200 whitespace-pre-wrap font-mono max-h-[200px] overflow-y-auto">${escapeHtml(st.output)}</pre></div>
+          </div>
+        </details>
+      `).join('');
+    }
+
+    async function refreshRagTelemetry() {
+      try {
+        const url = currentLectureId ? `/api/rag/telemetry?lecture_id=${currentLectureId}` : '/api/rag/telemetry';
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const auditBody = document.getElementById('dbAuditTableBody');
+        if (auditBody) {
+          auditBody.innerHTML = (data.audit_logs || []).map(a => `
+            <tr>
+              <td class="p-2 max-w-[180px] truncate">${escapeHtml(a.query_text)}</td>
+              <td class="p-2">${a.latency_retrieval_ms ?? 0}</td>
+              <td class="p-2">${a.latency_rerank_ms ?? 0}</td>
+              <td class="p-2 font-bold text-kitsune-hover">${a.latency_llm_ms ?? 0}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="4" class="p-2 text-plum-muted italic">Chưa có audit log.</td></tr>';
+        }
+      } catch (err) {
+        console.error('Failed to refresh RAG telemetry', err);
       }
     }
 
