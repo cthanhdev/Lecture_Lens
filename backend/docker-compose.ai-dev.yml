@@ -69,18 +69,20 @@ services:
       STORAGE_ROOT: /volumes/rag_data
       INTERNAL_API_SECRET_KEY: ${INTERNAL_API_SECRET_KEY:-lecture_lens_internal_secret_token_xyz987}
       SPRING_BASE_URL: ${SPRING_BASE_URL:-http://spring:8080}
-      DEVICE: ${DEVICE:-auto}
+      DEVICE: ${DEVICE:-cuda}
       LOW_VRAM_MODE: ${LOW_VRAM_MODE:-true}
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
       OMP_NUM_THREADS: "4"
       MKL_NUM_THREADS: "4"
       TORCH_NUM_THREADS: "4"
       MODEL_PATH_PHOWHISPER: /models/phowhisper-base
       MODEL_PATH_BGE_M3: /models/bge-m3
       MODEL_PATH_RERANKER: /models/bge-reranker-v2-m3
-      MODEL_PATH_GEMMA: /models/gemma-4-e4b
+      MODEL_PATH_GEMMA: /models/gemma-4-e2b
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma4:e2b}
-      LLM_ENGINE_MODE: ${LLM_ENGINE_MODE:-auto}
+      LLM_ENGINE_MODE: ${LLM_ENGINE_MODE:-transformers}
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
       POSTGRES_DB: ${POSTGRES_DB:-lecturelens_db}
@@ -100,14 +102,14 @@ services:
           cpus: "1.0"
           memory: 2G
           # -----------------------------------------------------------------
-          # Optional NVIDIA GPU passthrough (e.g., RTX 3050 4 GB VRAM).
-          # Keep commented on hosts without nvidia-container-toolkit;
-          # uncomment on GPU-enabled Docker Desktop (WSL2) / Linux hosts:
+          # NVIDIA GPU passthrough enabled by default (RTX 3050 4 GB VRAM).
+          # Requires Docker Desktop (WSL2) / Linux host with nvidia-container-toolkit.
+          # On CPU-only hosts, comment out `devices:` below and set DEVICE=cpu:
           # -----------------------------------------------------------------
-          # devices:
-          #   - driver: nvidia
-          #     count: 1
-          #     capabilities: [gpu]
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     networks:
       - rag-internal-network
 

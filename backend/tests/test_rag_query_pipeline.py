@@ -704,7 +704,9 @@ def test_transformers_gemma_client_preserves_eos_and_strips_thinking_block():
     import torch
     from transformers import AutoTokenizer
 
-    model_dir = Path("backend/models/gemma-4-e4b")
+    model_dir = Path("backend/models/gemma-4-e2b")
+    if not model_dir.exists():
+        model_dir = Path("backend/models/gemma-4-e4b")
     if not model_dir.exists():
         pytest.skip("Gemma 4 weights/tokenizer directory not present")
 
@@ -766,6 +768,90 @@ def test_transformers_gemma_client_preserves_eos_and_strips_thinking_block():
     client.unload()
     assert client._model is None
     assert client._tokenizer is None
+
+
+def test_transformers_gemma_client_ensure_loaded_uses_auto_dtype_for_qat(tmp_path: Path, monkeypatch):
+    import transformers
+    from transformers.quantizers.auto import AUTO_QUANTIZER_MAPPING
+    from transformers.utils.quantization_config import GemmaQuantizationConfig
+
+    assert "gemma" in AUTO_QUANTIZER_MAPPING
+    quantizer = AUTO_QUANTIZER_MAPPING["gemma"](GemmaQuantizationConfig(num_bits=4, quantize_embeddings=True))
+    quantizer.validate_environment()
+
+    model_dir = tmp_path / "gemma-4-e2b"
+    model_dir.mkdir(parents=True)
+    (model_dir / "config.json").write_text('{"model_type": "gemma4"}', encoding="utf-8")
+    (model_dir / "model.safetensors").write_bytes(b"stub")
+
+    captured: dict = {}
+
+    class _FakeModel:
+        def __init__(self) -> None:
+            self.is_quantized = True
+            self.to_calls: list[str] = []
+            self.eval_called = False
+
+        def to(self, device: str):
+            self.to_calls.append(device)
+            return self
+
+        def eval(self):
+            self.eval_called = True
+            return self
+
+    fake_model = _FakeModel()
+
+    def _fake_tok_load(path, **kwargs):
+        captured["tok_path"] = path
+        captured["tok_kwargs"] = kwargs
+        return object()
+
+    def _fake_model_load(path, **kwargs):
+        captured["model_path"] = path
+        captured["model_kwargs"] = kwargs
+        return fake_model
+
+    monkeypatch.setattr(transformers.AutoTokenizer, "from_pretrained", _fake_tok_load)
+    monkeypatch.setattr(transformers.AutoModelForCausalLM, "from_pretrained", _fake_model_load)
+
+    client = TransformersGemmaClient(model_path=model_dir, device="cpu")
+    assert client.is_model_present() is True
+    client._ensure_loaded()
+
+    assert captured["tok_kwargs"] == {"local_files_only": True}
+    assert captured["model_kwargs"]["dtype"] == "auto"
+    assert captured["model_kwargs"]["local_files_only"] is True
+    assert "low_cpu_mem_usage" not in captured["model_kwargs"]
+    assert fake_model.eval_called is True
+    assert fake_model.to_calls == []
+
+
+def test_download_models_gemma_e2b_qat_config_and_hf_v2_kwargs(monkeypatch):
+    import download_models as dm
+
+    info = dm.MODELS["gemma-4-e2b"]
+    assert info["repo_id"] == "google/gemma-4-E2B-it-qat-mobile-transformers"
+    assert info["local_dir"].name == "gemma-4-e2b"
+
+    recorded: list[dict] = []
+
+    def _fake_snapshot_download(**kwargs):
+        recorded.append(kwargs)
+        return str(kwargs["local_dir"])
+
+    monkeypatch.setattr(dm, "snapshot_download", _fake_snapshot_download)
+    out = dm.download_models(selected=["gemma-4-e2b"], token="hf_test_tok", force=False)
+
+    assert "gemma-4-e2b" in out
+    assert len(recorded) == 1
+    call = recorded[0]
+    assert call["repo_id"] == "google/gemma-4-E2B-it-qat-mobile-transformers"
+    assert Path(call["local_dir"]).name == "gemma-4-e2b"
+    assert call["token"] == "hf_test_tok"
+    assert call["force_download"] is False
+    assert "local_dir_use_symlinks" not in call
+    assert "resume_download" not in call
 
 
 def test_ollama_gemma_client_default_e2b_model_override_and_json_format(monkeypatch):

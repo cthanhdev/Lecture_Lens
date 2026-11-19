@@ -52,11 +52,11 @@ class Settings(BaseSettings):
         description="Local directory containing BGE-Reranker-v2-m3 Cross-Encoder weights"
     )
     MODEL_PATH_GEMMA: Path = Field(
-        default=Path("./backend/models/gemma-4-e4b"),
-        description="Local directory containing Gemma 4 E4B weights"
+        default=Path("./backend/models/gemma-4-e2b"),
+        description="Local directory containing Gemma 4 E2B QAT Mobile Transformers weights"
     )
 
-    # Online RAG & LLM Runtime (Gemma 4 E4B)
+    # Online RAG & LLM Runtime (Gemma 4 E2B)
     OLLAMA_BASE_URL: str = Field(
         default="http://llm:11434",
         description="Base URL of local Ollama inference server"

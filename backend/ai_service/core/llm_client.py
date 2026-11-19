@@ -245,8 +245,8 @@ class OllamaGemmaClient:
 
 class TransformersGemmaClient:
     """
-    Production Local Adapter: Directly loads `backend/models/gemma-4-e4b` via
-    HuggingFace `transformers` (`Gemma4ForConditionalGeneration` / `AutoModelForCausalLM`),
+    Production Local Adapter: Directly loads `backend/models/gemma-4-e2b` (QAT Mobile INT2/4/8
+    via native `GemmaQuantizer`, or standard BF16 weights) using HuggingFace `transformers`,
     applying Gemma 4's canonical `chat_template.jinja`.
     """
 
@@ -277,7 +277,7 @@ class TransformersGemmaClient:
 
         if not self.model_path.is_dir():
             raise FileNotFoundError(
-                f"Gemma 4 E4B model directory not found: {self.model_path}"
+                f"Gemma 4 model directory not found: {self.model_path}"
             )
 
         import torch
@@ -288,36 +288,37 @@ class TransformersGemmaClient:
             actual_device = "cuda" if torch.cuda.is_available() else "cpu"
         elif actual_device == "cuda" and not torch.cuda.is_available():
             logger.warning(
-                "CUDA requested but not available. Falling back to CPU for Gemma 4 E4B."
+                "CUDA requested but not available. Falling back to CPU for Gemma 4."
             )
             actual_device = "cpu"
 
-        # Gemma 4 E4B weights are natively bfloat16 (~15.88 GB); casting to float32 on CPU
-        # would double RAM footprint to ~32 GB and OOM 16 GB dev hosts.
-        torch_dtype = torch.bfloat16
-
         logger.info(
-            "Loading Gemma 4 E4B from %s onto %s (dtype=%s)...",
+            "Loading Gemma 4 from %s onto %s (dtype=auto)...",
             self.model_path,
             actual_device,
-            torch_dtype,
         )
         tokenizer = AutoTokenizer.from_pretrained(
             str(self.model_path),
             local_files_only=True,
         )
+        # dtype="auto" lets transformers activate GemmaQuantizer (INT2/4/8) for QAT Mobile
+        # checkpoints automatically while preserving native bfloat16 for unquantized checkpoints.
         model = AutoModelForCausalLM.from_pretrained(
             str(self.model_path),
-            dtype=torch_dtype,
-            low_cpu_mem_usage=True,
+            dtype="auto",
             local_files_only=True,
-        ).to(actual_device)
+        )
+        if actual_device != "cpu":
+            model = model.to(actual_device)
         model.eval()
 
         self._tokenizer = tokenizer
         self._model = model
         self.device = actual_device
-        logger.info("Gemma 4 E4B successfully loaded into VRAM/RAM.")
+        logger.info(
+            "Gemma 4 successfully loaded into VRAM/RAM (quantized=%s).",
+            bool(getattr(model, "is_quantized", False)),
+        )
 
     def generate(
         self,

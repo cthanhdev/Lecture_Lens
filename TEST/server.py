@@ -113,7 +113,14 @@ def _resolve_gemma_path() -> Path:
     env_path = os.getenv("MODEL_PATH_GEMMA")
     if env_path and Path(env_path).exists():
         return Path(env_path)
-    return PROJECT_ROOT / "backend" / "models" / "gemma-4-e4b"
+    e2b_path = PROJECT_ROOT / "backend" / "models" / "gemma-4-e2b"
+    if e2b_path.exists():
+        return e2b_path
+    e4b_path = PROJECT_ROOT / "backend" / "models" / "gemma-4-e4b"
+    if e4b_path.exists():
+        logger.warning("gemma-4-e2b not found. Falling back temporarily to gemma-4-e4b.")
+        return e4b_path
+    return e2b_path
 
 
 def _resolve_phowhisper_path(model_variant: str) -> Path:
@@ -198,8 +205,12 @@ _transformers_gemma = TransformersGemmaClient(
     model_path=_resolve_gemma_path(),
     device=_resolve_runtime_device(),
 )
+_raw_llm_mode = os.getenv("LLM_ENGINE_MODE", settings.LLM_ENGINE_MODE).lower()
+_configured_llm_mode: EngineMode = (
+    _raw_llm_mode if _raw_llm_mode in ("auto", "ollama", "transformers", "mock") else "auto"  # type: ignore[assignment]
+)
 _llm_client = CompositeLLMClient(
-    mode="auto",
+    mode=_configured_llm_mode,
     ollama_client=_ollama_client,
     transformers_client=_transformers_gemma,
     mock_client=FakeLLMClient(),
@@ -894,7 +905,7 @@ class TestRagQueryRequest(BaseModel):
     extra_stages: list[LLMStageConfig] = Field(default_factory=list, alias="extraStages")
     embedder_mode: Literal["real", "mock"] = Field(default="real", alias="embedderMode")
     reranker_mode: Literal["real", "mock"] = Field(default="real", alias="rerankerMode")
-    llm_engine: EngineMode = Field(default="auto", alias="llmEngine")
+    llm_engine: EngineMode = Field(default=_configured_llm_mode, alias="llmEngine")
 
 
 @app.get("/api/rag/presets")
