@@ -15,9 +15,9 @@ python-multipart>=0.0.9
 soundfile>=0.12.1
 imageio-ffmpeg>=0.4.9
 
-# Deep Learning & Embeddings (PhoWhisper + BGE-M3)
+# Deep Learning & Embeddings (PhoWhisper + BGE-M3 + BGE Reranker + Gemma 4)
 torch>=2.3.0
-transformers>=4.40.0
+transformers>=5.0.0
 numpy>=1.24.0
 
 # PostgreSQL + pgvector Client

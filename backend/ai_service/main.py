@@ -5,7 +5,7 @@ Operates exclusively within the internal isolated Docker network.
 from contextlib import asynccontextmanager
 import logging
 from fastapi import FastAPI
-from ai_service.routers import health, ingest
+from ai_service.routers import health, ingest, rag
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,3 +37,4 @@ app = FastAPI(
 # Register routers
 app.include_router(health.router)
 app.include_router(ingest.router)
+app.include_router(rag.router)

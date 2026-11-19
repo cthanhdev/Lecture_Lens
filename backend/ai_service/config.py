@@ -47,6 +47,36 @@ class Settings(BaseSettings):
         default=Path("./backend/models/bge-m3"),
         description="Local directory containing BGE-M3 embedding model weights"
     )
+    MODEL_PATH_RERANKER: Path = Field(
+        default=Path("./backend/models/bge-reranker-v2-m3"),
+        description="Local directory containing BGE-Reranker-v2-m3 Cross-Encoder weights"
+    )
+    MODEL_PATH_GEMMA: Path = Field(
+        default=Path("./backend/models/gemma-4-e4b"),
+        description="Local directory containing Gemma 4 E4B weights"
+    )
+
+    # Online RAG & LLM Runtime (Gemma 4 E4B)
+    OLLAMA_BASE_URL: str = Field(
+        default="http://llm:11434",
+        description="Base URL of local Ollama inference server"
+    )
+    OLLAMA_MODEL: str = Field(
+        default="gemma4:e2b",
+        description="Ollama model tag for Gemma 4 E2B"
+    )
+    OLLAMA_QUERY_PREP_MODEL: str | None = Field(
+        default=None,
+        description="Optional Ollama model tag for [Q1] query preparation; defaults to OLLAMA_MODEL"
+    )
+    LLM_ENGINE_MODE: str = Field(
+        default="auto",
+        description="LLM execution backend: auto, ollama, transformers, or mock"
+    )
+    RAG_RETRIEVAL_TOP_K: int = Field(
+        default=25,
+        description="Number of 3-stream RRF candidates retrieved before Cross-Encoder reranking"
+    )
 
     # Chunking & VRAM Management (Stage 2)
     CHUNK_MAX_TOKENS: int = Field(

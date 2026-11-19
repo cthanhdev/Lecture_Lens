@@ -243,28 +243,7 @@ AS $$
     WHERE c_curr.id = p_chunk_id;
 $$;
 
-\echo '>>> 5/5: Khởi tạo Semantic Cache & Audit Logs...'
-CREATE TABLE IF NOT EXISTS rag.semantic_query_cache (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    lecture_id UUID NOT NULL,
-    query_text TEXT NOT NULL,
-    query_unaccent TEXT GENERATED ALWAYS AS (rag.immutable_unaccent(query_text)) STORED,
-    query_embedding_half halfvec(1024) NOT NULL,
-    cached_answer TEXT NOT NULL,
-    cached_citations JSONB NOT NULL,
-    hit_count INT DEFAULT 1,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_hit_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_query_cache_hnsw 
-ON rag.semantic_query_cache 
-USING hnsw (query_embedding_half halfvec_cosine_ops)
-WITH (m = 16, ef_construction = 64);
-
-CREATE INDEX IF NOT EXISTS idx_query_cache_lecture 
-ON rag.semantic_query_cache (lecture_id);
-
+\echo '>>> 5/5: Khởi tạo RAG Audit Logs...'
 CREATE TABLE IF NOT EXISTS rag.rag_audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     lecture_id UUID NOT NULL,

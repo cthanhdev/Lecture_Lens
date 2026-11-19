@@ -45,5 +45,7 @@ async def get_health(chunk_store: ChunkStoreProtocol = Depends(get_chunk_store))
         "models": {
             "phowhisper_path_exists": settings.MODEL_PATH_PHOWHISPER.exists(),
             "bge_m3_path_exists": settings.MODEL_PATH_BGE_M3.exists(),
+            "bge_reranker_path_exists": settings.MODEL_PATH_RERANKER.exists(),
+            "gemma4_path_exists": settings.MODEL_PATH_GEMMA.exists(),
         },
     }
