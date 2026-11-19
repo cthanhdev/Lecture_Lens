@@ -205,8 +205,12 @@ _transformers_gemma = TransformersGemmaClient(
     model_path=_resolve_gemma_path(),
     device=_resolve_runtime_device(),
 )
+_raw_llm_mode = os.getenv("LLM_ENGINE_MODE", settings.LLM_ENGINE_MODE).lower()
+_configured_llm_mode: EngineMode = (
+    _raw_llm_mode if _raw_llm_mode in ("auto", "ollama", "transformers", "mock") else "auto"  # type: ignore[assignment]
+)
 _llm_client = CompositeLLMClient(
-    mode="auto",
+    mode=_configured_llm_mode,
     ollama_client=_ollama_client,
     transformers_client=_transformers_gemma,
     mock_client=FakeLLMClient(),
@@ -901,7 +905,7 @@ class TestRagQueryRequest(BaseModel):
     extra_stages: list[LLMStageConfig] = Field(default_factory=list, alias="extraStages")
     embedder_mode: Literal["real", "mock"] = Field(default="real", alias="embedderMode")
     reranker_mode: Literal["real", "mock"] = Field(default="real", alias="rerankerMode")
-    llm_engine: EngineMode = Field(default="auto", alias="llmEngine")
+    llm_engine: EngineMode = Field(default=_configured_llm_mode, alias="llmEngine")
 
 
 @app.get("/api/rag/presets")
