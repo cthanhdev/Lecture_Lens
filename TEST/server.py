@@ -113,7 +113,14 @@ def _resolve_gemma_path() -> Path:
     env_path = os.getenv("MODEL_PATH_GEMMA")
     if env_path and Path(env_path).exists():
         return Path(env_path)
-    return PROJECT_ROOT / "backend" / "models" / "gemma-4-e4b"
+    e2b_path = PROJECT_ROOT / "backend" / "models" / "gemma-4-e2b"
+    if e2b_path.exists():
+        return e2b_path
+    e4b_path = PROJECT_ROOT / "backend" / "models" / "gemma-4-e4b"
+    if e4b_path.exists():
+        logger.warning("gemma-4-e2b not found. Falling back temporarily to gemma-4-e4b.")
+        return e4b_path
+    return e2b_path
 
 
 def _resolve_phowhisper_path(model_variant: str) -> Path:

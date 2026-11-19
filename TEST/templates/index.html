@@ -102,7 +102,7 @@
         <span>⚖️ Reranker:</span> <span id="rerankerStatus" class="font-bold text-plum-muted">Đang quét...</span>
       </div>
       <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>🦙 Gemma 4 E4B:</span> <span id="gemmaStatus" class="font-bold text-plum-muted">Đang quét...</span>
+        <span>🦙 Gemma 4 E2B:</span> <span id="gemmaStatus" class="font-bold text-plum-muted">Đang quét...</span>
       </div>
       <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
         <span>🐘 PgVector DB:</span> <span id="dbStatus" class="font-bold text-plum-muted">Đang quét...</span>
@@ -422,7 +422,7 @@
               <select id="ragLlmEngine" class="w-full text-xs font-semibold p-1.5 rounded-lg border border-sakura-pink/60 bg-white">
                 <option value="auto" selected>🦙 Auto (Ollama → Transformers)</option>
                 <option value="ollama">🦙 Ollama (gemma4:e2b)</option>
-                <option value="transformers">🤗 Transformers Local</option>
+                <option value="transformers">🤗 Transformers Local (gemma-4-e2b QAT)</option>
                 <option value="mock">🧪 Mock Gemma 4 (&lt;50ms)</option>
               </select>
             </div>
