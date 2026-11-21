@@ -9,6 +9,7 @@ import hashlib
 import logging
 from pathlib import Path
 import re
+import time
 from typing import Protocol, runtime_checkable
 import unicodedata
 
@@ -91,6 +92,12 @@ class FakeEmbedder:
         self.dim = dim
         self.top_k_lexical = top_k_lexical
         self.max_length = max_length
+        self.model_name: str = "fake-embedder"
+        self.device: str = "cpu"
+        self.dtype_label: str = "synthetic"
+        self.is_loaded: bool = False
+        self.unload_count: int = 0
+        self.last_load_seconds: float | None = 0.0
 
     def encode_passages(
         self,
@@ -133,6 +140,7 @@ class FakeEmbedder:
 
     def unload(self) -> None:
         """No-op for in-memory deterministic adapter."""
+        self.unload_count += 1
         return None
 
 
@@ -167,6 +175,24 @@ class BgeM3Embedder:
         self._model = None
         self._sparse_linear = None
         self._special_ids: set[int] = {0, 1, 2, 3}
+        self.unload_count: int = 0
+        self.last_load_seconds: float | None = None
+
+    @property
+    def model_name(self) -> str:
+        return self.model_path.name
+
+    @property
+    def is_loaded(self) -> bool:
+        return (
+            self._model is not None
+            and self._tokenizer is not None
+            and self._sparse_linear is not None
+        )
+
+    @property
+    def dtype_label(self) -> str:
+        return "float16" if self.device == "cuda" else "float32"
 
     def _ensure_loaded(self) -> None:
         if (
@@ -200,6 +226,7 @@ class BgeM3Embedder:
 
         torch_dtype = torch.float16 if actual_device == "cuda" else torch.float32
 
+        t0 = time.perf_counter()
         logger.info(
             "Loading BGE-M3 from %s onto %s (dtype=%s)...",
             self.model_path,
@@ -235,7 +262,8 @@ class BgeM3Embedder:
         self.device = actual_device
         extra_special_ids = getattr(tokenizer, "all_special_ids", []) or []
         self._special_ids = {0, 1, 2, 3} | set(extra_special_ids)
-        logger.info("BGE-M3 successfully loaded into VRAM/RAM.")
+        self.last_load_seconds = round(time.perf_counter() - t0, 3)
+        logger.info("BGE-M3 successfully loaded into VRAM/RAM in %.2fs.", self.last_load_seconds)
 
     def _extract_lexical_weights_and_count(
         self,
@@ -344,6 +372,7 @@ class BgeM3Embedder:
 
     def unload(self) -> None:
         """Release model, tokenizer, and sparse head from RAM/VRAM."""
+        had_loaded = self._model is not None or self._tokenizer is not None or self._sparse_linear is not None
         model = self._model
         tokenizer = self._tokenizer
         sparse_linear = self._sparse_linear
@@ -351,6 +380,8 @@ class BgeM3Embedder:
         self._tokenizer = None
         self._sparse_linear = None
         self._special_ids = {0, 1, 2, 3}
+        if had_loaded:
+            self.unload_count += 1
         del model, tokenizer, sparse_linear
         gc.collect()
 

@@ -13,10 +13,10 @@ BASE_DIR = Path(__file__).resolve().parent
 MODELS_DIR = BASE_DIR / "models"
 
 MODELS = {
-    "phowhisper-base": {
-        "repo_id": "vinai/phowhisper-base",
-        "local_dir": MODELS_DIR / "phowhisper-base",
-        "description": "PhoWhisper Base - Speech-to-Text tối ưu tiếng Việt (VinAI)",
+    "phowhisper-medium": {
+        "repo_id": "vinai/PhoWhisper-medium",
+        "local_dir": MODELS_DIR / "phowhisper-medium",
+        "description": "PhoWhisper Medium - Speech-to-Text tối ưu tiếng Việt (VinAI)",
     },
     "bge-m3": {
         "repo_id": "BAAI/bge-m3",

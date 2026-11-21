@@ -29,7 +29,7 @@ def _make_transcript(segments: list[TranscriptSegment]) -> TranscriptSchema:
     return TranscriptSchema(
         job_id=uuid4(),
         lecture_id=uuid4(),
-        generated=TranscriptGeneratedMeta(model="phowhisper-base", language="vi", device="cpu"),
+        generated=TranscriptGeneratedMeta(model="phowhisper-medium", language="vi", device="cpu"),
         audio=TranscriptAudioMeta(duration_seconds=max(0.0, duration), sample_rate_hz=16000),
         full_text=full_text,
         segments=segments,

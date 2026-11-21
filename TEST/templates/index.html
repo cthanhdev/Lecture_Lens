@@ -1,674 +1,564 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LectureLens - Stage 1 ASR & Stage 2 RAG Verification Studio</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LectureLens BE & Model Inspector</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          },
-          colors: {
-            'washi-cream': '#FFF7FD',
-            'kitsune-coral': '#F47F72',
-            'kitsune-hover': '#E26D60',
-            'plum-ink': '#261333',
-            'plum-muted': '#5C4A6B',
-            'sakura-pink': '#F5C3C9',
-            'mist-sky': '#A9D4E8',
-            'mochi-yellow': '#FFE27A',
-            'matcha-mint': '#BEE1D0',
-          }
-        }
-      }
-    }
-  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
+    :root {
+      --bg-canvas: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-inset: #f1f5f9;
+      --border: #e2e8f0;
+      --ink-main: #0f172a;
+      --ink-sub: #334155;
+      --ink-muted: #64748b;
+    }
     body {
-      background-color: #FFF7FD;
-      color: #261333;
-      background-image:
-        radial-gradient(circle at 10% 10%, rgba(245, 195, 201, 0.25), transparent 42%),
-        radial-gradient(circle at 90% 15%, rgba(169, 212, 232, 0.25), transparent 40%),
-        radial-gradient(circle at 80% 85%, rgba(190, 225, 208, 0.22), transparent 45%);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--ink-main);
+      font-size: 13px;
+      line-height: 1.45;
     }
-    .miruku-glass {
-      background: rgba(255, 255, 255, 0.80);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.92);
-      box-shadow: 0 10px 34px rgba(38, 19, 51, 0.06);
+    .mono {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
     }
-    .mochi-press {
-      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    .panel {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
     }
-    .mochi-press:active {
-      transform: scale(0.97);
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid transparent;
+      white-space: nowrap;
     }
-    .chunk-highlight {
-      outline: 2px solid #F47F72;
-      box-shadow: 0 0 0 6px rgba(244, 127, 114, 0.15);
+    .badge-neutral { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+    .badge-teal    { background: #f0fdfa; color: #0f766e; border-color: #99f6e4; }
+    .badge-indigo  { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; }
+    .badge-amber   { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    .badge-rose    { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+    .tab-btn {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748b;
+      border-bottom: 2px solid transparent;
+      transition: color 0.12s, border-color 0.12s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: #0f172a; }
+    .tab-btn.active {
+      color: #0f766e;
+      border-bottom-color: #0f766e;
+      font-weight: 600;
+    }
+    .flow-node {
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 6px;
+      padding: 6px 8px;
+      min-width: 112px;
+      flex: 1 1 0;
+    }
+    .flow-node.status-done    { background: #f0fdfa; border-color: #99f6e4; }
+    .flow-node.status-running { background: #eef2ff; border-color: #a5b4fc; }
+    .flow-node.status-skipped { background: #f8fafc; border-color: #e2e8f0; opacity: 0.72; }
+    .flow-node.status-failed  { background: #fff1f2; border-color: #fecdd3; }
+    .chunk-active {
+      border-color: #0f766e !important;
+      background-color: #f0fdfa !important;
+    }
+    pre.codebox {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 11.5px;
+      overflow-x: auto;
     }
   </style>
 </head>
-<body class="min-h-screen font-sans p-4 md:p-8 text-plum-ink">
+<body class="min-h-screen">
 
-  <!-- Header & System Diagnostics -->
-  <header class="max-w-6xl mx-auto mb-8 flex flex-col gap-4 pb-6 border-b border-sakura-pink/50">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="w-12 h-12 rounded-2xl bg-kitsune-coral/15 flex items-center justify-center text-2xl shadow-sm border border-kitsune-coral/30">
-          🦊
-        </div>
+  <!-- BAND 1: TOP TELEMETRY STRIP -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded bg-slate-900 text-white flex items-center justify-center mono text-xs font-semibold">LL</div>
         <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-2xl font-extrabold text-plum-ink tracking-tight">LectureLens</h1>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-kitsune-coral text-white shadow-xs">TEST STUDIO</span>
-            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-matcha-mint/70 text-plum-ink border border-matcha-mint">Stage 1 + Stage 2 + 2-Pass Pre-RAG [Q1]–[Q6+]</span>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm font-semibold text-slate-900 tracking-tight">LectureLens BE &amp; Model Inspector</h1>
+            <span class="badge badge-neutral mono">2-Stage Ingest + 2-Pass Pre-RAG</span>
           </div>
-          <p class="text-xs text-plum-muted font-medium mt-0.5">PhoWhisper ASR ➔ [I5] Chunking ➔ [I6] BGE-M3 ➔ [Q1] Gemma 4 E2B Prep ➔ [Q2–Q4] RRF + Reranker ➔ [Q5–Q6+] Gemma 4 + RAG</p>
+          <p class="text-[11px] text-slate-500">Isolated verification workbench bound to real backend adapters, telemetry &amp; VRAM lifecycle</p>
         </div>
       </div>
 
-      <button onclick="loadDiagnostics()" class="self-start md:self-auto px-3.5 py-1.5 rounded-full bg-white/85 hover:bg-white border border-sakura-pink/60 text-xs font-semibold text-plum-ink mochi-press shadow-xs">
-        🔄 Quét lại hệ thống
-      </button>
-    </div>
+      <div class="flex flex-wrap items-center gap-1.5" id="topTelemetryChips">
+        <span class="badge badge-neutral mono" id="chipRuntime">Runtime: loading...</span>
+        <span class="badge badge-neutral mono" id="chipDevice">Device: --</span>
+        <span class="badge badge-neutral mono" id="chipLowVram">LOW_VRAM: --</span>
+        <span class="badge badge-neutral mono" id="chipLlmEngine">LLM: --</span>
+        <span class="badge badge-neutral mono" id="chipDb">DB: --</span>
+        <span class="badge badge-neutral mono" id="chipFfmpeg">FFmpeg: --</span>
+      </div>
 
-    <!-- 7 Diagnostics Pills -->
-    <div class="flex flex-wrap items-center gap-2">
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>🎬 FFmpeg:</span> <span id="ffmpegStatus" class="font-bold text-plum-muted">Đang quét...</span>
-      </div>
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>⚡ Thiết Bị:</span> <span id="aiDeviceStatus" class="font-bold text-plum-muted">Đang quét...</span>
-      </div>
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>🎙️ PhoWhisper:</span> <span id="aiModelStatus" class="font-bold text-plum-muted">Đang quét...</span>
-      </div>
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>🧠 BGE-M3:</span> <span id="bgeM3Status" class="font-bold text-plum-muted">Đang quét...</span>
-      </div>
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>⚖️ Reranker:</span> <span id="rerankerStatus" class="font-bold text-plum-muted">Đang quét...</span>
-      </div>
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>🦙 Gemma 4 E2B:</span> <span id="gemmaStatus" class="font-bold text-plum-muted">Đang quét...</span>
-      </div>
-      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/85 border border-sakura-pink/50 text-xs font-medium text-plum-ink shadow-xs">
-        <span>🐘 PgVector DB:</span> <span id="dbStatus" class="font-bold text-plum-muted">Đang quét...</span>
+      <div class="flex items-center gap-2">
+        <select id="recentRunsSelect" onchange="onSelectRecentJob()" class="text-xs border border-slate-300 rounded px-2 py-1 bg-white text-slate-700 max-w-[200px]">
+          <option value="">Recent runs (none)</option>
+        </select>
+        <button onclick="loadDiagnostics(); loadJobs();" class="px-2.5 py-1 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded">
+          Refresh
+        </button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto space-y-8">
+  <main class="max-w-7xl mx-auto px-4 py-3.5 space-y-3.5">
 
-    <!-- Step 1: Audio Upload & Quick Stage 2 Controls -->
-    <section class="miruku-glass rounded-3xl p-6 md:p-8">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h2 class="text-lg font-bold text-plum-ink flex items-center gap-2">
-            <span class="w-7 h-7 rounded-full bg-kitsune-coral text-white text-xs font-bold flex items-center justify-center">1</span>
-            Khởi Chạy Pipeline (Stage 1 ASR + Stage 2 BGE-M3)
-          </h2>
-          <p class="text-xs text-plum-muted mt-0.5">Tải audio bài giảng để chạy full pipeline hoặc bấm Test Nhanh Stage 2 để kiểm tra Chunking [I5] + BGE-M3 [I6] ngay lập tức</p>
+    <!-- BAND 2: OVERVIEW GRID (4-MODEL MATRIX + BE CONFIG & RUNNERS) -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+
+      <!-- LEFT (7 cols): 4-Model Live Matrix -->
+      <div class="lg:col-span-7 panel p-3.5 flex flex-col justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-200">
+          <div>
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-700">4-Model Registry &amp; Session Execution</h2>
+            <p class="text-[11px] text-slate-500">Inspects real <span class="mono">backend/models/</span> weights (excl. .cache), RAM residency &amp; per-model run counters</p>
+          </div>
+          <div class="flex items-center gap-1.5" id="modelSummaryBadges">
+            <span class="badge badge-neutral mono">-- GiB</span>
+            <span class="badge badge-teal mono">-- ACTIVE</span>
+          </div>
         </div>
 
-        <!-- Mode Toggle -->
-        <div class="flex items-center p-1 bg-white/70 rounded-full border border-sakura-pink/60 text-xs font-medium self-start md:self-auto">
-          <button id="modeRealBtn" class="px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press" onclick="setMode('real')">
-            🎙️ Real Models (PhoWhisper + BGE-M3)
-          </button>
-          <button id="modeMockBtn" class="px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press" onclick="setMode('mock')">
-            ⚡ Fast Mock (&lt;1s)
-          </button>
+        <div class="overflow-x-auto mt-2">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 text-[11px] uppercase text-slate-500">
+                <th class="py-1.5 pr-2 font-medium">Model &amp; Repo</th>
+                <th class="py-1.5 px-2 font-medium">Stage &amp; Wiring</th>
+                <th class="py-1.5 px-2 font-medium">Disk / Arch / Ctx</th>
+                <th class="py-1.5 px-2 font-medium">Memory</th>
+                <th class="py-1.5 pl-2 font-medium text-right">Session Runs</th>
+              </tr>
+            </thead>
+            <tbody id="modelsMatrixBody" class="divide-y divide-slate-100">
+              <tr><td colspan="5" class="py-4 text-center text-slate-400">Loading model registry...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Fast Stage 2 Banner -->
-      <div class="p-4 rounded-2xl bg-gradient-to-r from-mochi-yellow/35 via-sakura-pink/25 to-mist-sky/30 border border-kitsune-coral/35 mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <div class="text-xs font-extrabold uppercase tracking-wider text-plum-ink flex items-center gap-1.5">
-            <span>⚡</span> Kiểm Thử Nhanh Stage 2 Không Cần Chờ ASR Audio
+      <!-- RIGHT (5 cols): BE Configuration Strip + Compact Runners -->
+      <div class="lg:col-span-5 panel p-3.5 space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-700">BE Configuration &amp; Pipeline Runner</h2>
+          <div class="inline-flex rounded border border-slate-300 bg-slate-100 p-0.5 text-[11px]">
+            <button type="button" id="btnModeReal" onclick="setMode('real')" class="px-2 py-0.5 rounded font-medium bg-white text-slate-900 shadow-sm">Real BE</button>
+            <button type="button" id="btnModeMock" onclick="setMode('mock')" class="px-2 py-0.5 rounded font-medium text-slate-600">Fast Mock</button>
           </div>
-          <p class="text-xs text-plum-muted mt-1">
-            Sinh sẵn <code>transcript.json</code> bài giảng Đại học Tiếng Việt đa chủ đề (Mạng Máy Tính, Active Directory, Đại Số Tuyến Tính, Gradient Descent) và chạy <strong>RecursiveTokenChunker [I5]</strong> + <strong>BgeM3Embedder [I6]</strong> + <strong>ChunkStore</strong>.
-          </p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
-          <button id="fastStage2RealBtn" onclick="runFastStage2('real')" class="px-5 py-2.5 rounded-full bg-plum-ink hover:bg-plum-muted text-white text-xs font-bold mochi-press shadow-md flex items-center gap-2">
-            <span>⚡ Test Nhanh Stage 2 (Chunking [I5] + BGE-M3 [I6] Thật)</span>
-          </button>
-          <button id="fastStage2MockBtn" onclick="runFastStage2('mock')" class="px-3.5 py-2.5 rounded-full bg-white/90 hover:bg-white border border-sakura-pink text-plum-ink text-xs font-semibold mochi-press shadow-xs">
-            🧪 Mock (&lt;50ms)
-          </button>
-        </div>
-      </div>
-
-      <!-- Advanced Pipeline Settings Card -->
-      <div class="p-4 rounded-2xl bg-white/60 border border-sakura-pink/40 mb-6 space-y-3">
-        <div class="flex items-center justify-between flex-wrap gap-2">
-          <span class="text-xs font-bold uppercase tracking-wider text-plum-ink flex items-center gap-1.5">
-            <span>⚙️</span> Cấu Hình Bộ Lọc & Model ASR (Stage 1)
-          </span>
-          <span class="text-[11px] text-plum-muted">LOW_VRAM_MODE tự động unload PhoWhisper trước khi nạp BGE-M3</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-          <div class="p-3 rounded-xl bg-white/85 border border-sakura-pink/40">
-            <label class="block text-xs font-bold text-plum-ink mb-1">Mô Hình ASR</label>
-            <select id="modelSelect" class="w-full text-xs font-semibold p-2 rounded-lg border border-sakura-pink/60 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral">
-              <option value="medium" selected>PhoWhisper-Medium (769M - Độ chuẩn cao)</option>
-              <option value="base">PhoWhisper-Base (74M - Bản nhẹ)</option>
-            </select>
+        <!-- BE Config Key-Value Strip -->
+        <div id="beConfigGrid" class="grid grid-cols-3 gap-1.5 text-[11px] bg-slate-50 border border-slate-200 rounded p-2">
+          <div class="text-slate-400 col-span-3">Loading BE config...</div>
+        </div>
+
+        <!-- Active Context IDs -->
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-[11px]">
+          <div class="truncate">
+            <span class="text-slate-500">Job:</span>
+            <span id="ctxJobId" class="mono font-medium text-slate-800">--</span>
+          </div>
+          <div class="truncate">
+            <span class="text-slate-500">Lecture:</span>
+            <span id="ctxLectureId" class="mono font-medium text-slate-800">--</span>
+          </div>
+        </div>
+
+        <!-- Runners -->
+        <div class="space-y-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btnStage2Sample" onclick="runStage2Sample()" class="flex-1 px-3 py-1.5 text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white rounded transition">
+              Run Stage 2 Sample [I5-&gt;I6]
+            </button>
+            <button id="btnLoadSampleWav" onclick="loadSampleAudio()" class="px-2.5 py-1.5 text-xs font-medium bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded">
+              Load Sample WAV
+            </button>
           </div>
 
-          <div class="p-3 rounded-xl bg-white/85 border border-sakura-pink/40 flex items-center gap-2">
-            <input type="checkbox" id="dspToggle" checked class="w-4 h-4 accent-kitsune-coral cursor-pointer">
-            <div>
-              <label for="dspToggle" class="text-xs font-bold text-plum-ink cursor-pointer block">Khử Nhiễu DSP (afftdn + loudnorm)</label>
-              <span class="text-[10px] text-plum-muted">Cắt ù quạt 80Hz, rít 7.5kHz & khử ồn phòng</span>
+          <div class="flex items-center gap-2">
+            <label for="audioFileInput" class="flex-1 cursor-pointer border border-dashed border-slate-300 hover:border-slate-400 rounded px-2.5 py-1.5 bg-slate-50 text-xs text-slate-600 truncate">
+              <input id="audioFileInput" type="file" accept=".wav,.mp3,.m4a,.aac,.flac" class="hidden" onchange="onFileSelected(event)" />
+              <span id="selectedFileLabel">Select audio (.wav, .mp3, .m4a, .flac)...</span>
+            </label>
+            <button id="btnRunFull" onclick="runFullPipeline()" disabled class="px-3 py-1.5 text-xs font-medium bg-teal-700 hover:bg-teal-800 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded">
+              Run Full [I1-&gt;I6]
+            </button>
+          </div>
+
+          <!-- Progress Status Row -->
+          <div id="runnerStatusBox" class="hidden border border-slate-200 rounded p-2 bg-slate-50 space-y-1">
+            <div class="flex items-center justify-between text-[11px]">
+              <span id="runnerStateBadge" class="badge badge-indigo mono">QUEUED</span>
+              <span id="runnerProgressPct" class="mono text-slate-600">0%</span>
             </div>
-          </div>
-
-          <div class="p-3 rounded-xl bg-white/85 border border-sakura-pink/40 flex items-center gap-2">
-            <input type="checkbox" id="vadToggle" checked class="w-4 h-4 accent-kitsune-coral cursor-pointer">
-            <div>
-              <label for="vadToggle" class="text-xs font-bold text-plum-ink cursor-pointer block">Cắt Khoảng Nghỉ Tự Nhiên (VAD)</label>
-              <span class="text-[10px] text-plum-muted">Dò khoảng lặng &gt;350ms, không cắt đôi câu</span>
+            <div class="w-full h-1.5 bg-slate-200 rounded overflow-hidden">
+              <div id="runnerProgressBar" class="h-full bg-teal-600 transition-all duration-300" style="width: 0%"></div>
             </div>
+            <p id="runnerStatusMsg" class="text-[11px] text-slate-600 truncate">Initializing...</p>
           </div>
-        </div>
 
-        <div class="pt-2">
-          <label class="block text-xs font-bold text-plum-ink mb-1 flex items-center justify-between">
-            <span>📚 Gợi Ý Từ Điển Ngữ Cảnh (Vocabulary Prompting):</span>
-            <button onclick="resetPrompt()" class="text-[10px] text-kitsune-coral hover:underline font-semibold">Khôi phục mặc định CNTT</button>
-          </label>
-          <input type="text" id="promptInput" class="w-full text-xs font-mono p-2.5 rounded-xl border border-sakura-pink/60 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral" value="Bài giảng Đại học, Công nghệ thông tin, Quản trị mạng, Windows Server 2016, Active Directory, Users, Groups, Domain Controller, Password, OU, Member Of, Properties, Administrator, Log on, DNS, DHCP, Permissions.">
-        </div>
-      </div>
-
-      <!-- Dropzone -->
-      <div id="dropzone" class="border-2 border-dashed border-sakura-pink hover:border-kitsune-coral transition-colors rounded-2xl p-8 text-center cursor-pointer bg-white/45 group">
-        <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac" class="hidden">
-        <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-sakura-pink/25 text-kitsune-coral flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
-          🎵
-        </div>
-        <p class="text-sm font-semibold text-plum-ink" id="fileNameDisplay">Kéo thả tệp âm thanh vào đây hoặc <span class="text-kitsune-coral underline">chọn từ máy tính</span></p>
-        <p class="text-xs text-plum-muted mt-1" id="fileSizeDisplay">Hỗ trợ .mp3, .wav, .m4a, .aac, .flac — tối đa đề xuất 500MB</p>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-sakura-pink/30">
-        <button id="sampleAudioBtn" class="px-4 py-2 rounded-full bg-white hover:bg-sakura-pink/20 border border-sakura-pink/60 text-xs font-semibold text-plum-ink mochi-press flex items-center gap-1.5 shadow-xs">
-          <span>🎯</span> Dùng File Âm Thanh Mẫu (sample_lecture_vi.wav)
-        </button>
-
-        <button id="startProcessBtn" disabled class="px-6 py-2.5 rounded-full bg-kitsune-coral hover:bg-kitsune-hover text-white text-xs font-bold mochi-press shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-          <span>🚀</span> Chạy Full Pipeline (Stage 1 ASR + Stage 2 BGE-M3)
-        </button>
-      </div>
-    </section>
-
-    <!-- Step 2: 6-Step Live Pipeline Tracker -->
-    <section id="trackerSection" class="miruku-glass rounded-3xl p-6 md:p-8 hidden">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <div>
-          <h2 class="text-lg font-bold text-plum-ink flex items-center gap-2">
-            <span class="w-7 h-7 rounded-full bg-mist-sky text-plum-ink text-xs font-bold flex items-center justify-center">2</span>
-            Tiến Độ Pipeline 6 Bước Thời Gian Thực
-          </h2>
-          <p id="trackerMessage" class="text-xs text-plum-muted mt-0.5">Đang chờ khởi tạo...</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <span id="statusBadge" class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-sakura-pink/40 text-plum-ink">QUEUED</span>
-          <span id="percentBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-mist-sky text-plum-ink">0%</span>
-        </div>
-      </div>
-
-      <!-- Error Card -->
-      <div id="errorCard" class="hidden p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs mb-4">
-        <div class="font-bold flex items-center gap-1.5 text-sm text-rose-700 mb-1">
-          <span>⚠️</span> Pipeline Gặp Sự Cố
-        </div>
-        <p id="errorMessageText" class="font-mono text-[11px] leading-relaxed break-words"></p>
-      </div>
-
-      <!-- Progress bar -->
-      <div class="w-full bg-white/75 h-3.5 rounded-full overflow-hidden p-0.5 border border-sakura-pink/40 mb-6">
-        <div id="progressBar" class="bg-gradient-to-r from-kitsune-coral via-sakura-pink to-matcha-mint h-full rounded-full transition-all duration-300 w-0"></div>
-      </div>
-
-      <!-- 6 Step Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" id="stepList">
-        <div id="step-staged" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
-          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
-            <span class="step-icon">⚪</span> 1. Tiếp nhận
-          </div>
-          <span class="text-[11px]">Incoming + Manifest</span>
-        </div>
-        <div id="step-normalize" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
-          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
-            <span class="step-icon">⚪</span> 2. Khử Nhiễu DSP
-          </div>
-          <span class="text-[11px]">16kHz Mono WAV</span>
-        </div>
-        <div id="step-asr" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
-          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
-            <span class="step-icon">⚪</span> 3. PhoWhisper ASR
-          </div>
-          <span class="text-[11px]">transcript.json</span>
-        </div>
-        <div id="step-chunking" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
-          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
-            <span class="step-icon">⚪</span> 4. Chunking [I5]
-          </div>
-          <span class="text-[11px]">≤512 tok / 64 ovlp</span>
-        </div>
-        <div id="step-embedding" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
-          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
-            <span class="step-icon">⚪</span> 5. BGE-M3 [I6]
-          </div>
-          <span class="text-[11px]">halfvec + Lexical</span>
-        </div>
-        <div id="step-db" class="p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1">
-          <div class="font-bold flex items-center gap-1.5 text-plum-ink">
-            <span class="step-icon">⚪</span> 6. DB &amp; READY
-          </div>
-          <span class="text-[11px]">ChunkStore + Ready</span>
+          <!-- Collapsible Stage 1 Options -->
+          <details class="border border-slate-200 rounded bg-slate-50 px-2.5 py-1.5 text-xs">
+            <summary class="cursor-pointer font-medium text-slate-700 select-none">Stage 1 Options ([I2] DSP, [I3] VAD, [I4] PhoWhisper-medium Prompt)</summary>
+            <div class="pt-2 space-y-2">
+              <div class="flex items-center gap-4 text-[11px] text-slate-700">
+                <label class="flex items-center gap-1.5"><input id="chkDsp" type="checkbox" checked class="rounded border-slate-300" /> FFmpeg DSP ([I2])</label>
+                <label class="flex items-center gap-1.5"><input id="chkVad" type="checkbox" checked class="rounded border-slate-300" /> Silero VAD ([I3])</label>
+              </div>
+              <div>
+                <label for="txtAsrPrompt" class="block text-[11px] text-slate-500 mb-0.5">PhoWhisper-medium Initial Prompt</label>
+                <textarea id="txtAsrPrompt" rows="2" class="w-full text-[11px] mono border border-slate-300 rounded p-1.5 bg-white text-slate-800"></textarea>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
     </section>
 
-    <!-- Step 3: 6 Inspection Tabs -->
-    <section id="resultSection" class="miruku-glass rounded-3xl p-6 md:p-8 hidden">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <!-- BAND 3: DUAL EXECUTION FLOW RAIL + AUDIT TABLE -->
+    <section class="panel p-3.5 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200">
         <div>
-          <h2 class="text-lg font-bold text-plum-ink flex items-center gap-2">
-            <span class="w-7 h-7 rounded-full bg-matcha-mint text-plum-ink text-xs font-bold flex items-center justify-center">3</span>
-            Kiểm Tra Artifacts Stage 1 &amp; Stage 2 + Hybrid Search RRF
-          </h2>
-          <p id="resultMetaSummary" class="text-xs text-plum-muted mt-0.5">Kiểm tra transcript, chunks [I5], embeddings [I6] và tìm kiếm 3 luồng</p>
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Execution Flow &amp; Model Trace</h2>
+          <p class="text-[11px] text-slate-500">Live blueprint state across Offline Ingest <span class="mono">[I1-&gt;I6]</span> and Online 2-Pass Pre-RAG <span class="mono">[Q1-&gt;Q6+]</span></p>
         </div>
-
-        <!-- Capsule Audio Player -->
-        <div id="audioPlayerContainer" class="flex items-center gap-2 bg-white/85 px-4 py-2 rounded-full border border-sakura-pink/60 shadow-xs">
-          <span id="audioPlayerNote" class="text-[11px] font-semibold text-plum-muted hidden">Sample Stage 2 (No Audio)</span>
-          <audio id="audioPlayer" controls class="h-8 max-w-[260px]"></audio>
+        <div id="modelsExecutedBanner" class="flex flex-wrap items-center gap-1.5 text-[11px]">
+          <span class="badge badge-neutral">No execution recorded yet</span>
         </div>
       </div>
 
-      <!-- 7 Navigation Tabs -->
-      <div class="flex items-center gap-2 border-b border-sakura-pink/40 pb-3 mb-6 overflow-x-auto text-xs font-semibold">
-        <button id="tabBtn-tab-transcript" class="tab-btn px-4 py-2 rounded-full bg-kitsune-coral text-white shadow-xs mochi-press whitespace-nowrap" onclick="switchTab('tab-transcript', this)">
-          📜 Lời Thoại ASR (Segments)
-        </button>
-        <button id="tabBtn-tab-chunks" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-chunks', this)">
-          🧩 Chunks [I5] &amp; BGE-M3 [I6]
-        </button>
-        <button id="tabBtn-tab-search" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-search', this)">
-          🔍 Tìm Kiếm 3-Stream Hybrid RRF
-        </button>
-        <button id="tabBtn-tab-gemma" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-gemma', this)">
-          🦙 2-Pass Pre-RAG &amp; Gemma 4 ([Q1]–[Q6+])
-        </button>
-        <button id="tabBtn-tab-json" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-json', this)">
-          📄 JSON Artifacts
-        </button>
-        <button id="tabBtn-tab-manifest" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-manifest', this)">
-          🏷️ File manifest.json
-        </button>
-        <button id="tabBtn-tab-db" class="tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap" onclick="switchTab('tab-db', this)">
-          🐘 Database (pgvector &amp; Audit)
-        </button>
+      <!-- Flow Rail 1: Offline Ingest -->
+      <div class="space-y-1">
+        <div class="flex items-center justify-between text-[11px]">
+          <span class="font-semibold text-slate-600">OFFLINE INGEST PIPELINE [I1-&gt;I6]</span>
+          <span id="ingestTraceSummary" class="mono text-slate-500">Idle</span>
+        </div>
+        <div id="ingestFlowRail" class="flex flex-wrap lg:flex-nowrap items-stretch gap-1.5 overflow-x-auto pb-0.5"></div>
       </div>
 
-      <!-- Tab 1: Spoken Segments -->
-      <div id="tab-transcript" class="tab-pane space-y-3">
-        <div id="segmentsContainer" class="space-y-2.5 max-h-[460px] overflow-y-auto pr-2"></div>
+      <!-- Flow Rail 2: Online 2-Pass Pre-RAG -->
+      <div class="space-y-1">
+        <div class="flex items-center justify-between text-[11px]">
+          <span class="font-semibold text-slate-600">ONLINE 2-PASS PRE-RAG [Q1-&gt;Q6+] (No Semantic Cache)</span>
+          <span id="ragTraceSummary" class="mono text-slate-500">Idle</span>
+        </div>
+        <div id="ragFlowRail" class="flex flex-wrap lg:flex-nowrap items-stretch gap-1.5 overflow-x-auto pb-0.5"></div>
       </div>
 
-      <!-- Tab 2: Chunks [I5] & BGE-M3 [I6] -->
-      <div id="tab-chunks" class="tab-pane hidden space-y-4">
-        <div id="chunksSummaryBar" class="p-3.5 rounded-2xl bg-white/75 border border-sakura-pink/40 flex flex-wrap items-center gap-3 text-xs"></div>
-        <div id="chunksContainer" class="space-y-4 max-h-[560px] overflow-y-auto pr-2"></div>
-      </div>
-
-      <!-- Tab 3: 3-Stream Hybrid RRF Search -->
-      <div id="tab-search" class="tab-pane hidden space-y-4">
-        <div class="p-4 rounded-2xl bg-white/75 border border-sakura-pink/50 space-y-3">
-          <div class="flex flex-col md:flex-row gap-2">
-            <input id="searchQueryInput" type="text" placeholder="Nhập câu hỏi có dấu hoặc KHÔNG DẤU (vd: khong gian vector doc lap tuyen tinh)..."
-              class="flex-1 text-xs p-3 rounded-full border border-sakura-pink/70 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral"
-              onkeydown="if(event.key==='Enter') runHybridSearch()">
-            <select id="searchModeSelect" class="text-xs font-semibold px-3 py-2 rounded-full border border-sakura-pink/70 bg-white text-plum-ink focus:outline-none">
-              <option value="real" selected>🧠 Real BGE-M3</option>
-              <option value="mock">⚡ Mock Embedder</option>
-            </select>
-            <select id="searchTopKSelect" class="text-xs font-semibold px-3 py-2 rounded-full border border-sakura-pink/70 bg-white text-plum-ink focus:outline-none">
-              <option value="3">Top 3</option>
-              <option value="5" selected>Top 5</option>
-              <option value="10">Top 10</option>
-            </select>
-            <button id="runSearchBtn" onclick="runHybridSearch()" class="px-5 py-2.5 rounded-full bg-kitsune-coral hover:bg-kitsune-hover text-white text-xs font-bold mochi-press shadow-sm">
-              🔍 Tìm Kiếm RRF
-            </button>
+      <!-- Execution Audit Table -->
+      <div class="pt-1 border-t border-slate-200">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+          <div class="flex items-center gap-1 text-[11px]">
+            <span class="font-semibold text-slate-600 mr-1">Audit Filter:</span>
+            <button type="button" onclick="setAuditFilter('all')" id="fltAll" class="px-2 py-0.5 rounded bg-slate-800 text-white">All</button>
+            <button type="button" onclick="setAuditFilter('ingest')" id="fltIngest" class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200">Ingest [I1-I6]</button>
+            <button type="button" onclick="setAuditFilter('rag_query')" id="fltRag" class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200">RAG [Q1-Q6+]</button>
           </div>
+          <span class="text-[11px] text-slate-500 mono" id="auditRowCount">0 steps</span>
+        </div>
+        <div class="overflow-x-auto max-h-56 overflow-y-auto border border-slate-200 rounded">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-50 sticky top-0 border-b border-slate-200 text-[11px] uppercase text-slate-500">
+              <tr>
+                <th class="py-1.5 px-2 font-medium">Step</th>
+                <th class="py-1.5 px-2 font-medium">Pipeline</th>
+                <th class="py-1.5 px-2 font-medium">Model / Adapter</th>
+                <th class="py-1.5 px-2 font-medium">Engine / Device</th>
+                <th class="py-1.5 px-2 font-medium">Status</th>
+                <th class="py-1.5 px-2 font-medium text-right">Duration</th>
+                <th class="py-1.5 px-2 font-medium">In -&gt; Out</th>
+                <th class="py-1.5 px-2 font-medium">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody" class="divide-y divide-slate-100 bg-white">
+              <tr><td colspan="8" class="py-3 text-center text-slate-400">Run Stage 2 Sample, Full Ingest, or 2-Pass Pre-RAG to inspect execution steps.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-          <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-            <span class="font-bold text-plum-muted">Thử nhanh (không dấu / có dấu):</span>
-            <button onclick="setSearchQuery('khong gian vector doc lap tuyen tinh')" class="px-2.5 py-1 rounded-full bg-sakura-pink/25 hover:bg-sakura-pink/45 text-plum-ink font-medium mochi-press">khong gian vector doc lap tuyen tinh</button>
-            <button onclick="setSearchQuery('Active Directory Domain Controller')" class="px-2.5 py-1 rounded-full bg-mist-sky/35 hover:bg-mist-sky/60 text-plum-ink font-medium mochi-press">Active Directory Domain Controller</button>
-            <button onclick="setSearchQuery('thuat toan gradient descent va learning rate')" class="px-2.5 py-1 rounded-full bg-matcha-mint/45 hover:bg-matcha-mint/70 text-plum-ink font-medium mochi-press">thuat toan gradient descent va learning rate</button>
-            <button onclick="setSearchQuery('giao thuc TCP IP va chia mang con subnet')" class="px-2.5 py-1 rounded-full bg-mochi-yellow/45 hover:bg-mochi-yellow/75 text-plum-ink font-medium mochi-press">giao thuc TCP IP va chia mang con subnet</button>
+    <!-- BAND 4: 6 COMPACT ANALYTICAL TABS -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-slate-200 bg-slate-50 px-3 flex items-center gap-1 overflow-x-auto">
+        <button class="tab-btn active" data-tab="flow" onclick="switchTab('flow')">1. Flow &amp; State</button>
+        <button class="tab-btn" data-tab="transcript" onclick="switchTab('transcript')">2. Transcript [S1]</button>
+        <button class="tab-btn" data-tab="chunks" onclick="switchTab('chunks')">3. Chunks &amp; Vectors [S2]</button>
+        <button class="tab-btn" data-tab="search" onclick="switchTab('search')">4. Hybrid Search [Q2]</button>
+        <button class="tab-btn" data-tab="rag" onclick="switchTab('rag')">5. 2-Pass Pre-RAG [Q1-Q6+]</button>
+        <button class="tab-btn" data-tab="artifacts" onclick="switchTab('artifacts')">6. Artifacts &amp; DB</button>
+      </div>
+
+      <div class="p-4">
+
+        <!-- TAB 1: FLOW & STATE -->
+        <div id="tab-flow" class="tab-panel space-y-3">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div class="border border-slate-200 rounded p-3 bg-slate-50">
+              <h3 class="text-xs font-semibold text-slate-700 mb-2">Job State Machine Transitions</h3>
+              <div id="stateTransitionsList" class="space-y-1.5 text-xs text-slate-600">
+                <p class="text-slate-400">No job transitions recorded yet.</p>
+              </div>
+            </div>
+            <div class="border border-slate-200 rounded p-3 bg-slate-50">
+              <h3 class="text-xs font-semibold text-slate-700 mb-2">Recent Session Runs</h3>
+              <div id="recentActivitySummary" class="space-y-1.5 text-xs text-slate-600">
+                <p class="text-slate-400">No jobs or RAG queries run in this session yet.</p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-xs font-semibold text-slate-700 mb-1">Latest Trace Payload (JSON)</h3>
+            <pre id="rawTraceJson" class="codebox mono text-slate-700 max-h-64 overflow-y-auto">{}</pre>
           </div>
         </div>
 
-        <div id="searchStatusBanner" class="hidden text-xs font-semibold px-4 py-2 rounded-full bg-white/80 border border-sakura-pink/40 text-plum-ink"></div>
-        <div id="searchResultsContainer" class="space-y-4 max-h-[560px] overflow-y-auto pr-2">
-          <div class="p-6 rounded-2xl bg-white/60 border border-sakura-pink/30 text-center text-xs text-plum-muted">
-            Nhập truy vấn ở trên để thử nghiệm tìm kiếm lai 3 luồng (Dense Vector HNSW + Lexical TSVECTOR + Fuzzy Trigram RRF) và mở rộng ngữ cảnh 3 chiều (PREVIOUS / CURRENT / NEXT).
+        <!-- TAB 2: TRANSCRIPT [S1] -->
+        <div id="tab-transcript" class="tab-panel hidden space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded p-2.5">
+            <audio id="audioPlayer" controls class="h-8 w-full max-w-md"></audio>
+            <div class="flex items-center gap-2">
+              <span id="transcriptMetaLabel" class="mono text-[11px] text-slate-500">No transcript loaded</span>
+              <button onclick="copyTranscriptText()" class="px-2.5 py-1 text-xs bg-white hover:bg-slate-100 border border-slate-300 rounded text-slate-700">Copy Text</button>
+            </div>
+          </div>
+          <div id="transcriptSegmentsList" class="space-y-1.5 max-h-[420px] overflow-y-auto">
+            <p class="text-xs text-slate-400">Run Full Pipeline or Stage 2 Sample to view segments.</p>
           </div>
         </div>
-      </div>
 
-      <!-- Tab 3.5: 2-Pass Pre-RAG & Gemma 4 ([Q1]–[Q6+], No Cache) -->
-      <div id="tab-gemma" class="tab-pane hidden space-y-5">
-        <!-- Query + Engine Bar -->
-        <div class="p-4 rounded-2xl bg-white/80 border border-sakura-pink/55 space-y-3">
-          <div class="flex flex-col lg:flex-row gap-2">
-            <input id="ragQueryInput" type="text" placeholder="Nhập câu hỏi bài giảng để chạy 2-Pass Pre-RAG (vd: ad gpo agdlp dung lam gi?)..."
-              class="flex-1 text-xs p-3 rounded-full border border-sakura-pink/70 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral"
-              onkeydown="if(event.key==='Enter') runMultiPassRag()">
-            <button id="runRagBtn" onclick="runMultiPassRag()" class="px-5 py-2.5 rounded-full bg-kitsune-coral hover:bg-kitsune-hover text-white text-xs font-bold mochi-press shadow-md whitespace-nowrap">
-              🦙 Chạy 2-Pass Pre-RAG ([Q1]–[Q6+])
-            </button>
+        <!-- TAB 3: CHUNKS & VECTORS [S2] -->
+        <div id="tab-chunks" class="tab-panel hidden space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded p-2.5">
+            <div id="chunksMetaStats" class="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+              <span>No chunks loaded.</span>
+            </div>
+            <button onclick="copyChunksJson()" class="px-2.5 py-1 text-xs bg-white hover:bg-slate-100 border border-slate-300 rounded text-slate-700">Copy chunks.json</button>
           </div>
-
-          <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-            <span class="font-bold text-plum-muted">Câu hỏi mẫu:</span>
-            <button onclick="setRagQuery('thuat toan gradient descent va learning rate hoat dong nhu the nao?')" class="px-2.5 py-1 rounded-full bg-sakura-pink/25 hover:bg-sakura-pink/45 text-plum-ink font-medium mochi-press">Gradient Descent &amp; learning rate (không dấu)</button>
-            <button onclick="setRagQuery('ad gpo agdlp trong active directory dung lam gi?')" class="px-2.5 py-1 rounded-full bg-mist-sky/35 hover:bg-mist-sky/60 text-plum-ink font-medium mochi-press">AD, GPO &amp; AGDLP</button>
-            <button onclick="setRagQuery('Độc lập tuyến tính, cơ sở basis và phép đo Cosine Similarity với BGE-M3 là gì?')" class="px-2.5 py-1 rounded-full bg-matcha-mint/45 hover:bg-matcha-mint/70 text-plum-ink font-medium mochi-press">Không gian vector &amp; BGE-M3</button>
+          <div id="chunksList" class="space-y-2 max-h-[460px] overflow-y-auto">
+            <p class="text-xs text-slate-400">Run Stage 2 Sample or Full Pipeline to inspect Doubly-Linked Chunks, sparse lexical weights &amp; 1024-d halfvec embeddings.</p>
           </div>
+        </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 text-xs">
-            <div class="p-2.5 rounded-xl bg-washi-cream border border-sakura-pink/40">
-              <label class="block text-[10px] font-bold uppercase text-plum-muted mb-1">[Q2] Embedder (BGE-M3)</label>
-              <select id="ragEmbedderMode" class="w-full text-xs font-semibold p-1.5 rounded-lg border border-sakura-pink/60 bg-white">
-                <option value="real" selected>🧠 Real BGE-M3</option>
-                <option value="mock">⚡ Mock Embedder</option>
+        <!-- TAB 4: HYBRID SEARCH [Q2] -->
+        <div id="tab-search" class="tab-panel hidden space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end bg-slate-50 border border-slate-200 rounded p-3">
+            <div class="md:col-span-6">
+              <label for="searchQueryInput" class="block text-[11px] font-medium text-slate-600 mb-1">Vietnamese Query (3-Stream RRF + Query Drift Guard)</label>
+              <input id="searchQueryInput" type="text" value="khong gian vector doc lap tuyen tinh" class="w-full text-xs border border-slate-300 rounded px-2.5 py-1.5 bg-white text-slate-900" />
+            </div>
+            <div class="md:col-span-2">
+              <label for="searchTopK" class="block text-[11px] font-medium text-slate-600 mb-1">topK</label>
+              <input id="searchTopK" type="number" value="5" min="1" max="30" class="w-full text-xs border border-slate-300 rounded px-2 py-1.5 bg-white text-slate-900 mono" />
+            </div>
+            <div class="md:col-span-2">
+              <label for="searchModeSelect" class="block text-[11px] font-medium text-slate-600 mb-1">Embedder</label>
+              <select id="searchModeSelect" class="w-full text-xs border border-slate-300 rounded px-2 py-1.5 bg-white text-slate-900">
+                <option value="mock">Mock (FakeEmbedder)</option>
+                <option value="real">Real (BGE-M3)</option>
               </select>
             </div>
-            <div class="p-2.5 rounded-xl bg-washi-cream border border-sakura-pink/40">
-              <label class="block text-[10px] font-bold uppercase text-plum-muted mb-1">[Q4] Reranker</label>
-              <select id="ragRerankerMode" class="w-full text-xs font-semibold p-1.5 rounded-lg border border-sakura-pink/60 bg-white">
-                <option value="real" selected>⚖️ Real bge-reranker-v2-m3</option>
-                <option value="mock">⚡ Mock Reranker</option>
-              </select>
+            <div class="md:col-span-2">
+              <button onclick="executeHybridSearch()" class="w-full px-3 py-1.5 text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white rounded">Search [Q2]</button>
             </div>
-            <div class="p-2.5 rounded-xl bg-washi-cream border border-sakura-pink/40">
-              <label class="block text-[10px] font-bold uppercase text-plum-muted mb-1">[Q1 &amp; Q5+] Gemma 4 Engine</label>
-              <select id="ragLlmEngine" class="w-full text-xs font-semibold p-1.5 rounded-lg border border-sakura-pink/60 bg-white">
-                <option value="auto">🦙 Auto (Ollama → Transformers)</option>
-                <option value="ollama">🦙 Ollama (gemma4:e2b)</option>
-                <option value="transformers" selected>🤗 Transformers Local (gemma-4-e2b QAT)</option>
-                <option value="mock">🧪 Mock Gemma 4 (&lt;50ms)</option>
-              </select>
+            <div class="md:col-span-12 flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+              <span class="text-slate-500">Presets:</span>
+              <button type="button" onclick="setSearchPreset('khong gian vector doc lap tuyen tinh')" class="px-2 py-0.5 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">khong gian vector doc lap tuyen tinh</button>
+              <button type="button" onclick="setSearchPreset('to hop tuyen tinh la gi?')" class="px-2 py-0.5 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">to hop tuyen tinh la gi?</button>
+              <button type="button" onclick="setSearchPreset('he sinh va co so cua R^n')" class="px-2 py-0.5 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">he sinh va co so cua R^n</button>
             </div>
-            <div class="p-2.5 rounded-xl bg-washi-cream border border-sakura-pink/40 flex flex-col justify-between gap-1">
-              <div class="flex items-center justify-between gap-2">
-                <label class="text-[10px] font-bold uppercase text-plum-muted">Top K Rerank</label>
-                <select id="ragTopK" class="text-xs font-semibold px-2 py-0.5 rounded-lg border border-sakura-pink/60 bg-white">
-                  <option value="3">Top 3</option>
-                  <option value="5" selected>Top 5</option>
+          </div>
+
+          <div id="searchLatencyBar" class="hidden flex flex-wrap items-center gap-2 text-[11px] bg-slate-50 border border-slate-200 rounded px-3 py-1.5"></div>
+          <div id="searchResultsList" class="space-y-2">
+            <p class="text-xs text-slate-400">Run Search [Q2] on an active Lecture ID to inspect Dense Cosine + TSVECTOR + Fuzzy Trigram RRF rankings.</p>
+          </div>
+        </div>
+
+        <!-- TAB 5: 2-PASS PRE-RAG [Q1-Q6+] -->
+        <div id="tab-rag" class="tab-panel hidden space-y-3">
+          <div class="border border-slate-200 rounded p-3 bg-slate-50 space-y-2.5">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
+              <div class="md:col-span-6">
+                <label for="ragQueryInput" class="block text-[11px] font-medium text-slate-600 mb-1">Student Question (Input to Pass 1 [Q1])</label>
+                <input id="ragQueryInput" type="text" value="doc lap tuyen tinh la gi?" class="w-full text-xs border border-slate-300 rounded px-2.5 py-1.5 bg-white text-slate-900" />
+              </div>
+              <div class="md:col-span-2">
+                <label for="ragEmbedderMode" class="block text-[11px] font-medium text-slate-600 mb-1">Embedder [Q2]</label>
+                <select id="ragEmbedderMode" class="w-full text-xs border border-slate-300 rounded px-2 py-1.5 bg-white">
+                  <option value="mock">Mock (Fake)</option>
+                  <option value="real">Real (BGE-M3)</option>
                 </select>
               </div>
-              <div class="flex items-center justify-between gap-2">
-                <label class="flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer">
-                  <input type="checkbox" id="ragUseExpanded" checked class="accent-kitsune-coral"> Expand [Q3]
-                </label>
-                <span class="text-[10px] font-bold text-emerald-700">No Cache • Live Audit</span>
+              <div class="md:col-span-2">
+                <label for="ragRerankerMode" class="block text-[11px] font-medium text-slate-600 mb-1">Reranker [Q4]</label>
+                <select id="ragRerankerMode" class="w-full text-xs border border-slate-300 rounded px-2 py-1.5 bg-white">
+                  <option value="mock">Mock (Fake)</option>
+                  <option value="real">Real (BGE-Reranker)</option>
+                </select>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- System Prompt Configuration ([Q1] Pass 1 Query Prep, [Q5] Pass 2 Gemma 4 + RAG, [Q6+]) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <!-- [Q1] Pass 1 -->
-          <div class="p-4 rounded-2xl bg-white/75 border border-sakura-pink/50 space-y-2">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-extrabold text-plum-ink">📝 [Q1] Pass 1 — System Prompt Chuẩn hóa Câu hỏi (Gemma 4 E2B Pre-RAG)</span>
-              <button onclick="resetQueryPrepSystemPrompt()" class="text-[11px] font-semibold text-kitsune-coral hover:underline">Khôi phục mặc định</button>
-            </div>
-            <textarea id="ragQueryPrepPromptInput" rows="5" class="w-full text-[11px] font-mono p-3 rounded-xl border border-sakura-pink/60 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral"></textarea>
-          </div>
-
-          <!-- [Q5] Pass 2 -->
-          <div class="p-4 rounded-2xl bg-white/75 border border-kitsune-coral/50 space-y-2">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <span class="text-xs font-extrabold text-plum-ink">✨ [Q5] Pass 2 — System Prompt Trả lời (Gemma 4 E2B + RAG ➔ Output chuẩn)</span>
-              <div class="flex items-center gap-1.5">
-                <select id="ragPresetSelect" onchange="applyRagPreset()" class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-sakura-pink/70 bg-white"></select>
-                <select id="ragResponseFormat" class="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-sakura-pink/70 bg-white">
-                  <option value="text" selected>Text</option>
-                  <option value="json">JSON</option>
+              <div class="md:col-span-2">
+                <label for="ragLlmEngine" class="block text-[11px] font-medium text-slate-600 mb-1">LLM [Q1/Q5]</label>
+                <select id="ragLlmEngine" class="w-full text-xs border border-slate-300 rounded px-2 py-1.5 bg-white">
+                  <option value="mock">Mock LLM</option>
+                  <option value="transformers">Transformers (Gemma 4 E2B)</option>
+                  <option value="ollama">Ollama (gemma4:e2b)</option>
                 </select>
               </div>
             </div>
-            <textarea id="ragAnswerPromptInput" rows="5" class="w-full text-[11px] font-mono p-3 rounded-xl border border-kitsune-coral/60 bg-white text-plum-ink focus:outline-none focus:border-kitsune-coral"></textarea>
+
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-2 items-end">
+              <div>
+                <label for="ragProfileSelect" class="block text-[11px] font-medium text-slate-600 mb-1">Pass 2 Profile</label>
+                <select id="ragProfileSelect" onchange="onRagProfileChanged()" class="w-full text-xs border border-slate-300 rounded px-2 py-1.5 bg-white"></select>
+              </div>
+              <div>
+                <label for="ragFormatSelect" class="block text-[11px] font-medium text-slate-600 mb-1">Output Format</label>
+                <select id="ragFormatSelect" class="w-full text-xs border border-slate-300 rounded px-2 py-1.5 bg-white">
+                  <option value="text">text</option>
+                  <option value="markdown">markdown</option>
+                  <option value="json">json</option>
+                </select>
+              </div>
+              <div>
+                <label for="ragTopK" class="block text-[11px] font-medium text-slate-600 mb-1">topK [Q4]</label>
+                <input id="ragTopK" type="number" value="5" min="1" max="25" class="w-full text-xs border border-slate-300 rounded px-2 py-1.5 bg-white mono" />
+              </div>
+              <div>
+                <label for="ragRetrievalTopK" class="block text-[11px] font-medium text-slate-600 mb-1">retrievalTopK [Q2]</label>
+                <input id="ragRetrievalTopK" type="number" value="25" min="1" max="50" class="w-full text-xs border border-slate-300 rounded px-2 py-1.5 bg-white mono" />
+              </div>
+              <div>
+                <label for="ragMaxTokens" class="block text-[11px] font-medium text-slate-600 mb-1">maxNewTokens</label>
+                <input id="ragMaxTokens" type="number" value="512" min="16" max="4096" class="w-full text-xs border border-slate-300 rounded px-2 py-1.5 bg-white mono" />
+              </div>
+              <div>
+                <button id="btnRunRag" onclick="executeRagQuery()" class="w-full px-3 py-1.5 text-xs font-medium bg-teal-700 hover:bg-teal-800 text-white rounded">Run 2-Pass Pre-RAG</button>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-slate-500">Quick Queries:</span>
+                <button type="button" onclick="document.getElementById('ragQueryInput').value='doc lap tuyen tinh la gi?'" class="px-2 py-0.5 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">doc lap tuyen tinh la gi?</button>
+                <button type="button" onclick="document.getElementById('ragQueryInput').value='tom tat y chinh cua bai giang'" class="px-2 py-0.5 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">tom tat y chinh cua bai giang</button>
+              </div>
+              <label class="flex items-center gap-1.5 text-slate-700">
+                <input id="chkRagExpandedCtx" type="checkbox" checked class="rounded border-slate-300" /> Use 3-Way Expanded Context ([Q3])
+              </label>
+            </div>
+
+            <details class="border border-slate-200 rounded bg-white px-2.5 py-1.5 text-xs">
+              <summary class="cursor-pointer font-medium text-slate-700 select-none">Prompts &amp; Optional [Q6+] Extra Stage</summary>
+              <div class="pt-2 grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                <div>
+                  <label for="ragPass1Prompt" class="block text-[11px] text-slate-500 mb-0.5">Pass 1 [Q1] Query Prep System Prompt</label>
+                  <textarea id="ragPass1Prompt" rows="4" class="w-full text-[11px] mono border border-slate-300 rounded p-1.5 bg-slate-50"></textarea>
+                </div>
+                <div>
+                  <label for="ragPass2Prompt" class="block text-[11px] text-slate-500 mb-0.5">Pass 2 [Q5] Grounded System Prompt</label>
+                  <textarea id="ragPass2Prompt" rows="4" class="w-full text-[11px] mono border border-slate-300 rounded p-1.5 bg-slate-50"></textarea>
+                </div>
+                <div class="md:col-span-2 flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+                  <label class="flex items-center gap-1.5 text-[11px] font-medium text-slate-700">
+                    <input id="chkEnableExtraStage" type="checkbox" class="rounded border-slate-300" /> Append [Q6+] Extra Stage (`cornell_notes`)
+                  </label>
+                  <input id="txtExtraStagePrompt" type="text" placeholder="Optional override system prompt for [Q6+]..." class="flex-1 text-[11px] border border-slate-300 rounded px-2 py-1" />
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <div id="ragResultArea" class="hidden space-y-3">
+            <div id="ragTelemetryStrip" class="flex flex-wrap items-center gap-1.5 text-[11px]"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+              <div class="lg:col-span-4 border border-slate-200 rounded p-3 bg-slate-50 space-y-1.5">
+                <div class="text-[11px] font-semibold uppercase text-slate-600">Pass 1 [Q1] Prepared Query</div>
+                <div id="ragPreparedQueryText" class="mono text-xs text-slate-800 whitespace-pre-wrap bg-white border border-slate-200 rounded p-2"></div>
+              </div>
+              <div class="lg:col-span-8 border border-slate-200 rounded p-3 bg-white space-y-1.5">
+                <div class="text-[11px] font-semibold uppercase text-teal-800">Pass 2 [Q5] Grounded Answer</div>
+                <div id="ragFinalAnswerText" class="text-xs text-slate-900 whitespace-pre-wrap leading-relaxed"></div>
+              </div>
+            </div>
+            <div id="ragStageOutputsBox" class="space-y-1.5"></div>
+            <div id="ragCitationsBox" class="space-y-2"></div>
           </div>
         </div>
 
-        <!-- [Q6+] Extensible Stages -->
-        <div class="p-4 rounded-2xl bg-white/70 border border-sakura-pink/45 space-y-3">
-          <div class="flex flex-wrap items-center justify-between gap-2">
+        <!-- TAB 6: ARTIFACTS & DB -->
+        <div id="tab-artifacts" class="tab-panel hidden space-y-3">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <div>
-              <span class="text-xs font-extrabold text-plum-ink">🧩 [Q6+] Chuỗi Bước Mở Rộng Gemma 4 (extraStages)</span>
-              <p class="text-[11px] text-plum-muted">Gắn thêm các pass Gemma 4 nối tiếp sau [Q5] (ví dụ: kiểm tra chính tả, dịch thuật, xuất JSON flashcard...)</p>
-            </div>
-            <button onclick="addExtraStageRow()" class="px-3.5 py-1.5 rounded-full bg-plum-ink hover:bg-plum-muted text-white text-xs font-bold mochi-press">
-              + Thêm Bước Gemma 4 ([Q6+])
-            </button>
-          </div>
-          <div id="extraStagesContainer" class="space-y-2"></div>
-        </div>
-
-        <!-- Telemetry & 6-Step Progress Strip -->
-        <div id="ragResultsWrapper" class="hidden space-y-4">
-          <div id="ragTelemetryStrip" class="p-3.5 rounded-2xl bg-white/85 border border-sakura-pink/50 space-y-2"></div>
-
-          <!-- Pass 1 vs Pass 2 Side-by-Side Comparison -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div class="p-4 rounded-2xl bg-white/85 border border-mist-sky/70 space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-extrabold text-plum-ink">🧠 Output Pass 1 ([Q1] Câu hỏi đã chuẩn hóa bởi Gemma 4)</span>
-                <button onclick="copyContent('ragPreparedQueryOutput')" class="px-2.5 py-0.5 rounded-full bg-white border border-sakura-pink text-[10px] font-semibold mochi-press">📋 Copy</button>
+              <div class="flex items-center justify-between mb-1">
+                <h3 class="text-xs font-semibold text-slate-700">Manifest JSON (<span class="mono">manifest.json</span>)</h3>
+                <span id="dbStorageBadge" class="badge badge-neutral mono">--</span>
               </div>
-              <pre id="ragPreparedQueryOutput" class="whitespace-pre-wrap text-xs leading-relaxed text-plum-ink bg-washi-cream p-3.5 rounded-xl border border-sakura-pink/35 max-h-[340px] overflow-y-auto font-sans"></pre>
+              <pre id="manifestJsonBox" class="codebox mono text-slate-700 max-h-64 overflow-y-auto">{}</pre>
             </div>
-
-            <div class="p-4 rounded-2xl bg-white/95 border-2 border-kitsune-coral/60 space-y-2 shadow-sm">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-extrabold text-kitsune-hover">✨ Output Chuẩn ([Q5/Q6+] Gemma 4 + RAG)</span>
-                <button onclick="copyContent('ragFinalOutput')" class="px-2.5 py-0.5 rounded-full bg-kitsune-coral text-white text-[10px] font-semibold mochi-press">📋 Copy</button>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <h3 class="text-xs font-semibold text-slate-700">Audit Logs (<span class="mono">rag.rag_audit_logs</span>)</h3>
+                <button onclick="loadTelemetry()" class="px-2 py-0.5 text-[11px] bg-white hover:bg-slate-100 border border-slate-300 rounded text-slate-700">Refresh Logs</button>
               </div>
-              <pre id="ragFinalOutput" class="whitespace-pre-wrap text-xs leading-relaxed text-plum-ink bg-washi-cream p-3.5 rounded-xl border border-sakura-pink/35 max-h-[340px] overflow-y-auto font-sans"></pre>
-              <div id="ragCitationPills" class="flex flex-wrap gap-1.5 pt-1"></div>
-            </div>
-          </div>
-
-          <!-- Top Ranked Citations & Reranker Scores -->
-          <div class="p-4 rounded-2xl bg-white/80 border border-sakura-pink/50 space-y-3">
-            <h3 class="text-xs font-extrabold text-plum-ink uppercase tracking-wider">⚖️ Top Đoạn RAG &amp; Điểm Cross-Encoder Reranker ([Q2]–[Q4])</h3>
-            <div id="ragRerankedList" class="space-y-2.5"></div>
-          </div>
-
-          <!-- Stage Trace Accordion -->
-          <div class="p-4 rounded-2xl bg-white/80 border border-sakura-pink/50 space-y-2">
-            <h3 class="text-xs font-extrabold text-plum-ink uppercase tracking-wider">🔍 Soi Prompt &amp; Output Từng Stage (stage_outputs)</h3>
-            <div id="ragStageOutputsList" class="space-y-2"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab 4: JSON Artifacts (transcript.json + chunks.json) -->
-      <div id="tab-json" class="tab-pane hidden space-y-5">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div class="space-y-2">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-bold text-plum-ink">📜 transcript.json</span>
-              <div class="flex items-center gap-2">
-                <button onclick="copyContent('transcriptJsonCode')" class="px-3 py-1 rounded-full bg-white border border-sakura-pink text-xs font-medium text-plum-ink hover:bg-sakura-pink/20 mochi-press">
-                  📋 Copy
-                </button>
-                <a id="downloadTranscriptLink" download="transcript.json" class="px-3 py-1 rounded-full bg-kitsune-coral text-white text-xs font-medium hover:bg-kitsune-hover mochi-press">
-                  ⬇️ Tải về
-                </a>
+              <div id="auditLogsContainer" class="border border-slate-200 rounded max-h-64 overflow-y-auto bg-white p-2 text-xs text-slate-600">
+                <p class="text-slate-400">No telemetry loaded.</p>
               </div>
             </div>
-            <pre class="bg-plum-ink text-emerald-300 font-mono text-[11px] p-4 rounded-2xl overflow-auto max-h-[440px]"><code id="transcriptJsonCode"></code></pre>
-          </div>
-
-          <div class="space-y-2">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-bold text-plum-ink">🧩 chunks.json (preview tối đa 16 dims/vector để giữ nhẹ UI, tải về file đầy đủ)</span>
-              <div class="flex items-center gap-2">
-                <button onclick="copyChunksJson()" class="px-3 py-1 rounded-full bg-white border border-sakura-pink text-xs font-medium text-plum-ink hover:bg-sakura-pink/20 mochi-press">
-                  📋 Copy Full
-                </button>
-                <a id="downloadChunksLink" download="chunks.json" class="px-3 py-1 rounded-full bg-kitsune-coral text-white text-xs font-medium hover:bg-kitsune-hover mochi-press">
-                  ⬇️ Tải về
-                </a>
-              </div>
-            </div>
-            <pre class="bg-plum-ink text-sky-200 font-mono text-[11px] p-4 rounded-2xl overflow-auto max-h-[440px]"><code id="chunksJsonCode"></code></pre>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab 5: Raw manifest.json -->
-      <div id="tab-manifest" class="tab-pane hidden">
-        <div class="flex items-center justify-end gap-2 mb-2">
-          <button onclick="copyContent('manifestJsonCode')" class="px-3 py-1 rounded-full bg-white border border-sakura-pink text-xs font-medium text-plum-ink hover:bg-sakura-pink/20 mochi-press">
-            📋 Sao chép JSON
-          </button>
-        </div>
-        <pre class="bg-plum-ink text-amber-200 font-mono text-xs p-4 rounded-2xl overflow-x-auto max-h-[460px]"><code id="manifestJsonCode"></code></pre>
-      </div>
-
-      <!-- Tab 6: Database (app.jobs & rag.lecture_chunks) -->
-      <div id="tab-db" class="tab-pane hidden space-y-4">
-        <div id="dbConnectionSummary" class="p-3.5 rounded-2xl bg-white/80 border border-sakura-pink/40 flex flex-wrap items-center justify-between gap-2 text-xs"></div>
-
-        <div class="p-4 rounded-2xl bg-white/75 border border-sakura-pink/40">
-          <h3 class="text-xs font-bold text-plum-ink uppercase tracking-wider mb-2">1. Trạng thái bản ghi tại bảng <code>app.jobs</code></h3>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs font-mono">
-              <thead class="bg-sakura-pink/30 text-plum-ink">
-                <tr>
-                  <th class="p-2 rounded-l-lg">job_id</th>
-                  <th class="p-2">lecture_id</th>
-                  <th class="p-2">status</th>
-                  <th class="p-2">progress</th>
-                  <th class="p-2 rounded-r-lg">updated_at</th>
-                </tr>
-              </thead>
-              <tbody id="dbJobsTableBody" class="divide-y divide-sakura-pink/20"></tbody>
-            </table>
           </div>
         </div>
 
-        <div class="p-4 rounded-2xl bg-white/75 border border-sakura-pink/40">
-          <h3 class="text-xs font-bold text-plum-ink uppercase tracking-wider mb-2">2. Bản ghi thực tế trong <code>rag.lecture_chunks</code> (Stage 2 [I5] + [I6])</h3>
-          <div class="overflow-x-auto max-h-[300px]">
-            <table class="w-full text-left text-xs font-mono">
-              <thead class="bg-mist-sky/35 text-plum-ink">
-                <tr>
-                  <th class="p-2 rounded-l-lg">idx</th>
-                  <th class="p-2">time [MM:SS]</th>
-                  <th class="p-2">tokens</th>
-                  <th class="p-2">halfvec</th>
-                  <th class="p-2">lexical_keys</th>
-                  <th class="p-2">prev / next</th>
-                  <th class="p-2 rounded-r-lg">content_preview</th>
-                </tr>
-              </thead>
-              <tbody id="dbChunksTableBody" class="divide-y divide-sakura-pink/20"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="p-4 rounded-2xl bg-white/75 border border-sakura-pink/40 space-y-2">
-          <div class="flex items-center justify-between">
-            <h3 class="text-xs font-bold text-plum-ink uppercase tracking-wider">3. <code>rag.rag_audit_logs</code> (Latency &amp; Retrieval Audit — No Semantic Cache)</h3>
-            <button onclick="refreshRagTelemetry()" class="text-[11px] font-semibold text-kitsune-coral hover:underline">🔄 Làm mới</button>
-          </div>
-          <div class="overflow-x-auto max-h-[260px]">
-            <table class="w-full text-left text-[11px] font-mono">
-              <thead class="bg-mochi-yellow/45 text-plum-ink">
-                <tr>
-                  <th class="p-2 rounded-l-lg">query_text</th>
-                  <th class="p-2">ret_ms</th>
-                  <th class="p-2">rr_ms</th>
-                  <th class="p-2 rounded-r-lg">llm_ms</th>
-                </tr>
-              </thead>
-              <tbody id="dbAuditTableBody" class="divide-y divide-sakura-pink/20"></tbody>
-            </table>
-          </div>
-        </div>
       </div>
     </section>
-
   </main>
 
   <script>
-    let currentMode = 'real';
-    let selectedFile = null;
-    let currentJobId = null;
-    let currentLectureId = null;
-    let pollInterval = null;
-    let fullChunksPayload = null;
-    let hasAudioSource = false;
+    const state = {
+      mode: 'real',
+      jobId: null,
+      lectureId: null,
+      selectedFile: null,
+      diagnostics: null,
+      blueprint: { ingest: [], rag_query: [] },
+      ingestSteps: {},
+      ragSteps: {},
+      lastIngestExecuted: [],
+      lastRagExecuted: [],
+      auditFilter: 'all',
+      resultData: null,
+      pollTimer: null,
+      presetsData: null,
+      llmEngineInitialized: false,
+    };
 
-    const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('fileInput');
-    const fileNameDisplay = document.getElementById('fileNameDisplay');
-    const fileSizeDisplay = document.getElementById('fileSizeDisplay');
-    const startProcessBtn = document.getElementById('startProcessBtn');
-    const sampleAudioBtn = document.getElementById('sampleAudioBtn');
-    const trackerSection = document.getElementById('trackerSection');
-    const resultSection = document.getElementById('resultSection');
-    const progressBar = document.getElementById('progressBar');
-    const percentBadge = document.getElementById('percentBadge');
-    const statusBadge = document.getElementById('statusBadge');
-    const trackerMessage = document.getElementById('trackerMessage');
-    const audioPlayer = document.getElementById('audioPlayer');
-    const audioPlayerNote = document.getElementById('audioPlayerNote');
-    const errorCard = document.getElementById('errorCard');
-    const errorMessageText = document.getElementById('errorMessageText');
-    const promptInput = document.getElementById('promptInput');
-    const modelSelect = document.getElementById('modelSelect');
-    const dspToggle = document.getElementById('dspToggle');
-    const vadToggle = document.getElementById('vadToggle');
-
-    let defaultPromptText = "Bài giảng Đại học, Công nghệ thông tin, Quản trị mạng, Windows Server 2016, Active Directory, Users, Groups, Domain Controller, Password, OU, Member Of, Properties, Administrator, Log on, DNS, DHCP, Permissions.";
-
-    function escapeHtml(str) {
-      if (str === null || str === undefined) return '';
-      return String(str)
+    function escHtml(v) {
+      if (v === null || v === undefined) return '';
+      return String(v)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -676,943 +566,753 @@
         .replace(/'/g, '&#39;');
     }
 
-    function resetPrompt() {
-      promptInput.value = defaultPromptText;
+    function fmtMs(ms) {
+      if (ms === null || ms === undefined || Number.isNaN(Number(ms))) return '--';
+      const n = Number(ms);
+      return n >= 1000 ? (n / 1000).toFixed(2) + 's' : n.toFixed(1) + 'ms';
+    }
+
+    function setActiveContext(jobId, lectureId) {
+      if (jobId) {
+        state.jobId = jobId;
+        document.getElementById('ctxJobId').textContent = jobId;
+      }
+      if (lectureId) {
+        state.lectureId = lectureId;
+        document.getElementById('ctxLectureId').textContent = lectureId;
+      }
+    }
+
+    function setMode(mode) {
+      state.mode = mode;
+      const realBtn = document.getElementById('btnModeReal');
+      const mockBtn = document.getElementById('btnModeMock');
+      if (mode === 'real') {
+        realBtn.className = 'px-2 py-0.5 rounded font-medium bg-white text-slate-900 shadow-sm';
+        mockBtn.className = 'px-2 py-0.5 rounded font-medium text-slate-600';
+      } else {
+        mockBtn.className = 'px-2 py-0.5 rounded font-medium bg-white text-slate-900 shadow-sm';
+        realBtn.className = 'px-2 py-0.5 rounded font-medium text-slate-600';
+      }
+      const searchMode = document.getElementById('searchModeSelect');
+      if (searchMode) searchMode.value = mode;
+      const ragEmb = document.getElementById('ragEmbedderMode');
+      const ragRr = document.getElementById('ragRerankerMode');
+      if (ragEmb) ragEmb.value = mode;
+      if (ragRr) ragRr.value = mode;
+      if (mode === 'mock') {
+        document.getElementById('ragLlmEngine').value = 'mock';
+      } else if (state.diagnostics?.be_config?.llm_engine_mode) {
+        document.getElementById('ragLlmEngine').value = state.diagnostics.be_config.llm_engine_mode;
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-panel').forEach((el) => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach((el) => el.classList.remove('active'));
+      const panel = document.getElementById('tab-' + tabId);
+      if (panel) panel.classList.remove('hidden');
+      const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+      if (btn) btn.classList.add('active');
+    }
+
+    function setAuditFilter(flt) {
+      state.auditFilter = flt;
+      const buttons = { all: 'fltAll', ingest: 'fltIngest', rag_query: 'fltRag' };
+      Object.entries(buttons).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        el.className = key === flt
+          ? 'px-2 py-0.5 rounded bg-slate-800 text-white'
+          : 'px-2 py-0.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200';
+      });
+      renderAuditTable();
+    }
+
+    function renderDiagnostics(d) {
+      state.diagnostics = d;
+      state.blueprint = d.pipeline_blueprint || { ingest: [], rag_query: [] };
+
+      const promptBox = document.getElementById('txtAsrPrompt');
+      if (promptBox && !promptBox.value && d.default_prompt) {
+        promptBox.value = d.default_prompt;
+      }
+
+      if (!state.llmEngineInitialized && d.be_config?.llm_engine_mode) {
+        state.llmEngineInitialized = true;
+        if (state.mode === 'real') {
+          document.getElementById('ragLlmEngine').value = d.be_config.llm_engine_mode;
+        }
+      }
+
+      // Top telemetry strip
+      const rt = d.runtime || {};
+      const cfg = d.be_config || {};
+      const db = d.database || {};
+      const ff = d.ffmpeg || {};
+
+      const elRt = document.getElementById('chipRuntime');
+      elRt.textContent = `Py ${rt.python_version || '?'} | TF ${rt.transformers_version || '?'} | Torch ${rt.torch_version || 'N/A'}`;
+      elRt.className = 'badge badge-neutral mono';
+
+      const elDev = document.getElementById('chipDevice');
+      elDev.textContent = rt.cuda_available
+        ? `CUDA (${rt.vram_allocated_mb}/${rt.vram_mb} MB)`
+        : `CPU (${rt.cpu_count || '?'} vCPU)`;
+      elDev.className = rt.cuda_available ? 'badge badge-teal mono' : 'badge badge-amber mono';
+
+      const elLv = document.getElementById('chipLowVram');
+      elLv.textContent = `LOW_VRAM=${cfg.low_vram_mode ? 'true' : 'false'}`;
+      elLv.className = cfg.low_vram_mode ? 'badge badge-teal mono' : 'badge badge-neutral mono';
+
+      const elEng = document.getElementById('chipLlmEngine');
+      elEng.textContent = `LLM=${cfg.llm_engine_mode}${cfg.llm_engine_mode === 'ollama' ? (cfg.ollama_available ? ':ok' : ':down') : ''}`;
+      elEng.className = 'badge badge-indigo mono';
+
+      const elDb = document.getElementById('chipDb');
+      elDb.textContent = db.postgres_pgvector_connected ? 'DB: PgVector' : 'DB: InMemory';
+      elDb.className = db.postgres_pgvector_connected ? 'badge badge-teal mono' : 'badge badge-amber mono';
+
+      const elFf = document.getElementById('chipFfmpeg');
+      elFf.textContent = ff.available ? 'FFmpeg: OK' : 'FFmpeg: MISSING';
+      elFf.className = ff.available ? 'badge badge-teal mono' : 'badge badge-rose mono';
+
+      // BE Config Strip
+      document.getElementById('beConfigGrid').innerHTML = [
+        ['DEVICE', cfg.device_configured],
+        ['LOW_VRAM', cfg.low_vram_mode],
+        ['LLM_MODE', cfg.llm_engine_mode],
+        ['THREADS', `${rt.omp_num_threads}/${rt.mkl_num_threads}/${rt.torch_num_threads}`],
+        ['CHUNK', `${cfg.chunk_max_tokens}/${cfg.chunk_overlap_tokens}`],
+        ['WHISPER', `${cfg.whisper_chunk_seconds}s/${cfg.whisper_stride_seconds}s`],
+        ['TOP_K', cfg.rag_retrieval_top_k],
+        ['GPU_SEM', cfg.gpu_semaphore_limit],
+        ['CACHE', cfg.semantic_cache_enabled ? 'ON' : 'OFF (Audit)'],
+      ].map(([k, v]) => `
+        <div class="flex items-center justify-between gap-1 px-1.5 py-0.5 bg-white border border-slate-200 rounded">
+          <span class="text-slate-500">${escHtml(k)}</span>
+          <span class="mono font-medium text-slate-800">${escHtml(v)}</span>
+        </div>
+      `).join('');
+
+      // Model summary badges
+      const models = d.models || { items: [] };
+      document.getElementById('modelSummaryBadges').innerHTML = `
+        <span class="badge badge-neutral mono">${escHtml(models.total_disk_gb)} GiB (${escHtml(models.ready_on_disk_count)}/${models.items.length} ready)</span>
+        <span class="badge badge-teal mono">${escHtml(models.active_count)} ACTIVE</span>
+      `;
+
+      // 4-Model Matrix Table
+      document.getElementById('modelsMatrixBody').innerHTML = models.items.map((m) => {
+        const st = m.session_stats || { run_count: 0, real_runs: 0, mock_runs: 0 };
+        let runBadge = '<span class="badge badge-neutral mono">NOT RUN</span>';
+        if (st.real_runs > 0) {
+          runBadge = `<span class="badge badge-teal mono">RAN ${st.real_runs}x</span>` +
+            (st.mock_runs > 0 ? ` <span class="badge badge-amber mono">MOCK ${st.mock_runs}x</span>` : '');
+        } else if (st.mock_runs > 0) {
+          runBadge = `<span class="badge badge-amber mono">MOCK ${st.mock_runs}x</span>`;
+        }
+
+        const memBadge = m.loaded_in_memory
+          ? '<span class="badge badge-indigo mono">LOADED</span>'
+          : '<span class="badge badge-neutral mono">UNLOADED</span>';
+
+        const diskBadge = m.weights_ready
+          ? `<span class="mono font-medium text-slate-800">${escHtml(m.disk_size_gb)} GiB</span>`
+          : `<span class="badge badge-rose mono">MISSING</span>`;
+
+        const lastMeta = st.run_count > 0
+          ? `<div class="text-[10.5px] text-slate-500 mono mt-0.5">${fmtMs(st.last_duration_ms)} | ${escHtml(st.last_device || '--')} | ${escHtml(st.last_stage || '')}</div>`
+          : `<div class="text-[10.5px] text-slate-400 mt-0.5">${escHtml(m.role)}</div>`;
+
+        return `
+          <tr class="hover:bg-slate-50/80">
+            <td class="py-2 pr-2 align-top">
+              <div class="font-semibold text-slate-900">${escHtml(m.display_name)} <span class="mono text-[10.5px] text-slate-500">(${escHtml(m.key)})</span></div>
+              <div class="text-[11px] text-slate-500 mono">${escHtml(m.repo_id)}</div>
+            </td>
+            <td class="py-2 px-2 align-top">
+              <div class="flex flex-wrap gap-1">
+                <span class="badge badge-teal mono">${escHtml(m.stage_code)}</span>
+                <span class="badge badge-neutral mono">${escHtml(m.wiring_status)}</span>
+              </div>
+              <div class="text-[10.5px] text-slate-500 mt-0.5">${escHtml(m.stage)}</div>
+            </td>
+            <td class="py-2 px-2 align-top">
+              <div>${diskBadge} <span class="text-[11px] text-slate-500">${escHtml(m.quantization || 'FP32/FP16')}</span></div>
+              <div class="text-[10.5px] text-slate-500 mono">${escHtml(m.architecture || '--')} | ctx ${escHtml(m.max_context ?? '--')}</div>
+            </td>
+            <td class="py-2 px-2 align-top">
+              <div>${memBadge}</div>
+              ${!m.runtime_compatible ? '<span class="badge badge-rose mono mt-0.5">TF VER LOW</span>' : ''}
+            </td>
+            <td class="py-2 pl-2 align-top text-right">
+              <div>${runBadge}</div>
+              ${lastMeta}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      renderFlowRails();
+    }
+
+    function renderFlowRails() {
+      const renderRail = (containerId, blueprintList, liveMap) => {
+        const container = document.getElementById(containerId);
+        if (!blueprintList || !blueprintList.length) {
+          container.innerHTML = '<span class="text-xs text-slate-400">Blueprint unavailable.</span>';
+          return;
+        }
+        container.innerHTML = blueprintList.map((bp) => {
+          const live = liveMap[bp.step_id];
+          const status = live?.status || 'idle';
+          const badgeCls = status === 'done'
+            ? 'badge-teal'
+            : (status === 'running' ? 'badge-indigo' : (status === 'failed' ? 'badge-rose' : 'badge-neutral'));
+          const modelLabel = live?.model_used || bp.model_key || 'deterministic';
+          return `
+            <div class="flow-node status-${escHtml(status)}">
+              <div class="flex items-center justify-between gap-1">
+                <span class="mono text-[10.5px] font-semibold text-slate-800">${escHtml(bp.code)}</span>
+                <span class="badge ${badgeCls} mono">${escHtml(status.toUpperCase())}</span>
+              </div>
+              <div class="text-[11px] font-medium text-slate-800 truncate mt-0.5" title="${escHtml(bp.label)}">${escHtml(bp.label)}</div>
+              <div class="flex items-center justify-between gap-1 mt-1 text-[10.5px] mono text-slate-500">
+                <span class="truncate">${escHtml(modelLabel)}</span>
+                <span class="font-medium text-slate-700">${live ? fmtMs(live.duration_ms) : '--'}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      renderRail('ingestFlowRail', state.blueprint.ingest, state.ingestSteps);
+      renderRail('ragFlowRail', state.blueprint.rag_query, state.ragSteps);
+      renderModelsExecutedBanner();
+      renderAuditTable();
+    }
+
+    function renderModelsExecutedBanner() {
+      const chips = [];
+      state.lastIngestExecuted.forEach((m) => {
+        chips.push(`<span class="badge badge-teal mono">INGEST: ${escHtml(m.model_key)} (${escHtml(m.device)}, ${fmtMs(m.duration_ms)}${m.unloaded ? ', unloaded' : ''})</span>`);
+      });
+      state.lastRagExecuted.forEach((m) => {
+        const cls = m.mode === 'mock' ? 'badge-amber' : 'badge-indigo';
+        chips.push(`<span class="badge ${cls} mono">RAG: ${escHtml(m.model_key)} [${escHtml(m.adapter)}] (${escHtml(m.device)}, ${fmtMs(m.duration_ms)})</span>`);
+      });
+      document.getElementById('modelsExecutedBanner').innerHTML = chips.length
+        ? chips.join('')
+        : '<span class="badge badge-neutral">No execution recorded yet</span>';
+    }
+
+    function renderAuditTable() {
+      const ingestRows = Object.values(state.ingestSteps);
+      const ragRows = Object.values(state.ragSteps);
+      let rows = [];
+      if (state.auditFilter === 'all') rows = [...ingestRows, ...ragRows];
+      else if (state.auditFilter === 'ingest') rows = ingestRows;
+      else rows = ragRows;
+
+      document.getElementById('auditRowCount').textContent = `${rows.length} step(s)`;
+      const tbody = document.getElementById('auditTableBody');
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="py-3 text-center text-slate-400">Run Stage 2 Sample, Full Ingest, or 2-Pass Pre-RAG to inspect execution steps.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map((s) => {
+        const st = s.status || 'idle';
+        const stCls = st === 'done' ? 'badge-teal' : (st === 'running' ? 'badge-indigo' : (st === 'failed' ? 'badge-rose' : 'badge-neutral'));
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-1.5 px-2 mono font-semibold text-slate-800">${escHtml(s.code)} <span class="font-sans font-normal text-slate-600">${escHtml(s.label)}</span></td>
+            <td class="py-1.5 px-2 mono text-[11px] text-slate-500">${escHtml(s.pipeline)}</td>
+            <td class="py-1.5 px-2 mono text-[11px] text-slate-800">${escHtml(s.model_used || s.adapter || '--')}</td>
+            <td class="py-1.5 px-2 mono text-[11px] text-slate-600">${escHtml(s.adapter || '--')} / ${escHtml(s.device || '--')}</td>
+            <td class="py-1.5 px-2"><span class="badge ${stCls} mono">${escHtml(st.toUpperCase())}</span></td>
+            <td class="py-1.5 px-2 text-right mono text-slate-800">${fmtMs(s.duration_ms)}</td>
+            <td class="py-1.5 px-2 text-[11px] text-slate-600">${escHtml(s.in_summary || '--')} -&gt; ${escHtml(s.out_summary || '--')}</td>
+            <td class="py-1.5 px-2 text-[11px] text-slate-500">${escHtml(s.notes || '')}</td>
+          </tr>
+        `;
+      }).join('');
     }
 
     async function loadDiagnostics() {
-      try {
-        const res = await fetch('/api/system-diagnostics');
-        if (!res.ok) return;
-        const diag = await res.json();
-
-        const ffmpegEl = document.getElementById('ffmpegStatus');
-        const deviceEl = document.getElementById('aiDeviceStatus');
-        const modelEl = document.getElementById('aiModelStatus');
-        const bgeEl = document.getElementById('bgeM3Status');
-        const rerankerEl = document.getElementById('rerankerStatus');
-        const gemmaEl = document.getElementById('gemmaStatus');
-        const dbEl = document.getElementById('dbStatus');
-
-        if (diag.ffmpeg && diag.ffmpeg.available) {
-          ffmpegEl.textContent = diag.ffmpeg.is_bundled ? "✅ Tự Động (imageio)" : "✅ System PATH";
-          ffmpegEl.className = "font-bold text-emerald-600";
-        } else {
-          ffmpegEl.textContent = "❌ Thiếu Binary";
-          ffmpegEl.className = "font-bold text-rose-500";
-        }
-
-        if (diag.ai_runtime && diag.ai_runtime.torch_installed) {
-          const lowVram = diag.ai_runtime.low_vram_mode ? " • LOW_VRAM" : "";
-          if (diag.ai_runtime.cuda_available) {
-            deviceEl.textContent = `✅ GPU (${diag.ai_runtime.device_name} - ${diag.ai_runtime.vram_mb}MB${lowVram})`;
-            deviceEl.className = "font-bold text-emerald-600";
-          } else {
-            deviceEl.textContent = `✅ CPU (${diag.ai_runtime.device_name}${lowVram})`;
-            deviceEl.className = "font-bold text-sky-700";
-          }
-        } else {
-          deviceEl.textContent = "⚠️ Chưa cài Torch";
-          deviceEl.className = "font-bold text-amber-600";
-        }
-
-        if (diag.models && diag.models.medium_exists) {
-          modelEl.textContent = "✅ Medium + Base";
-          modelEl.className = "font-bold text-emerald-600";
-          modelSelect.value = "medium";
-        } else if (diag.models && diag.models.base_exists) {
-          modelEl.textContent = "⚠️ PhoWhisper-Base";
-          modelEl.className = "font-bold text-amber-600";
-          modelSelect.value = "base";
-        } else {
-          modelEl.textContent = "❌ Chưa có weights";
-          modelEl.className = "font-bold text-rose-500";
-        }
-
-        if (diag.models && diag.models.bge_m3_exists) {
-          const sparseOk = diag.models.bge_m3_sparse_linear_exists ? " + sparse_linear.pt" : " (thiếu sparse)";
-          bgeEl.textContent = `✅ BGE-M3${sparseOk}`;
-          bgeEl.className = "font-bold text-emerald-600";
-        } else {
-          bgeEl.textContent = "❌ Thiếu bge-m3";
-          bgeEl.className = "font-bold text-rose-500";
-        }
-
-        if (diag.models && diag.models.reranker_exists) {
-          rerankerEl.textContent = "✅ bge-reranker-v2-m3";
-          rerankerEl.className = "font-bold text-emerald-600";
-        } else {
-          rerankerEl.textContent = "❌ Thiếu weights";
-          rerankerEl.className = "font-bold text-rose-500";
-        }
-
-        if (diag.models && diag.models.ollama_available && diag.models.gemma4_exists) {
-          gemmaEl.textContent = "✅ Ollama + Local";
-          gemmaEl.className = "font-bold text-emerald-600";
-        } else if (diag.models && diag.models.ollama_available) {
-          gemmaEl.textContent = `✅ Ollama (${diag.models.ollama_model})`;
-          gemmaEl.className = "font-bold text-emerald-600";
-        } else if (diag.models && diag.models.gemma4_exists) {
-          gemmaEl.textContent = "✅ Local Transformers (Chưa bật Ollama)";
-          gemmaEl.className = "font-bold text-sky-700";
-        } else {
-          gemmaEl.textContent = "❌ Thiếu Gemma 4";
-          gemmaEl.className = "font-bold text-rose-500";
-        }
-
-        if (diag.database && diag.database.postgres_pgvector_connected) {
-          dbEl.textContent = `✅ Postgres pgvector (${diag.database.host}:${diag.database.port})`;
-          dbEl.className = "font-bold text-emerald-600";
-        } else {
-          dbEl.textContent = "🟡 InMemory Fallback (DB Offline)";
-          dbEl.className = "font-bold text-amber-600";
-        }
-
-        if (diag.default_prompt) {
-          defaultPromptText = diag.default_prompt;
-        }
-      } catch (err) {
-        console.error("Diagnostics load error", err);
-      }
-    }
-    window.addEventListener('DOMContentLoaded', () => {
-      loadDiagnostics();
-      loadRagPresets();
-    });
-
-    function setMode(mode) {
-      currentMode = mode;
-      const mockBtn = document.getElementById('modeMockBtn');
-      const realBtn = document.getElementById('modeRealBtn');
-      if (mode === 'mock') {
-        mockBtn.className = "px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press";
-        realBtn.className = "px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press";
-        document.getElementById('searchModeSelect').value = 'mock';
-        document.getElementById('ragEmbedderMode').value = 'mock';
-        document.getElementById('ragRerankerMode').value = 'mock';
-        document.getElementById('ragLlmEngine').value = 'mock';
-      } else {
-        realBtn.className = "px-3.5 py-1.5 rounded-full bg-kitsune-coral text-white font-semibold shadow-xs mochi-press";
-        mockBtn.className = "px-3.5 py-1.5 rounded-full text-plum-muted hover:text-plum-ink mochi-press";
-        document.getElementById('searchModeSelect').value = 'real';
-        document.getElementById('ragEmbedderMode').value = 'real';
-        document.getElementById('ragRerankerMode').value = 'real';
-        document.getElementById('ragLlmEngine').value = 'auto';
-      }
+      const res = await fetch('/api/system-diagnostics');
+      const data = await res.json();
+      renderDiagnostics(data);
     }
 
-    dropzone.addEventListener('click', () => fileInput.click());
-    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-kitsune-coral'); });
-    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-kitsune-coral'));
-    dropzone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('border-kitsune-coral');
-      if (e.dataTransfer.files.length) handleFileSelected(e.dataTransfer.files[0]);
-    });
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length) handleFileSelected(e.target.files[0]);
-    });
-
-    function handleFileSelected(file) {
-      selectedFile = file;
-      fileNameDisplay.textContent = `🎵 ${file.name}`;
-      fileSizeDisplay.textContent = `Dung lượng: ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
-      startProcessBtn.disabled = false;
-    }
-
-    sampleAudioBtn.addEventListener('click', async () => {
-      try {
-        sampleAudioBtn.textContent = "⏳ Đang nạp file mẫu...";
-        const resp = await fetch('/api/sample-audio');
-        if (!resp.ok) throw new Error("Không thể tải file mẫu");
-        const blob = await resp.blob();
-        const file = new File([blob], "sample_lecture_vi.wav", { type: "audio/wav" });
-        handleFileSelected(file);
-      } catch (err) {
-        alert("Lỗi tải file mẫu: " + err.message);
-      } finally {
-        sampleAudioBtn.innerHTML = `<span>🎯</span> Dùng File Âm Thanh Mẫu (sample_lecture_vi.wav)`;
-      }
-    });
-
-    async function runFastStage2(mode) {
-      const realBtn = document.getElementById('fastStage2RealBtn');
-      const mockBtn = document.getElementById('fastStage2MockBtn');
-      realBtn.disabled = true;
-      mockBtn.disabled = true;
-
-      trackerSection.classList.remove('hidden');
-      resultSection.classList.add('hidden');
-      errorCard.classList.add('hidden');
-      resetSteps();
-      markStepDone('step-staged');
-      markStepDone('step-normalize');
-      markStepDone('step-asr');
-      markStepActive('step-chunking');
-      updateProgress(80, mode === 'real' ? "Đang chạy [I5] RecursiveTokenChunker + [I6] BgeM3Embedder thật..." : "Đang chạy Stage 2 Mock...", "CHUNKING");
-
-      try {
-        const res = await fetch(`/api/test-stage2-sample?mode=${mode}`, { method: 'POST' });
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(errText || `HTTP ${res.status}`);
-        }
-        const data = await res.json();
-        currentJobId = data.jobId;
-        currentLectureId = data.lectureId;
-        hasAudioSource = false;
-
-        markStepDone('step-chunking');
-        markStepDone('step-embedding');
-        markStepDone('step-db');
-        updateProgress(100, data.message || `Hoàn tất Stage 2 (${data.total_chunks} chunks trong ${data.processing_seconds}s)`, "READY");
-
-        document.getElementById('searchModeSelect').value = mode;
-        const ragEmb = document.getElementById('ragEmbedderMode');
-        const ragRrk = document.getElementById('ragRerankerMode');
-        if (ragEmb) ragEmb.value = mode === 'mock' ? 'mock' : 'real';
-        if (ragRrk) ragRrk.value = mode === 'mock' ? 'mock' : 'real';
-        await fetchFinalResults(currentJobId, false);
-        switchTab('tab-chunks', document.getElementById('tabBtn-tab-chunks'));
-        loadDiagnostics();
-      } catch (err) {
-        showError("Lỗi Test Nhanh Stage 2: " + err.message);
-        updateProgress(0, "Stage 2 gặp lỗi.", "FAILED");
-      } finally {
-        realBtn.disabled = false;
-        mockBtn.disabled = false;
-      }
-    }
-
-    startProcessBtn.addEventListener('click', async () => {
-      if (!selectedFile) return;
-
-      startProcessBtn.disabled = true;
-      trackerSection.classList.remove('hidden');
-      resultSection.classList.add('hidden');
-      errorCard.classList.add('hidden');
-      resetSteps();
-      updateProgress(5, "Đang tải tệp lên server...", "QUEUED");
-
-      try {
-        const formData = new FormData();
-        formData.append("file", selectedFile);
-
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
-        if (!uploadRes.ok) throw new Error("Upload thất bại");
-        const uploadData = await uploadRes.json();
-
-        currentJobId = uploadData.jobId;
-        currentLectureId = uploadData.lectureId;
-        hasAudioSource = true;
-        markStepDone('step-staged');
-
-        updateProgress(15, "Khử nhiễu & chuẩn hóa âm thanh...", "PROCESSING_STT");
-        const selectedModel = modelSelect.value;
-        const enableDsp = dspToggle.checked;
-        const enableVad = vadToggle.checked;
-        const promptText = encodeURIComponent(promptInput.value);
-
-        const procUrl = `/api/process/${currentJobId}?mode=${currentMode}&model=${selectedModel}&dsp=${enableDsp}&vad=${enableVad}&prompt=${promptText}`;
-        const procRes = await fetch(procUrl, { method: 'POST' });
-        if (!procRes.ok) throw new Error("Kích hoạt pipeline thất bại");
-
-        document.getElementById('searchModeSelect').value = currentMode;
-        startPolling(currentJobId);
-      } catch (err) {
-        showError("Lỗi khởi tạo: " + err.message);
-        startProcessBtn.disabled = false;
-      }
-    });
-
-    function startPolling(jobId) {
-      if (pollInterval) clearInterval(pollInterval);
-      pollInterval = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/status/${jobId}`);
-          if (!res.ok) return;
-          const data = await res.json();
-
-          updateProgress(data.progress, data.message || data.status, data.status);
-
-          if (data.progress >= 15) markStepDone('step-normalize');
-          if (data.progress >= 25 && data.progress < 75 && data.status === 'PROCESSING_STT') markStepActive('step-asr');
-          if (data.progress >= 75 || ['STT_COMPLETED', 'CHUNKING', 'EMBEDDING', 'READY'].includes(data.status)) markStepDone('step-asr');
-          if (data.status === 'CHUNKING') markStepActive('step-chunking');
-          if (data.progress >= 88 || ['EMBEDDING', 'READY'].includes(data.status)) markStepDone('step-chunking');
-          if (data.status === 'EMBEDDING') markStepActive('step-embedding');
-          if (data.progress >= 96 || data.status === 'READY') markStepDone('step-embedding');
-
-          if (data.progress >= 100 || data.status === 'READY') {
-            markStepDone('step-db');
-            clearInterval(pollInterval);
-            await fetchFinalResults(jobId, true);
-            loadDiagnostics();
-          } else if (data.status === 'FAILED') {
-            clearInterval(pollInterval);
-            showError(data.errorMessage || "Pipeline xử lý gặp sự cố.");
-            startProcessBtn.disabled = false;
-          }
-        } catch (e) {
-          console.error("Polling error", e);
-        }
-      }, 450);
-    }
-
-    function showError(msg) {
-      errorCard.classList.remove('hidden');
-      errorMessageText.textContent = msg;
-    }
-
-    function vectorNorm(vec) {
-      if (!Array.isArray(vec) || vec.length === 0) return 0;
-      let sumSq = 0;
-      for (let i = 0; i < vec.length; i++) sumSq += vec[i] * vec[i];
-      return Math.sqrt(sumSq);
-    }
-
-    async function fetchFinalResults(jobId, withAudio) {
-      try {
-        const res = await fetch(`/api/result/${jobId}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const result = await res.json();
-        currentLectureId = result.manifest.lecture_id;
-        fullChunksPayload = result.chunks;
-
-        // Setup audio player
-        if (withAudio) {
-          audioPlayer.src = `/api/audio/${jobId}`;
-          audioPlayer.classList.remove('hidden');
-          audioPlayerNote.classList.add('hidden');
-        } else {
-          audioPlayer.removeAttribute('src');
-          audioPlayer.classList.add('hidden');
-          audioPlayerNote.classList.remove('hidden');
-        }
-
-        const totalSegs = result.transcript && result.transcript.segments ? result.transcript.segments.length : 0;
-        const totalChunks = result.chunks && result.chunks.chunks ? result.chunks.chunks.length : 0;
-        document.getElementById('resultMetaSummary').textContent =
-          `Job ${jobId.slice(0, 8)}... • Lecture ${currentLectureId.slice(0, 8)}... • ${totalSegs} segments • ${totalChunks} chunks • DB: ${result.db_backend} (${result.db_chunks_count} rows)`;
-
-        // Tab 1: Segments
-        const segContainer = document.getElementById('segmentsContainer');
-        segContainer.innerHTML = '';
-        if (result.transcript && result.transcript.segments) {
-          result.transcript.segments.forEach(seg => {
-            const div = document.createElement('div');
-            div.className = "p-3 rounded-2xl bg-white/80 hover:bg-white border border-sakura-pink/50 transition-colors flex items-start gap-3 shadow-2xs";
-            div.innerHTML = `
-              <button onclick="seekAudio(${Number(seg.start_time_seconds)})" class="px-2.5 py-1 rounded-full bg-matcha-mint/65 hover:bg-matcha-mint text-plum-ink font-mono text-xs font-bold mochi-press flex-shrink-0">
-                ${escapeHtml(seg.timestamp_label)}
-              </button>
-              <div class="flex-1">
-                <span class="text-[10px] font-mono text-plum-muted">#${seg.id} (${seg.start_time_seconds}s → ${seg.end_time_seconds}s)</span>
-                <p class="text-xs text-plum-ink leading-relaxed mt-0.5">${escapeHtml(seg.text)}</p>
-              </div>
-            `;
-            segContainer.appendChild(div);
-          });
-        }
-
-        // Tab 2: Chunks [I5] & BGE-M3 [I6]
-        renderChunksTab(result.chunks);
-
-        // Tab 4: JSON Artifacts
-        const jsonCode = document.getElementById('transcriptJsonCode');
-        const jsonStr = JSON.stringify(result.transcript, null, 2);
-        jsonCode.textContent = jsonStr;
-        document.getElementById('downloadTranscriptLink').href =
-          'data:application/json;charset=utf-8,' + encodeURIComponent(jsonStr);
-
-        const chunksCode = document.getElementById('chunksJsonCode');
-        if (result.chunks) {
-          const previewChunks = {
-            ...result.chunks,
-            chunks: (result.chunks.chunks || []).map(c => ({
-              ...c,
-              embedding_half: Array.isArray(c.embedding_half)
-                ? [...c.embedding_half.slice(0, 8), `... (${c.embedding_half.length} dims total)`]
-                : c.embedding_half
-            }))
-          };
-          chunksCode.textContent = JSON.stringify(previewChunks, null, 2);
-          document.getElementById('downloadChunksLink').href =
-            'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(result.chunks, null, 2));
-        } else {
-          chunksCode.textContent = "// Chưa có chunks.json";
-        }
-
-        // Tab 5: Manifest
-        document.getElementById('manifestJsonCode').textContent = JSON.stringify(result.manifest, null, 2);
-
-        // Tab 6: DB Inspection
-        renderDbTab(result);
-
-        resultSection.classList.remove('hidden');
-        startProcessBtn.disabled = !selectedFile;
-      } catch (err) {
-        console.error("Fetch result error", err);
-        showError("Không thể tải kết quả: " + err.message);
-      }
-    }
-
-    function renderChunksTab(chunksArtifact) {
-      const summaryEl = document.getElementById('chunksSummaryBar');
-      const container = document.getElementById('chunksContainer');
-      container.innerHTML = '';
-
-      if (!chunksArtifact || !chunksArtifact.chunks || chunksArtifact.chunks.length === 0) {
-        summaryEl.innerHTML = '<span class="text-plum-muted">Chưa có dữ liệu Stage 2 chunks.json.</span>';
-        return;
-      }
-
-      const chunks = chunksArtifact.chunks;
-      const maxTok = Math.max(...chunks.map(c => c.token_count || 0));
-      const allWithin512 = maxTok <= (chunksArtifact.max_tokens || 512);
-      const firstDim = chunks[0].embedding_half ? chunks[0].embedding_half.length : 0;
-
-      summaryEl.innerHTML = `
-        <span class="px-3 py-1 rounded-full bg-matcha-mint/60 font-bold text-plum-ink">Tổng: ${chunks.length} chunks</span>
-        <span class="px-3 py-1 rounded-full ${allWithin512 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'} font-bold">
-          Max Tokens: ${maxTok} / ${chunksArtifact.max_tokens || 512} ${allWithin512 ? '✓' : '⚠️'}
-        </span>
-        <span class="px-3 py-1 rounded-full bg-mist-sky/50 font-bold text-plum-ink">Overlap: ${chunksArtifact.overlap_tokens || 64} tokens</span>
-        <span class="px-3 py-1 rounded-full bg-sakura-pink/40 font-bold text-plum-ink">Model: ${escapeHtml(chunksArtifact.model)} (${firstDim}-d halfvec)</span>
-        <span class="px-3 py-1 rounded-full bg-mochi-yellow/50 font-bold text-plum-ink">Thời gian Stage 2: ${chunksArtifact.processing_seconds || 0}s</span>
-      `;
-
-      chunks.forEach(chunk => {
-        const lexEntries = Object.entries(chunk.lexical_weights || {})
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 12);
-        const lexHtml = lexEntries.length
-          ? lexEntries.map(([tok, wt]) =>
-              `<span class="px-2 py-0.5 rounded-full bg-mochi-yellow/45 border border-amber-300/60 font-mono text-[11px] text-plum-ink">${escapeHtml(tok)}: <strong>${Number(wt).toFixed(3)}</strong></span>`
-            ).join(' ')
-          : '<span class="text-[11px] text-plum-muted italic">Không có lexical weights</span>';
-
-        const vec = Array.isArray(chunk.embedding_half) ? chunk.embedding_half : [];
-        const normVal = vectorNorm(vec);
-        const previewDims = vec.slice(0, 12).map(v => Number(v).toFixed(4)).join(', ');
-
-        const prevBtn = chunk.prev_chunk_id
-          ? `<button onclick="jumpToChunk('${chunk.prev_chunk_id}')" class="px-2 py-0.5 rounded-full bg-white border border-sakura-pink text-[10px] font-mono text-kitsune-coral hover:bg-sakura-pink/20">← prev: ${chunk.prev_chunk_id.slice(0, 8)}</button>`
-          : `<span class="px-2 py-0.5 rounded-full bg-white/60 border border-sakura-pink/30 text-[10px] font-mono text-plum-muted">prev: null</span>`;
-
-        const nextBtn = chunk.next_chunk_id
-          ? `<button onclick="jumpToChunk('${chunk.next_chunk_id}')" class="px-2 py-0.5 rounded-full bg-white border border-sakura-pink text-[10px] font-mono text-kitsune-coral hover:bg-sakura-pink/20">next: ${chunk.next_chunk_id.slice(0, 8)} →</button>`
-          : `<span class="px-2 py-0.5 rounded-full bg-white/60 border border-sakura-pink/30 text-[10px] font-mono text-plum-muted">next: null</span>`;
-
-        const card = document.createElement('div');
-        card.id = `chunk-card-${chunk.id}`;
-        card.className = "p-4 rounded-2xl bg-white/85 border border-sakura-pink/55 shadow-xs space-y-3 transition-all";
-        card.innerHTML = `
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="px-2.5 py-1 rounded-full bg-kitsune-coral text-white font-mono text-xs font-bold">Chunk #${chunk.chunk_index}</span>
-              <button onclick="seekAudio(${Number(chunk.start_time_seconds)})" class="px-2.5 py-1 rounded-full bg-matcha-mint/70 hover:bg-matcha-mint text-plum-ink font-mono text-xs font-bold mochi-press">
-                🕒 ${escapeHtml(chunk.start_timestamp_display)} → ${escapeHtml(chunk.end_timestamp_display)}
-              </button>
-              <span class="px-2.5 py-1 rounded-full bg-mist-sky/45 text-plum-ink font-mono text-xs font-semibold">
-                ${chunk.token_count} / 512 tokens
-              </span>
-              <span class="text-[10px] font-mono text-plum-muted">id: ${chunk.id.slice(0, 13)}...</span>
-            </div>
-            <div class="flex items-center gap-1.5">${prevBtn}${nextBtn}</div>
-          </div>
-
-          <p class="text-xs text-plum-ink leading-relaxed bg-washi-cream/80 p-3 rounded-xl border border-sakura-pink/30">${escapeHtml(chunk.content)}</p>
-
-          <div class="space-y-1.5">
-            <div class="text-[11px] font-bold text-plum-muted">🏷️ BGE-M3 Sparse Lexical Weights (Top ${lexEntries.length}):</div>
-            <div class="flex flex-wrap gap-1.5">${lexHtml}</div>
-          </div>
-
-          <div class="p-2.5 rounded-xl bg-plum-ink/95 text-emerald-200 font-mono text-[11px] flex flex-col gap-1">
-            <div class="flex items-center justify-between text-[10px] text-sakura-pink">
-              <span>📐 embedding_half (${vec.length}-d FP16)</span>
-              <span>||v||₂ = ${normVal.toFixed(4)}</span>
-            </div>
-            <div class="truncate">[${previewDims}${vec.length > 12 ? ', ...' : ''}]</div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function jumpToChunk(chunkId) {
-      const target = document.getElementById(`chunk-card-${chunkId}`);
-      if (!target) return;
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      target.classList.add('chunk-highlight');
-      setTimeout(() => target.classList.remove('chunk-highlight'), 1800);
-    }
-
-    function setSearchQuery(q) {
-      document.getElementById('searchQueryInput').value = q;
-      runHybridSearch();
-    }
-
-    async function runHybridSearch() {
-      if (!currentLectureId) {
-        alert("Hãy chạy Stage 2 hoặc Full Pipeline trước để có dữ liệu lecture_id!");
-        return;
-      }
-      const query = document.getElementById('searchQueryInput').value.trim();
-      if (!query) return;
-
-      const mode = document.getElementById('searchModeSelect').value;
-      const topK = Number(document.getElementById('searchTopKSelect').value || 5);
-      const btn = document.getElementById('runSearchBtn');
-      const statusBanner = document.getElementById('searchStatusBanner');
-      const container = document.getElementById('searchResultsContainer');
-
-      btn.disabled = true;
-      btn.textContent = "⏳ Đang truy vấn...";
-
-      try {
-        const res = await fetch('/api/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            lecture_id: currentLectureId,
-            query: query,
-            top_k: topK,
-            mode: mode
-          })
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-
-        statusBanner.classList.remove('hidden');
-        statusBanner.textContent = `⚡ Tìm thấy ${data.results.length} chunks khớp truy vấn "${data.query}" • Backend: ${data.backend} • Mode: ${data.mode} • Latency: ${data.latency_ms} ms`;
-
-        container.innerHTML = '';
-        if (data.results.length === 0) {
-          container.innerHTML = '<div class="p-6 rounded-2xl bg-white/75 text-center text-xs text-plum-muted">Không có chunk nào khớp truy vấn.</div>';
-          return;
-        }
-
-        data.results.forEach((item, idx) => {
-          const lexPills = Object.entries(item.lexical_weights || {})
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 8)
-            .map(([t, w]) => `<span class="px-2 py-0.5 rounded-full bg-mochi-yellow/40 font-mono text-[10px]">${escapeHtml(t)}: ${Number(w).toFixed(3)}</span>`)
-            .join(' ');
-
-          const ctxCards = (item.expanded_context || []).map(ctx => {
-            const isCurr = ctx.position === 'CURRENT';
-            const badgeCls = isCurr
-              ? 'bg-kitsune-coral text-white'
-              : (ctx.position === 'PREVIOUS' ? 'bg-mist-sky/60 text-plum-ink' : 'bg-matcha-mint/60 text-plum-ink');
-            const boxCls = isCurr
-              ? 'bg-kitsune-coral/10 border-kitsune-coral/60'
-              : 'bg-white/75 border-sakura-pink/40';
-            return `
-              <div class="p-2.5 rounded-xl border ${boxCls} space-y-1">
-                <div class="flex items-center gap-2 text-[10px] font-mono">
-                  <span class="px-2 py-0.5 rounded-full font-bold ${badgeCls}">${escapeHtml(ctx.position)}</span>
-                  <span class="font-bold text-plum-ink">${escapeHtml(ctx.start_timestamp_display)} → ${escapeHtml(ctx.end_timestamp_display)}</span>
-                </div>
-                <p class="text-[11px] text-plum-ink leading-relaxed">${escapeHtml(ctx.content)}</p>
-              </div>
-            `;
-          }).join('');
-
-          const card = document.createElement('div');
-          card.className = "p-4 rounded-2xl bg-white/90 border border-sakura-pink/60 shadow-xs space-y-3";
-          card.innerHTML = `
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="px-2.5 py-1 rounded-full bg-plum-ink text-white font-mono text-xs font-bold">#${idx + 1} (Chunk #${item.chunk_index})</span>
-                <button onclick="seekAudio(${Number(item.start_time_seconds)})" class="px-2.5 py-1 rounded-full bg-matcha-mint/70 hover:bg-matcha-mint text-plum-ink font-mono text-xs font-bold mochi-press">
-                  🕒 ${escapeHtml(item.start_timestamp_display)} → ${escapeHtml(item.end_timestamp_display)}
-                </button>
-              </div>
-              <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
-                <span class="px-2.5 py-0.5 rounded-full bg-kitsune-coral/15 text-kitsune-hover font-bold">RRF: ${Number(item.rrf_total_score).toFixed(5)}</span>
-                <span class="px-2.5 py-0.5 rounded-full bg-mist-sky/40 text-plum-ink">Dense: ${Number(item.dense_score).toFixed(4)}</span>
-                <span class="px-2.5 py-0.5 rounded-full bg-sakura-pink/35 text-plum-ink">LexRank: ${item.lexical_rank ?? '—'}</span>
-                <span class="px-2.5 py-0.5 rounded-full bg-matcha-mint/45 text-plum-ink">FuzzyRank: ${item.fuzzy_rank ?? '—'}</span>
-              </div>
-            </div>
-
-            <p class="text-xs font-medium text-plum-ink bg-washi-cream p-3 rounded-xl border border-sakura-pink/35">${escapeHtml(item.content)}</p>
-
-            ${lexPills ? `<div class="flex flex-wrap items-center gap-1">${lexPills}</div>` : ''}
-
-            <details class="group">
-              <summary class="cursor-pointer text-[11px] font-bold text-kitsune-coral hover:underline">
-                📚 Xem Ngữ Cảnh Mở Rộng 3 Chiều (PREVIOUS / CURRENT / NEXT) — ${(item.expanded_context || []).length} đoạn
-              </summary>
-              <div class="mt-2 space-y-2">${ctxCards}</div>
-            </details>
-          `;
-          container.appendChild(card);
-        });
-      } catch (err) {
-        statusBanner.classList.remove('hidden');
-        statusBanner.textContent = "❌ Lỗi tìm kiếm: " + err.message;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "🔍 Tìm Kiếm RRF";
-      }
-    }
-
-    function renderDbTab(result) {
-      const dbSummary = document.getElementById('dbConnectionSummary');
-      const isPg = result.db_backend === 'postgres_pgvector';
-      dbSummary.innerHTML = `
-        <div class="flex items-center gap-2">
-          <span class="px-3 py-1 rounded-full font-bold ${isPg ? 'bg-matcha-mint text-plum-ink' : 'bg-mochi-yellow text-plum-ink'}">
-            ${isPg ? '🐘 Đang lưu trực tiếp trên PostgreSQL + pgvector' : '🟡 Đang dùng InMemoryChunkStore Fallback (Postgres offline)'}
-          </span>
-        </div>
-        <div class="font-mono font-bold text-plum-ink">
-          rag.lecture_chunks rows: ${result.db_chunks_count ?? 0}
-        </div>
-      `;
-
-      const jobStatus = (result.job_state && result.job_state.status) ||
-        (result.manifest.chunking && result.manifest.chunking.status === 'COMPLETED' ? 'READY' : 'STT_COMPLETED');
-      const jobProgress = (result.job_state && result.job_state.progress) || 100;
-
-      const tbodyJobs = document.getElementById('dbJobsTableBody');
-      tbodyJobs.innerHTML = `
-        <tr>
-          <td class="p-2 text-kitsune-coral font-bold">${escapeHtml(result.manifest.job_id.substring(0, 13))}...</td>
-          <td class="p-2 text-plum-muted">${escapeHtml(result.manifest.lecture_id.substring(0, 13))}...</td>
-          <td class="p-2"><span class="px-2 py-0.5 rounded-full bg-matcha-mint text-plum-ink font-semibold">${escapeHtml(jobStatus)}</span></td>
-          <td class="p-2 font-bold text-emerald-700">${jobProgress}%</td>
-          <td class="p-2 text-plum-muted">${new Date().toLocaleTimeString()}</td>
-        </tr>
-      `;
-
-      const tbodyChunks = document.getElementById('dbChunksTableBody');
-      tbodyChunks.innerHTML = '';
-      const chunks = result.chunks && result.chunks.chunks ? result.chunks.chunks : [];
-      if (chunks.length > 0) {
-        chunks.forEach(c => {
-          const tr = document.createElement('tr');
-          const lexCount = Object.keys(c.lexical_weights || {}).length;
-          const prevShort = c.prev_chunk_id ? c.prev_chunk_id.slice(0, 6) : 'null';
-          const nextShort = c.next_chunk_id ? c.next_chunk_id.slice(0, 6) : 'null';
-          tr.innerHTML = `
-            <td class="p-2 font-bold text-plum-ink">#${c.chunk_index}</td>
-            <td class="p-2 text-kitsune-coral font-bold">${escapeHtml(c.start_timestamp_display)} → ${escapeHtml(c.end_timestamp_display)}</td>
-            <td class="p-2">${c.token_count}</td>
-            <td class="p-2">${Array.isArray(c.embedding_half) ? c.embedding_half.length : 0}-d</td>
-            <td class="p-2">${lexCount} keys</td>
-            <td class="p-2 text-[10px] text-plum-muted">${prevShort} / ${nextShort}</td>
-            <td class="p-2 text-plum-ink truncate max-w-[260px]">${escapeHtml(c.content)}</td>
-          `;
-          tbodyChunks.appendChild(tr);
-        });
-      }
-      refreshRagTelemetry();
-    }
-
-    // =====================================================================
-    // 2-Pass Pre-RAG & Gemma 4 ([Q1]–[Q6+]) Controls (No Semantic Cache)
-    // =====================================================================
-    let ragPresetsCache = null;
-    let extraStageCounter = 0;
-
-    async function loadRagPresets() {
-      try {
-        const res = await fetch('/api/rag/presets');
-        if (!res.ok) return;
-        ragPresetsCache = await res.json();
-        const prepEl = document.getElementById('ragQueryPrepPromptInput');
-        if (prepEl && !prepEl.value.trim()) {
-          prepEl.value = ragPresetsCache.default_query_system_prompt || '';
-        }
-        const selectEl = document.getElementById('ragPresetSelect');
-        if (selectEl && Array.isArray(ragPresetsCache.presets)) {
-          selectEl.innerHTML = ragPresetsCache.presets.map(p =>
-            `<option value="${escapeHtml(p.id)}">${escapeHtml(p.label)}</option>`
-          ).join('');
-          applyRagPreset();
-        }
-      } catch (err) {
-        console.error('Failed to load RAG presets', err);
-      }
-    }
-
-    function resetQueryPrepSystemPrompt() {
-      if (ragPresetsCache && ragPresetsCache.default_query_system_prompt) {
-        document.getElementById('ragQueryPrepPromptInput').value = ragPresetsCache.default_query_system_prompt;
-      }
-    }
-
-    function applyRagPreset() {
-      if (!ragPresetsCache || !Array.isArray(ragPresetsCache.presets)) return;
-      const selectedId = document.getElementById('ragPresetSelect').value;
-      const preset = ragPresetsCache.presets.find(p => p.id === selectedId);
-      if (!preset) return;
-      document.getElementById('ragAnswerPromptInput').value = preset.system_prompt || '';
-      document.getElementById('ragResponseFormat').value = preset.default_response_format || 'text';
-    }
-
-    function addExtraStageRow() {
-      extraStageCounter += 1;
-      const idx = extraStageCounter;
-      const container = document.getElementById('extraStagesContainer');
-      const row = document.createElement('div');
-      row.className = "extra-stage-row p-3 rounded-xl bg-white/90 border border-sakura-pink/55 space-y-2";
-      row.innerHTML = `
-        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div class="flex flex-wrap items-center gap-2">
-            <label class="flex items-center gap-1 font-bold text-plum-ink">
-              <input type="checkbox" class="stage-enabled accent-kitsune-coral" checked>
-              Stage ID:
-            </label>
-            <input type="text" class="stage-id font-mono text-xs px-2.5 py-1 rounded-lg border border-sakura-pink/60 bg-white w-36" value="q${5 + idx}_custom">
-            <select class="stage-format text-xs font-semibold px-2 py-1 rounded-lg border border-sakura-pink/60 bg-white">
-              <option value="text" selected>Text</option>
-              <option value="json">JSON</option>
-            </select>
-            <label class="text-[11px] text-plum-muted">Temp:
-              <input type="number" step="0.1" min="0" max="1.5" value="0.2" class="stage-temp w-14 px-1.5 py-0.5 rounded border border-sakura-pink/60 bg-white font-mono">
-            </label>
-          </div>
-          <button onclick="this.closest('.extra-stage-row').remove()" class="px-2.5 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold">✕ Xóa</button>
-        </div>
-        <textarea rows="2" class="stage-prompt w-full text-[11px] font-mono p-2 rounded-lg border border-sakura-pink/60 bg-white" placeholder="Nhập System Prompt cho bước Gemma 4 mở rộng này...">Kiểm tra lại toàn bộ thuật ngữ chuyên ngành và thêm một dòng tóm tắt chốt ý ở cuối, giữ nguyên mốc [MM:SS].</textarea>
-      `;
-      container.appendChild(row);
-    }
-
-    function collectExtraStages() {
-      const rows = document.querySelectorAll('#extraStagesContainer .extra-stage-row');
-      const stages = [];
-      rows.forEach((row, i) => {
-        const stageId = (row.querySelector('.stage-id').value || `q${6 + i}_extra`).trim();
-        const sysPrompt = (row.querySelector('.stage-prompt').value || '').trim();
-        const respFmt = row.querySelector('.stage-format').value || 'text';
-        const temp = Number(row.querySelector('.stage-temp').value || 0.2);
-        const enabled = Boolean(row.querySelector('.stage-enabled').checked);
-        if (sysPrompt) {
-          stages.push({
-            stageId: stageId,
-            systemPrompt: sysPrompt,
-            responseFormat: respFmt,
-            temperature: temp,
-            maxNewTokens: 512,
-            enabled: enabled
-          });
-        }
-      });
-      return stages;
-    }
-
-    function setRagQuery(q) {
-      document.getElementById('ragQueryInput').value = q;
-      runMultiPassRag();
-    }
-
-    async function runMultiPassRag() {
-      if (!currentLectureId) {
-        alert("Hãy chạy Stage 2 hoặc Full Pipeline trước để có dữ liệu lecture_id!");
-        return;
-      }
-      const query = document.getElementById('ragQueryInput').value.trim();
-      if (!query) return;
-
-      const btn = document.getElementById('runRagBtn');
-      const wrapper = document.getElementById('ragResultsWrapper');
-      btn.disabled = true;
-      btn.textContent = "⏳ Đang chạy [Q1]–[Q6+]...";
-
-      try {
-        const payload = {
-          lectureId: currentLectureId,
-          query: query,
-          topK: Number(document.getElementById('ragTopK').value || 5),
-          retrievalTopK: 25,
-          querySystemPrompt: document.getElementById('ragQueryPrepPromptInput').value.trim() || null,
-          systemPrompt: document.getElementById('ragAnswerPromptInput').value.trim() || null,
-          promptProfile: document.getElementById('ragPresetSelect').value || 'qa_refine',
-          responseFormat: document.getElementById('ragResponseFormat').value || 'text',
-          useExpandedContext: document.getElementById('ragUseExpanded').checked,
-          extraStages: collectExtraStages(),
-          embedderMode: document.getElementById('ragEmbedderMode').value,
-          rerankerMode: document.getElementById('ragRerankerMode').value,
-          llmEngine: document.getElementById('ragLlmEngine').value
-        };
-
-        const res = await fetch('/api/rag/query', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(errText || `HTTP ${res.status}`);
-        }
-        const data = await res.json();
-        renderRagResults(data);
-        wrapper.classList.remove('hidden');
-        refreshRagTelemetry();
-      } catch (err) {
-        alert("Lỗi 2-Pass Pre-RAG: " + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "🦙 Chạy 2-Pass Pre-RAG ([Q1]–[Q6+])";
-      }
-    }
-
-    function renderRagResults(data) {
-      const tel = data.telemetry || {};
-
-      document.getElementById('ragTelemetryStrip').innerHTML = `
-        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="px-3 py-1 rounded-full bg-mist-sky/60 text-plum-ink font-bold">🔄 2-PASS PRE-RAG (NO CACHE)</span>
-            <span class="px-2.5 py-1 rounded-full bg-sakura-pink/35 font-mono font-bold text-plum-ink">Total: ${tel.total_ms ?? 0} ms</span>
-            <span class="px-2.5 py-1 rounded-full bg-white border border-sakura-pink/50 font-mono text-[11px]">Backend: ${escapeHtml(data.backend || '')}</span>
-          </div>
-          <span class="font-mono text-[10px] text-plum-muted">Stages: ${(data.stage_outputs || []).length} passes</span>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-[11px] font-mono pt-1">
-          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q1] Gemma Prep</strong><div>${tel.query_prep_ms ?? 0} ms</div></div>
-          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q2] BGE-M3 Embed</strong><div>${tel.embed_ms ?? 0} ms</div></div>
-          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q2] 3-Stream RRF</strong><div>${tel.retrieval_ms ?? 0} ms (${tel.candidates_retrieved ?? 0} hits)</div></div>
-          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q3] 3-Way Expand</strong><div>${tel.expand_ms ?? 0} ms</div></div>
-          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q4] Reranker</strong><div>${tel.rerank_ms ?? 0} ms (Top ${tel.reranked_count ?? 0})</div></div>
-          <div class="p-2 rounded-xl bg-washi-cream border border-sakura-pink/35"><strong>[Q5+] Gemma + RAG</strong><div>${tel.llm_ms ?? 0} ms</div></div>
-        </div>
-      `;
-
-      document.getElementById('ragPreparedQueryOutput').textContent = data.prepared_query || data.query || '(Không có đầu ra Pass 1)';
-      document.getElementById('ragFinalOutput').textContent = data.answer || '';
-
-      const citations = data.citations || [];
-      document.getElementById('ragCitationPills').innerHTML = citations.map(c =>
-        `<button onclick="seekAudio(${Number(c.start_time_seconds)})" class="px-2.5 py-1 rounded-full bg-matcha-mint/70 hover:bg-matcha-mint text-plum-ink font-mono text-[11px] font-bold mochi-press">
-          ▶ [${escapeHtml(c.start_timestamp_display)} - ${escapeHtml(c.end_timestamp_display)}] (Rerank ${Number(c.rerank_score).toFixed(3)})
-        </button>`
+    async function loadJobs() {
+      const res = await fetch('/api/jobs');
+      const data = await res.json();
+      const jobs = data.jobs || [];
+      const ragRuns = data.recent_rag_runs || [];
+
+      const sel = document.getElementById('recentRunsSelect');
+      sel.innerHTML = '<option value="">Recent runs (' + jobs.length + ')</option>' + jobs.map((j) =>
+        `<option value="${escHtml(j.jobId)}">${escHtml((j.source || 'job').toUpperCase())} [${escHtml(j.mode)}] ${escHtml(j.status)} (${j.total_chunks ?? 0} chunks)</option>`
       ).join('');
 
-      const rrList = document.getElementById('ragRerankedList');
-      rrList.innerHTML = citations.length ? citations.map((c, idx) => `
-        <div class="p-3 rounded-xl bg-washi-cream border border-sakura-pink/40 space-y-1.5">
-          <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded-full bg-plum-ink text-white font-bold">#${idx + 1} (Chunk #${c.chunk_index})</span>
-              <button onclick="seekAudio(${Number(c.start_time_seconds)})" class="px-2 py-0.5 rounded-full bg-matcha-mint/70 font-bold text-plum-ink">🕒 ${escapeHtml(c.start_timestamp_display)} → ${escapeHtml(c.end_timestamp_display)}</button>
-            </div>
-            <div class="flex flex-wrap gap-1.5">
-              <span class="px-2 py-0.5 rounded-full bg-kitsune-coral/15 text-kitsune-hover font-bold">Rerank: ${Number(c.rerank_score).toFixed(4)} (logit ${Number(c.rerank_logit).toFixed(2)})</span>
-              <span class="px-2 py-0.5 rounded-full bg-mist-sky/45">RRF: ${Number(c.rrf_total_score).toFixed(5)}</span>
-              <span class="px-2 py-0.5 rounded-full bg-sakura-pink/35">Dense: ${Number(c.dense_score).toFixed(4)}</span>
-            </div>
+      const summary = document.getElementById('recentActivitySummary');
+      if (!jobs.length && !ragRuns.length) {
+        summary.innerHTML = '<p class="text-slate-400">No jobs or RAG queries run in this session yet.</p>';
+      } else {
+        const jHtml = jobs.slice(0, 5).map((j) => `
+          <div class="flex items-center justify-between gap-2 bg-white border border-slate-200 rounded px-2 py-1">
+            <span class="mono truncate">${escHtml(j.jobId.slice(0, 8))}.. (${escHtml(j.source)} / ${escHtml(j.mode)})</span>
+            <span class="badge badge-teal mono">${escHtml(j.status)} ${fmtMs(j.total_duration_ms)}</span>
           </div>
-          <p class="text-xs text-plum-ink leading-relaxed">${escapeHtml(c.content)}</p>
-        </div>
-      `).join('') : '<div class="text-xs text-plum-muted">Không có citation nào được trích xuất.</div>';
+        `).join('');
+        const rHtml = ragRuns.slice(0, 5).map((r) => `
+          <div class="flex items-center justify-between gap-2 bg-white border border-slate-200 rounded px-2 py-1">
+            <span class="truncate">RAG [${escHtml(r.profile)}]: ${escHtml(r.query)}</span>
+            <span class="badge badge-indigo mono">${fmtMs(r.total_ms)}</span>
+          </div>
+        `).join('');
+        summary.innerHTML = jHtml + rHtml;
+      }
+    }
 
-      const stagesList = document.getElementById('ragStageOutputsList');
-      stagesList.innerHTML = (data.stage_outputs || []).map(st => `
-        <details class="p-3 rounded-xl bg-washi-cream border border-sakura-pink/40 text-xs">
-          <summary class="cursor-pointer font-bold text-plum-ink flex flex-wrap items-center justify-between gap-2">
-            <span>🦙 ${escapeHtml(st.stage_id)} (${escapeHtml(st.profile)} • format=${escapeHtml(st.response_format)})</span>
-            <span class="font-mono text-[11px] text-plum-muted">${escapeHtml(st.engine)} / ${escapeHtml(st.model)} • ${st.latency_ms} ms</span>
-          </summary>
-          <div class="mt-2 space-y-2 text-[11px]">
-            <div><strong>System Prompt:</strong><pre class="mt-1 p-2 rounded-lg bg-white border border-sakura-pink/30 whitespace-pre-wrap font-mono">${escapeHtml(st.system_prompt)}</pre></div>
-            <div><strong>User Prompt:</strong><pre class="mt-1 p-2 rounded-lg bg-white border border-sakura-pink/30 whitespace-pre-wrap font-mono max-h-[180px] overflow-y-auto">${escapeHtml(st.user_prompt)}</pre></div>
-            <div><strong>Output:</strong><pre class="mt-1 p-2 rounded-lg bg-plum-ink text-emerald-200 whitespace-pre-wrap font-mono max-h-[200px] overflow-y-auto">${escapeHtml(st.output)}</pre></div>
+    async function loadPresets() {
+      const res = await fetch('/api/rag/presets');
+      const data = await res.json();
+      state.presetsData = data;
+      document.getElementById('ragPass1Prompt').value = data.default_query_system_prompt || '';
+      const sel = document.getElementById('ragProfileSelect');
+      sel.innerHTML = (data.presets || []).map((p) =>
+        `<option value="${escHtml(p.id)}">${escHtml(p.label)}</option>`
+      ).join('');
+      onRagProfileChanged();
+    }
+
+    function onRagProfileChanged() {
+      const presets = state.presetsData?.presets || [];
+      const pid = document.getElementById('ragProfileSelect').value;
+      const preset = presets.find((p) => p.id === pid);
+      if (preset) {
+        document.getElementById('ragPass2Prompt').value = preset.system_prompt || '';
+        document.getElementById('ragFormatSelect').value = preset.default_response_format || 'text';
+      }
+    }
+
+    function onSelectRecentJob() {
+      const jobId = document.getElementById('recentRunsSelect').value;
+      if (jobId) fetchResult(jobId);
+    }
+
+    function onFileSelected(e) {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      state.selectedFile = f;
+      document.getElementById('selectedFileLabel').textContent = `${f.name} (${(f.size / 1024).toFixed(1)} KB)`;
+      document.getElementById('btnRunFull').disabled = false;
+    }
+
+    async function loadSampleAudio() {
+      const res = await fetch('/api/sample-audio');
+      if (!res.ok) return alert('Sample audio fixture missing.');
+      const blob = await res.blob();
+      const file = new File([blob], 'sample_lecture_vi.wav', { type: 'audio/wav' });
+      state.selectedFile = file;
+      document.getElementById('selectedFileLabel').textContent = `sample_lecture_vi.wav (${(file.size / 1024).toFixed(1)} KB)`;
+      document.getElementById('btnRunFull').disabled = false;
+    }
+
+    function applyIngestTrace(trace) {
+      if (!trace) return;
+      state.ingestSteps = {};
+      (trace.steps || []).forEach((s) => { state.ingestSteps[s.step_id] = s; });
+      state.lastIngestExecuted = trace.models_executed || [];
+      document.getElementById('ingestTraceSummary').textContent =
+        `${trace.source} (${trace.mode}) | ${fmtMs(trace.total_duration_ms)}`;
+      document.getElementById('rawTraceJson').textContent = JSON.stringify(trace, null, 2);
+
+      const trans = trace.state_transitions || [];
+      document.getElementById('stateTransitionsList').innerHTML = trans.length
+        ? trans.map((t) => `
+          <div class="flex items-center justify-between bg-white border border-slate-200 rounded px-2 py-1">
+            <span><span class="badge badge-neutral mono">${escHtml(t.status)}</span> ${escHtml(t.message)}</span>
+            <span class="mono text-[11px] text-slate-400">${escHtml(t.progress)}%</span>
           </div>
-        </details>
+        `).join('')
+        : '<p class="text-slate-400">No transitions recorded.</p>';
+
+      renderFlowRails();
+    }
+
+    async function runStage2Sample() {
+      const btn = document.getElementById('btnStage2Sample');
+      btn.disabled = true;
+      const oldText = btn.textContent;
+      btn.textContent = `Running Stage 2 (${state.mode})...`;
+      try {
+        const res = await fetch(`/api/test-stage2-sample?mode=${encodeURIComponent(state.mode)}`, { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Stage 2 sample failed');
+        setActiveContext(data.jobId, data.lectureId);
+        applyIngestTrace(data.trace);
+        await fetchResult(data.jobId);
+        await Promise.all([loadDiagnostics(), loadJobs(), loadTelemetry()]);
+        switchTab('chunks');
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = oldText;
+      }
+    }
+
+    async function runFullPipeline() {
+      if (!state.selectedFile) return alert('Select an audio file first.');
+      const btn = document.getElementById('btnRunFull');
+      btn.disabled = true;
+      try {
+        const fd = new FormData();
+        fd.append('file', state.selectedFile);
+        const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+        const up = await upRes.json();
+        if (!upRes.ok) throw new Error(up.detail || 'Upload failed');
+
+        setActiveContext(up.jobId, up.lectureId);
+        document.getElementById('audioPlayer').src = `/api/audio/${up.jobId}`;
+        document.getElementById('runnerStatusBox').classList.remove('hidden');
+
+        const dsp = document.getElementById('chkDsp').checked;
+        const vad = document.getElementById('chkVad').checked;
+        const prompt = document.getElementById('txtAsrPrompt').value;
+        const pRes = await fetch(
+          `/api/process/${up.jobId}?mode=${encodeURIComponent(state.mode)}&dsp=${dsp}&vad=${vad}&prompt=${encodeURIComponent(prompt)}`,
+          { method: 'POST' }
+        );
+        if (!pRes.ok) {
+          const pErr = await pRes.json();
+          throw new Error(pErr.detail || 'Process launch failed');
+        }
+        startStatusPoll(up.jobId);
+      } catch (err) {
+        alert(err.message);
+        btn.disabled = false;
+      }
+    }
+
+    function startStatusPoll(jobId) {
+      if (state.pollTimer) clearInterval(state.pollTimer);
+      state.pollTimer = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/status/${jobId}`);
+          const data = await res.json();
+          document.getElementById('runnerStateBadge').textContent = data.status || 'UNKNOWN';
+          document.getElementById('runnerProgressPct').textContent = `${data.progress || 0}%`;
+          document.getElementById('runnerProgressBar').style.width = `${data.progress || 0}%`;
+          document.getElementById('runnerStatusMsg').textContent = data.message || '';
+          if (data.trace) applyIngestTrace(data.trace);
+
+          if (data.status === 'READY' || data.status === 'FAILED') {
+            clearInterval(state.pollTimer);
+            state.pollTimer = null;
+            document.getElementById('btnRunFull').disabled = false;
+            if (data.status === 'READY') {
+              await fetchResult(jobId);
+              await Promise.all([loadDiagnostics(), loadJobs(), loadTelemetry()]);
+            }
+          }
+        } catch (err) {
+          clearInterval(state.pollTimer);
+          state.pollTimer = null;
+          document.getElementById('btnRunFull').disabled = false;
+        }
+      }, 650);
+    }
+
+    async function fetchResult(jobId) {
+      const res = await fetch(`/api/result/${jobId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      state.resultData = data;
+      setActiveContext(data.manifest?.job_id, data.manifest?.lecture_id);
+      if (data.trace) applyIngestTrace(data.trace);
+
+      // Audio source if incoming/normalized audio exists
+      if (data.manifest?.original) {
+        document.getElementById('audioPlayer').src = `/api/audio/${data.manifest.job_id}`;
+      }
+
+      renderTranscript(data.transcript);
+      renderChunks(data.chunks, data.db_chunks_count, data.db_backend);
+      document.getElementById('manifestJsonBox').textContent = JSON.stringify(data.manifest, null, 2);
+      document.getElementById('dbStorageBadge').textContent = `${data.db_backend} (${data.db_chunks_count} rows)`;
+    }
+
+    function renderTranscript(tr) {
+      if (!tr) {
+        document.getElementById('transcriptSegmentsList').innerHTML = '<p class="text-xs text-slate-400">No transcript available.</p>';
+        return;
+      }
+      document.getElementById('transcriptMetaLabel').textContent =
+        `${tr.generated?.model || '--'} | ${tr.generated?.device || '--'} | ${tr.segments?.length || 0} segs | ${tr.audio?.duration_seconds?.toFixed(1) || 0}s`;
+      document.getElementById('transcriptSegmentsList').innerHTML = (tr.segments || []).map((seg) => `
+        <div onclick="seekAudio(${Number(seg.start_time_seconds)})" class="cursor-pointer border border-slate-200 hover:border-teal-400 rounded px-2.5 py-1.5 bg-white flex items-start gap-2.5">
+          <span class="badge badge-indigo mono mt-0.5">[${escHtml(seg.timestamp_label)}]</span>
+          <p class="text-xs text-slate-800">${escHtml(seg.text)}</p>
+        </div>
       `).join('');
     }
 
-    async function refreshRagTelemetry() {
-      try {
-        const url = currentLectureId ? `/api/rag/telemetry?lecture_id=${currentLectureId}` : '/api/rag/telemetry';
-        const res = await fetch(url);
-        if (!res.ok) return;
-        const data = await res.json();
-
-        const auditBody = document.getElementById('dbAuditTableBody');
-        if (auditBody) {
-          auditBody.innerHTML = (data.audit_logs || []).map(a => `
-            <tr>
-              <td class="p-2 max-w-[180px] truncate">${escapeHtml(a.query_text)}</td>
-              <td class="p-2">${a.latency_retrieval_ms ?? 0}</td>
-              <td class="p-2">${a.latency_rerank_ms ?? 0}</td>
-              <td class="p-2 font-bold text-kitsune-hover">${a.latency_llm_ms ?? 0}</td>
-            </tr>
-          `).join('') || '<tr><td colspan="4" class="p-2 text-plum-muted italic">Chưa có audit log.</td></tr>';
-        }
-      } catch (err) {
-        console.error('Failed to refresh RAG telemetry', err);
+    function renderChunks(chunksArt, dbCount, dbBackend) {
+      if (!chunksArt) {
+        document.getElementById('chunksList').innerHTML = '<p class="text-xs text-slate-400">No chunks artifact found.</p>';
+        return;
       }
+      document.getElementById('chunksMetaStats').innerHTML = `
+        <span class="badge badge-teal mono">${chunksArt.total_chunks} chunks</span>
+        <span class="badge badge-neutral mono">model: ${escHtml(chunksArt.model)}</span>
+        <span class="badge badge-neutral mono">${chunksArt.max_tokens}/${chunksArt.overlap_tokens} tok</span>
+        <span class="badge badge-indigo mono">${escHtml(dbBackend)}: ${dbCount} rows</span>
+      `;
+      document.getElementById('chunksList').innerHTML = (chunksArt.chunks || []).map((c) => {
+        const topTerms = Object.entries(c.lexical_weights || {})
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6)
+          .map(([k, v]) => `${k}:${Number(v).toFixed(2)}`)
+          .join(', ');
+        return `
+          <div id="chunk-${escHtml(c.id)}" class="border border-slate-200 rounded p-2.5 bg-white space-y-1.5">
+            <div class="flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+              <div class="flex items-center gap-1.5">
+                <span class="badge badge-neutral mono">#${c.chunk_index}</span>
+                <button type="button" onclick="seekAudio(${Number(c.start_time_seconds)})" class="badge badge-indigo mono cursor-pointer">[${escHtml(c.start_timestamp_display)} - ${escHtml(c.end_timestamp_display)}]</button>
+                <span class="mono text-slate-500">${c.token_count} tok | ${c.embedding_half?.length || 0}d halfvec</span>
+              </div>
+              <div class="flex items-center gap-1.5 mono">
+                ${c.prev_chunk_id ? `<button type="button" onclick="jumpToChunk('${escHtml(c.prev_chunk_id)}')" class="text-teal-700 hover:underline">&lt;- prev</button>` : '<span class="text-slate-300">&lt;- none</span>'}
+                <span>|</span>
+                ${c.next_chunk_id ? `<button type="button" onclick="jumpToChunk('${escHtml(c.next_chunk_id)}')" class="text-teal-700 hover:underline">next -&gt;</button>` : '<span class="text-slate-300">none -&gt;</span>'}
+              </div>
+            </div>
+            <p class="text-xs text-slate-800">${escHtml(c.content)}</p>
+            ${topTerms ? `<div class="mono text-[10.5px] text-slate-500 bg-slate-50 px-2 py-1 rounded">sparse: ${escHtml(topTerms)}</div>` : ''}
+          </div>
+        `;
+      }).join('');
     }
 
     function seekAudio(sec) {
-      if (!hasAudioSource || !audioPlayer.src) return;
-      audioPlayer.currentTime = sec;
-      audioPlayer.play();
-    }
-
-    function updateProgress(percent, msg, statusText) {
-      progressBar.style.width = `${percent}%`;
-      percentBadge.textContent = `${percent}%`;
-      if (msg) trackerMessage.textContent = msg;
-      if (statusText) statusBadge.textContent = statusText;
-    }
-
-    function markStepDone(id) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.className = "p-3 rounded-2xl bg-matcha-mint/35 border border-matcha-mint text-xs text-plum-ink flex flex-col gap-1";
-      el.querySelector('.step-icon').textContent = "✅";
-    }
-
-    function markStepActive(id) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.className = "p-3 rounded-2xl bg-kitsune-coral/15 border border-kitsune-coral text-xs text-plum-ink flex flex-col gap-1 animate-pulse";
-      el.querySelector('.step-icon').textContent = "⚡";
-    }
-
-    function resetSteps() {
-      const steps = ['step-staged', 'step-normalize', 'step-asr', 'step-chunking', 'step-embedding', 'step-db'];
-      steps.forEach(s => {
-        const el = document.getElementById(s);
-        if (el) {
-          el.className = "p-3 rounded-2xl bg-white/70 border border-sakura-pink/40 text-xs text-plum-muted flex flex-col gap-1";
-          el.querySelector('.step-icon').textContent = "⚪";
-        }
-      });
-    }
-
-    function switchTab(tabId, btnEl) {
-      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
-      document.getElementById(tabId).classList.remove('hidden');
-
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.className = "tab-btn px-4 py-2 rounded-full bg-white/75 text-plum-muted hover:text-plum-ink mochi-press whitespace-nowrap";
-      });
-      if (btnEl) {
-        btnEl.className = "tab-btn px-4 py-2 rounded-full bg-kitsune-coral text-white shadow-xs mochi-press whitespace-nowrap";
+      const player = document.getElementById('audioPlayer');
+      if (player && player.src) {
+        player.currentTime = Number(sec) || 0;
+        player.play().catch(() => {});
       }
     }
 
-    function copyContent(elemId) {
-      const text = document.getElementById(elemId).textContent;
-      navigator.clipboard.writeText(text);
-      alert("Đã sao chép nội dung vào bộ nhớ tạm!");
+    function jumpToChunk(chunkId) {
+      const el = document.getElementById('chunk-' + chunkId);
+      if (!el) return;
+      document.querySelectorAll('#chunksList > div').forEach((n) => n.classList.remove('chunk-active'));
+      el.classList.add('chunk-active');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function copyTranscriptText() {
+      const txt = state.resultData?.transcript?.full_text || '';
+      if (txt) navigator.clipboard.writeText(txt);
     }
 
     function copyChunksJson() {
-      if (!fullChunksPayload) return;
-      navigator.clipboard.writeText(JSON.stringify(fullChunksPayload, null, 2));
-      alert("Đã sao chép toàn bộ chunks.json (1024-d vectors + lexical_weights) vào bộ nhớ tạm!");
+      const c = state.resultData?.chunks;
+      if (c) navigator.clipboard.writeText(JSON.stringify(c, null, 2));
     }
+
+    function setSearchPreset(q) {
+      document.getElementById('searchQueryInput').value = q;
+    }
+
+    async function executeHybridSearch() {
+      if (!state.lectureId) return alert('Run Stage 2 Sample or load a job first to set Lecture ID.');
+      const query = document.getElementById('searchQueryInput').value.trim();
+      const topK = Number(document.getElementById('searchTopK').value) || 5;
+      const mode = document.getElementById('searchModeSelect').value;
+      const res = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lectureId: state.lectureId, query, topK, mode }),
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.detail || 'Search failed');
+
+      const lb = data.latency_breakdown || {};
+      const bar = document.getElementById('searchLatencyBar');
+      bar.classList.remove('hidden');
+      bar.innerHTML = `
+        <span class="badge badge-indigo mono">Model: ${escHtml(data.model_used)} (${escHtml(data.device)})</span>
+        <span class="badge badge-neutral mono">Backend: ${escHtml(data.backend)}</span>
+        <span class="badge badge-teal mono">Total: ${fmtMs(lb.total_ms)} (emb ${fmtMs(lb.embed_ms)}, rrf ${fmtMs(lb.rrf_ms)}, ctx ${fmtMs(lb.context_ms)})</span>
+        <span class="mono text-slate-600">${data.total_results} result(s)</span>
+      `;
+
+      document.getElementById('searchResultsList').innerHTML = (data.results || []).map((r, i) => `
+        <div class="border border-slate-200 rounded p-3 bg-white space-y-1.5">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+            <div class="flex items-center gap-1.5">
+              <span class="badge badge-neutral mono">#${i + 1} Chunk ${r.chunk_index}</span>
+              <span class="badge badge-indigo mono">[${escHtml(r.start_timestamp_display)} - ${escHtml(r.end_timestamp_display)}]</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 mono">
+              <span class="badge badge-teal">RRF ${Number(r.rrf_total_score).toFixed(4)}</span>
+              <span class="badge badge-neutral">Dense ${Number(r.dense_score).toFixed(3)}</span>
+              <span class="badge badge-neutral">Lex ${r.lexical_rank ?? '-'}</span>
+              <span class="badge badge-neutral">Fuz ${r.fuzzy_rank ?? '-'}</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-900">${escHtml(r.content)}</p>
+          <details class="text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded px-2 py-1">
+            <summary class="cursor-pointer font-medium">3-Way Expanded Context (${r.expanded_context?.length || 0} windows)</summary>
+            <div class="pt-1.5 space-y-1">
+              ${(r.expanded_context || []).map((ctx) => `
+                <div class="px-2 py-1 rounded ${ctx.position === 'CURRENT' ? 'bg-teal-50 border border-teal-200' : 'bg-white border border-slate-200'}">
+                  <span class="mono font-semibold">${escHtml(ctx.position)}</span> [${escHtml(ctx.start_timestamp_display)}]: ${escHtml(ctx.content)}
+                </div>
+              `).join('')}
+            </div>
+          </details>
+        </div>
+      `).join('') || '<p class="text-xs text-slate-400">No hits matched.</p>';
+
+      await loadDiagnostics();
+    }
+
+    async function executeRagQuery() {
+      if (!state.lectureId) return alert('Run Stage 2 Sample or load a job first to set Lecture ID.');
+      const btn = document.getElementById('btnRunRag');
+      btn.disabled = true;
+      const oldText = btn.textContent;
+      btn.textContent = 'Running [Q1-Q6+]...';
+      try {
+        const extraStages = [];
+        if (document.getElementById('chkEnableExtraStage').checked) {
+          const overridePrompt = document.getElementById('txtExtraStagePrompt').value.trim();
+          extraStages.push({
+            stageId: 'q6_cornell',
+            profile: 'cornell_notes',
+            systemPrompt: overridePrompt || null,
+            responseFormat: 'markdown',
+            usePreviousOutput: true,
+          });
+        }
+        const body = {
+          lectureId: state.lectureId,
+          query: document.getElementById('ragQueryInput').value.trim(),
+          topK: Number(document.getElementById('ragTopK').value) || 5,
+          retrievalTopK: Number(document.getElementById('ragRetrievalTopK').value) || 25,
+          querySystemPrompt: document.getElementById('ragPass1Prompt').value.trim() || null,
+          systemPrompt: document.getElementById('ragPass2Prompt').value.trim() || null,
+          promptProfile: document.getElementById('ragProfileSelect').value || 'qa_refine',
+          responseFormat: document.getElementById('ragFormatSelect').value || 'text',
+          useExpandedContext: document.getElementById('chkRagExpandedCtx').checked,
+          maxNewTokens: Number(document.getElementById('ragMaxTokens').value) || 512,
+          embedderMode: document.getElementById('ragEmbedderMode').value,
+          rerankerMode: document.getElementById('ragRerankerMode').value,
+          llmEngine: document.getElementById('ragLlmEngine').value,
+          extraStages,
+        };
+        const res = await fetch('/api/rag/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'RAG query failed');
+
+        // Update Band 3 RAG Flow Rail & Models Executed
+        state.ragSteps = {};
+        (data.flow_trace || []).forEach((s) => { state.ragSteps[s.step_id] = s; });
+        state.lastRagExecuted = data.models_executed || [];
+        document.getElementById('ragTraceSummary').textContent =
+          `${data.adapters?.llm_engine} | ${fmtMs(data.telemetry?.total_ms)} | ${data.citations?.length || 0} citations`;
+        renderFlowRails();
+
+        // Populate Tab 5 UI
+        document.getElementById('ragResultArea').classList.remove('hidden');
+        const tel = data.telemetry || {};
+        document.getElementById('ragTelemetryStrip').innerHTML = [
+          `Total ${fmtMs(tel.total_ms)}`,
+          `[Q1] Prep ${fmtMs(tel.query_prep_ms)}`,
+          `[Q2] Embed ${fmtMs(tel.embed_ms)} + RRF ${fmtMs(tel.retrieval_ms)}`,
+          `[Q3] Expand ${fmtMs(tel.expand_ms)}`,
+          `[Q4] Rerank ${fmtMs(tel.rerank_ms)}`,
+          `[Q5+] LLM ${fmtMs(tel.llm_ms)}`,
+          `Cands ${tel.candidates_retrieved} -> Reranked ${tel.reranked_count}`,
+          `Backend: ${data.backend}`,
+        ].map((lbl) => `<span class="badge badge-neutral mono">${escHtml(lbl)}</span>`).join('');
+
+        document.getElementById('ragPreparedQueryText').textContent = data.prepared_query || '';
+        document.getElementById('ragFinalAnswerText').textContent = data.answer || '';
+
+        document.getElementById('ragStageOutputsBox').innerHTML = (data.stage_outputs || []).map((st) => `
+          <details class="border border-slate-200 rounded bg-slate-50 px-3 py-1.5 text-xs">
+            <summary class="cursor-pointer font-medium text-slate-800 mono">
+              ${escHtml(st.stage_id)} | ${escHtml(st.model)} [${escHtml(st.engine)}] | ${fmtMs(st.latency_ms)} | ${escHtml(st.response_format)}
+            </summary>
+            <div class="pt-2 space-y-1.5">
+              <div class="text-[11px] text-slate-500">Output:</div>
+              <pre class="codebox mono whitespace-pre-wrap">${escHtml(st.output)}</pre>
+            </div>
+          </details>
+        `).join('');
+
+        document.getElementById('ragCitationsBox').innerHTML = (data.citations || []).map((c, idx) => `
+          <div class="border border-slate-200 rounded p-2.5 bg-white space-y-1">
+            <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <div class="flex items-center gap-1.5">
+                <span class="badge badge-neutral mono">Citation #${idx + 1}</span>
+                <span class="badge badge-indigo mono">[${escHtml(c.start_timestamp_display)} - ${escHtml(c.end_timestamp_display)}]</span>
+              </div>
+              <div class="flex items-center gap-1.5 mono">
+                <span class="badge badge-teal">Rerank ${Number(c.rerank_score).toFixed(4)}</span>
+                <span class="badge badge-neutral">RRF ${Number(c.rrf_total_score).toFixed(4)}</span>
+              </div>
+            </div>
+            <p class="text-xs text-slate-800">${escHtml(c.text_snippet || c.content)}</p>
+          </div>
+        `).join('');
+
+        await Promise.all([loadDiagnostics(), loadJobs(), loadTelemetry()]);
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = oldText;
+      }
+    }
+
+    async function loadTelemetry() {
+      const qs = state.lectureId ? `?lecture_id=${encodeURIComponent(state.lectureId)}` : '';
+      const res = await fetch('/api/rag/telemetry' + qs);
+      const data = await res.json();
+      const logs = data.audit_logs || [];
+      const container = document.getElementById('auditLogsContainer');
+      if (!logs.length) {
+        container.innerHTML = '<p class="text-slate-400">No audit logs recorded for this context yet.</p>';
+        return;
+      }
+      container.innerHTML = logs.map((l) => `
+        <div class="border-b border-slate-100 py-1.5 last:border-0">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-medium text-slate-800">${escHtml(l.query_text)}</span>
+            <span class="mono text-[10.5px] text-slate-500">${fmtMs(l.latency_ms)}</span>
+          </div>
+          <div class="mono text-[10.5px] text-slate-500">
+            profile: ${escHtml(l.prompt_profile || '--')} | hits: ${l.retrieved_chunk_ids?.length ?? 0}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      setMode('real');
+      await Promise.all([loadDiagnostics(), loadJobs(), loadPresets(), loadTelemetry()]);
+    });
   </script>
 </body>
 </html>

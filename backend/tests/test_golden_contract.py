@@ -22,7 +22,7 @@ def test_transcript_schema_golden_contract():
         job_id=job_id,
         lecture_id=lecture_id,
         generated=TranscriptGeneratedMeta(
-            model="phowhisper-base",
+            model="phowhisper-medium",
             language="vi",
             device="cuda:0",
             processing_seconds=45.2

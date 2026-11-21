@@ -37,10 +37,10 @@ describe('LectureLens Legal Documents (Terms & Privacy Policy)', () => {
   it('accurately enforces ADR 0001 Privacy-First On-Premise AI & PostgreSQL pgvector scope in Privacy Policy', () => {
     const privacyText = PRIVACY_SECTIONS.map((s) => `${s.title} ${s.body}`).join('\n')
 
-    assert.match(privacyText, /PhoWhisper/i)
+    assert.match(privacyText, /PhoWhisper-medium/i)
     assert.match(privacyText, /BGE-M3/i)
     assert.match(privacyText, /BGE-Reranker-v2-m3/i)
-    assert.match(privacyText, /Gemma 4 E4B/i)
+    assert.match(privacyText, /Gemma 4 E2B/i)
     assert.match(privacyText, /pgvector/i)
     assert.match(privacyText, /AsyncStorage/i)
     assert.match(privacyText, /zero third-party cloud AI|never sent to external cloud/i)

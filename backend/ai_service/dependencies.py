@@ -14,6 +14,7 @@ from ai_service.core.chunk_store import (
 )
 from ai_service.core.embedder import BgeM3Embedder, EmbedderProtocol
 from ai_service.core.job_reporter import JobReporterProtocol, SpringJobReporter
+from ai_service.core.model_registry import LocalModelRegistry, ModelRegistryProtocol
 from ai_service.core.llm_client import (
     CompositeLLMClient,
     FakeLLMClient,
@@ -118,6 +119,11 @@ def get_chunk_store() -> ChunkStoreProtocol:
         postgres_store=postgres_store,
         enable_pgvector=settings.ENABLE_PGVECTOR_SYNC,
     )
+
+
+@lru_cache
+def get_model_registry() -> ModelRegistryProtocol:
+    return LocalModelRegistry(settings=get_settings())
 
 
 def get_pipeline_coordinator() -> IngestPipelineCoordinator:

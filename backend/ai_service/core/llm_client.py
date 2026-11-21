@@ -1,8 +1,8 @@
 """
-Gemma 4 E4B LLM Client Deep Module ([Q5], [Q6], [Q7+]).
+Gemma 4 E2B LLM Client Deep Module ([Q1], [Q5], [Q6+]).
 Provides a unified LLMClientProtocol seam with:
 - OllamaGemmaClient (calls local Ollama /api/chat)
-- TransformersGemmaClient (direct local inference on backend/models/gemma-4-e4b)
+- TransformersGemmaClient (direct local inference on backend/models/gemma-4-e2b QAT Mobile)
 - FakeLLMClient (deterministic fast adapter for automated tests and UI mock mode)
 - CompositeLLMClient (auto/ollama/transformers/mock routing + sequential VRAM unload)
 """
@@ -39,7 +39,7 @@ class LLMGenerationResult(BaseModel):
 
 @runtime_checkable
 class LLMClientProtocol(Protocol):
-    """Seam for local Gemma 4 E4B generation and VRAM offloading."""
+    """Seam for local Gemma 4 E2B generation and VRAM offloading."""
 
     def generate(
         self,
@@ -260,6 +260,14 @@ class TransformersGemmaClient:
         self._tokenizer = None
         self._model = None
 
+    @property
+    def model_name(self) -> str:
+        return self.model_path.name
+
+    @property
+    def is_loaded(self) -> bool:
+        return self._model is not None and self._tokenizer is not None
+
     def is_model_present(self) -> bool:
         return (
             self.model_path.is_dir()
@@ -405,7 +413,7 @@ class TransformersGemmaClient:
         )
 
     def unload(self) -> None:
-        """Release Gemma 4 E4B model and tokenizer from RAM/VRAM."""
+        """Release Gemma 4 E2B model and tokenizer from RAM/VRAM."""
         model = self._model
         tokenizer = self._tokenizer
         self._model = None
@@ -460,7 +468,7 @@ class CompositeLLMClient:
         if self.transformers_client is not None and self.transformers_client.is_model_present():
             return "transformers"
         raise RuntimeError(
-            "No Gemma 4 E4B runtime available: Ollama server is unreachable and local model weights were not found."
+            "No Gemma 4 E2B runtime available: Ollama server is unreachable and local model weights were not found."
         )
 
     def generate(

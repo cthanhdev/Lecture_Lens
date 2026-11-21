@@ -109,6 +109,14 @@ class BgeRerankerV2M3:
         self._tokenizer = None
         self._model = None
 
+    @property
+    def model_name(self) -> str:
+        return self.model_path.name
+
+    @property
+    def is_loaded(self) -> bool:
+        return self._model is not None and self._tokenizer is not None
+
     def _ensure_loaded(self) -> None:
         if self._model is not None and self._tokenizer is not None:
             return

@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     )
     MODEL_PATH_PHOWHISPER: Path = Field(
         default=Path("./backend/models/phowhisper-medium"),
-        description="Local directory containing PhoWhisper model weights (medium or base)"
+        description="Local directory containing PhoWhisper-medium ASR model weights"
     )
     MODEL_PATH_BGE_M3: Path = Field(
         default=Path("./backend/models/bge-m3"),

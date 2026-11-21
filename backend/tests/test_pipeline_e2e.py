@@ -114,7 +114,7 @@ async def test_ingest_pipeline_e2e_full_success(mock_dependencies):
         # Give BackgroundTask a short moment to finish in event loop
         await asyncio.sleep(0.15)
 
-        # 3. Verify Manifest endpoint
+        # 3. Verify Manifest endpoint & dynamic ASR model propagation
         manifest_res = await client.get(
             f"/internal/v1/ai/audio/{job_id}/manifest",
             headers={"X-Internal-Secret": settings.INTERNAL_API_SECRET_KEY}
@@ -122,10 +122,15 @@ async def test_ingest_pipeline_e2e_full_success(mock_dependencies):
         assert manifest_res.status_code == 200
         manifest_data = manifest_res.json()
         assert manifest_data["stt"]["status"] == "COMPLETED"
+        assert manifest_data["stt"]["model"] == "fake-asr"
         assert manifest_data["original"]["extension"] == "mp3"
         assert manifest_data["chunking"]["status"] == "COMPLETED"
         assert manifest_data["chunking"]["chunk_count"] >= 1
         assert manifest_data["chunking"]["chunks_rel_path"] == f"chunks/{job_id}/chunks.json"
+
+        loaded_transcript = audio_store.load_transcript(job_id)
+        assert loaded_transcript is not None
+        assert loaded_transcript.generated.model == "fake-asr"
 
         # 4. Verify Chunks API endpoint
         chunks_res = await client.get(
@@ -209,7 +214,7 @@ async def test_chunk_and_embed_endpoint_runs_stage2_from_existing_transcript(moc
     transcript = TranscriptSchema(
         job_id=job_id,
         lecture_id=lecture_id,
-        generated=TranscriptGeneratedMeta(model="phowhisper-base", device="cpu"),
+        generated=TranscriptGeneratedMeta(model="phowhisper-medium", device="cpu"),
         audio=TranscriptAudioMeta(duration_seconds=20.0),
         full_text="Bài giảng về Active Directory và Domain Controller trong Windows Server.",
         segments=[
@@ -253,7 +258,7 @@ async def test_chunk_and_embed_endpoint_runs_stage2_from_existing_transcript(moc
 
 
 @pytest.mark.asyncio
-async def test_health_reports_bge_m3_and_pgvector_status(mock_dependencies):
+async def test_health_reports_four_model_catalog_and_pgvector_status(mock_dependencies):
     settings = get_settings()
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -263,9 +268,55 @@ async def test_health_reports_bge_m3_and_pgvector_status(mock_dependencies):
         )
         assert res.status_code == 200
         data = res.json()
+        assert "python_version" in data
+        assert "transformers_version" in data
+        assert "phowhisper_path_exists" in data["models"]
         assert "bge_m3_path_exists" in data["models"]
+        assert "bge_reranker_path_exists" in data["models"]
+        assert "gemma4_path_exists" in data["models"]
+        assert "total_disk_gb" in data["models"]
+        assert len(data["models"]["catalog"]) == 4
         assert "pgvector_connected" in data
         assert data["pgvector_connected"] is False
+
+
+@pytest.mark.asyncio
+async def test_pipeline_coordinator_emits_trace_events_via_observer(tmp_path: Path):
+    from ai_service.pipeline.ingest_pipeline import PipelineObserverProtocol, PipelineTraceEvent
+
+    class RecordingObserver:
+        def __init__(self) -> None:
+            self.events: list[PipelineTraceEvent] = []
+
+        def emit(self, event: PipelineTraceEvent) -> None:
+            self.events.append(event)
+
+    audio_store = LocalVolumeAudioStore(storage_root=tmp_path)
+    observer: PipelineObserverProtocol = RecordingObserver()
+    coord = IngestPipelineCoordinator(
+        audio_store=audio_store,
+        preprocessor=FakeAudioPreprocessor(synthetic_duration_seconds=4.0),
+        asr_engine=FakeAsrEngine(),
+        job_reporter=RecordingJobReporter(),
+        text_chunker=RecursiveTokenChunker(tokenizer=WhitespaceApproxTokenizer(), max_tokens=512, overlap_tokens=64),
+        embedder=FakeEmbedder(),
+        chunk_store=CompositeChunkStore(memory_store=InMemoryChunkStore(), postgres_store=None, enable_pgvector=False),
+        low_vram_mode=True,
+        observer=observer,
+    )
+
+    job_id = uuid.uuid4()
+    lecture_id = uuid.uuid4()
+    audio_store.get_incoming_path(job_id, "wav").write_bytes(b"RIFF_MOCK")
+    await coord.run(job_id, lecture_id, "wav")
+
+    done_steps = [e.step_id for e in observer.events if e.status == "done"]
+    for expected in ("register", "normalize", "asr", "vram_offload", "chunking", "embedding", "store_sync"):
+        assert expected in done_steps
+    asr_event = next(e for e in observer.events if e.step_id == "asr" and e.status == "done")
+    assert asr_event.model_used == "fake-asr"
+    emb_event = next(e for e in observer.events if e.step_id == "embedding" and e.status == "done")
+    assert emb_event.model_used == "fake-embedder"
 
 
 @pytest.mark.asyncio
@@ -359,7 +410,7 @@ def test_audio_store_stage2_artifacts_and_mark_failed_preserves_stt(tmp_path: Pa
     transcript = TranscriptSchema(
         job_id=job_id,
         lecture_id=lecture_id,
-        generated=TranscriptGeneratedMeta(model="phowhisper-base", device="cpu"),
+        generated=TranscriptGeneratedMeta(model="phowhisper-medium", device="cpu"),
         audio=TranscriptAudioMeta(duration_seconds=10.0),
         full_text="Nội dung bài giảng.",
         segments=[
@@ -429,7 +480,7 @@ def test_asr_engine_unload_releases_resources():
     fake.unload()
     assert fake.unload_calls == 1
 
-    engine = PhoWhisperEngine(model_path=Path("backend/models/phowhisper-base"), device="cpu")
+    engine = PhoWhisperEngine(model_path=Path("backend/models/phowhisper-medium"), device="cpu")
     engine._model = object()
     engine._processor = object()
     engine._prompt_ids = object()

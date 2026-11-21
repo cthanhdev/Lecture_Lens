@@ -1,10 +1,11 @@
 """
-LectureLens Test Studio Server
-Lightweight FastAPI server running the isolated test UI and driving both
-Stage 1 (FFmpeg + PhoWhisper ASR) and Stage 2 ([I5] Chunking + [I6] BGE-M3 + ChunkStore).
-Located inside TEST/ folder - completely isolated and safe to delete anytime.
+LectureLens Backend Inspector & Test Studio Server.
+Lightweight isolated FastAPI workbench exercising:
+- Offline Ingest Pipeline ([I1]-[I6]): FFmpeg DSP -> PhoWhisper-medium -> Recursive Chunking -> BGE-M3 -> ChunkStore
+- Online 2-Pass Pre-RAG Pipeline ([Q1]-[Q6+], No Cache): Gemma 4 E2B Prep -> BGE-M3 + RRF -> Expand -> BGE-Reranker-v2-m3 -> Gemma 4 E2B + RAG -> Audit Logs
 """
 import asyncio
+from datetime import datetime, timezone
 import logging
 import os
 from pathlib import Path
@@ -18,7 +19,6 @@ from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Query, Upload
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-# Add backend directory to sys.path to leverage our deep modules
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BACKEND_DIR = PROJECT_ROOT / "backend"
 if str(BACKEND_DIR) not in sys.path:
@@ -45,6 +45,7 @@ from ai_service.core.llm_client import (
     OllamaGemmaClient,
     TransformersGemmaClient,
 )
+from ai_service.core.model_registry import LocalModelRegistry
 from ai_service.core.preprocessing import (
     FakeAudioPreprocessor,
     FFmpegAudioPreprocessor,
@@ -75,7 +76,11 @@ from ai_service.core.text_chunker import (
     WhitespaceApproxTokenizer,
 )
 from ai_service.core.vad_chunker import EnergyVadChunker
-from ai_service.pipeline.ingest_pipeline import IngestPipelineCoordinator
+from ai_service.pipeline.ingest_pipeline import (
+    IngestPipelineCoordinator,
+    PipelineObserverProtocol,
+    PipelineTraceEvent,
+)
 from ai_service.pipeline.rag_pipeline import RagPipelineCoordinator
 
 logging.basicConfig(
@@ -84,57 +89,44 @@ logging.basicConfig(
 )
 logger = logging.getLogger("test_server")
 
-app = FastAPI(title="LectureLens Stage 1 & Stage 2 Test Studio")
+app = FastAPI(title="LectureLens BE Inspector & Test Workbench")
 settings = get_settings()
+model_registry = LocalModelRegistry(settings=settings)
 
 
 def _resolve_storage_root() -> Path:
     env_root = os.getenv("STORAGE_ROOT")
     if env_root:
         return Path(env_root)
-    return PROJECT_ROOT / "volumes" / "rag_data"
+    return Path(settings.STORAGE_ROOT)
+
+
+def _resolve_phowhisper_path() -> Path:
+    env_path = os.getenv("MODEL_PATH_PHOWHISPER")
+    if env_path and Path(env_path).exists():
+        return Path(env_path)
+    return Path(settings.MODEL_PATH_PHOWHISPER)
 
 
 def _resolve_bge_m3_path() -> Path:
     env_path = os.getenv("MODEL_PATH_BGE_M3")
     if env_path and Path(env_path).exists():
         return Path(env_path)
-    return PROJECT_ROOT / "backend" / "models" / "bge-m3"
+    return Path(settings.MODEL_PATH_BGE_M3)
 
 
 def _resolve_reranker_path() -> Path:
     env_path = os.getenv("MODEL_PATH_RERANKER")
     if env_path and Path(env_path).exists():
         return Path(env_path)
-    return PROJECT_ROOT / "backend" / "models" / "bge-reranker-v2-m3"
+    return Path(settings.MODEL_PATH_RERANKER)
 
 
 def _resolve_gemma_path() -> Path:
     env_path = os.getenv("MODEL_PATH_GEMMA")
     if env_path and Path(env_path).exists():
         return Path(env_path)
-    e2b_path = PROJECT_ROOT / "backend" / "models" / "gemma-4-e2b"
-    if e2b_path.exists():
-        return e2b_path
-    e4b_path = PROJECT_ROOT / "backend" / "models" / "gemma-4-e4b"
-    if e4b_path.exists():
-        logger.warning("gemma-4-e2b not found. Falling back temporarily to gemma-4-e4b.")
-        return e4b_path
-    return e2b_path
-
-
-def _resolve_phowhisper_path(model_variant: str) -> Path:
-    if model_variant == "base":
-        env_path = os.getenv("MODEL_PATH_PHOWHISPER")
-        if env_path and Path(env_path).exists():
-            return Path(env_path)
-        return PROJECT_ROOT / "backend" / "models" / "phowhisper-base"
-
-    medium_path = PROJECT_ROOT / "backend" / "models" / "phowhisper-medium"
-    if medium_path.exists():
-        return medium_path
-    logger.warning("PhoWhisper-medium not found. Falling back to phowhisper-base.")
-    return PROJECT_ROOT / "backend" / "models" / "phowhisper-base"
+    return Path(settings.MODEL_PATH_GEMMA)
 
 
 def _resolve_runtime_device() -> str:
@@ -151,7 +143,6 @@ def _resolve_runtime_device() -> str:
     return "cpu"
 
 
-# Configure Storage Root & ChunkStore
 STORAGE_ROOT = _resolve_storage_root()
 STORAGE_ROOT.mkdir(parents=True, exist_ok=True)
 audio_store = LocalVolumeAudioStore(storage_root=STORAGE_ROOT)
@@ -173,14 +164,6 @@ chunk_store = CompositeChunkStore(
     enable_pgvector=settings.ENABLE_PGVECTOR_SYNC,
 )
 
-# Cached lazy-loaded Stage 2 & Online RAG adapters
-_real_tokenizer: BgeM3TokenizerAdapter | None = None
-_real_embedder: BgeM3Embedder | None = None
-_real_reranker: BgeRerankerV2M3 | None = None
-_fake_embedder = FakeEmbedder()
-_fake_reranker = FakeReranker()
-_prompt_builder = GroundedPromptBuilder()
-
 telemetry_store = CompositeTelemetryStore(
     memory_store=InMemoryTelemetryStore(),
     postgres_store=(
@@ -196,6 +179,15 @@ telemetry_store = CompositeTelemetryStore(
     ),
     enable_pgvector=settings.ENABLE_PGVECTOR_SYNC,
 )
+
+# Cached lazy-loaded real & fake adapters
+_real_tokenizer: BgeM3TokenizerAdapter | None = None
+_real_embedder: BgeM3Embedder | None = None
+_real_reranker: BgeRerankerV2M3 | None = None
+_last_asr_engine: PhoWhisperEngine | None = None
+_fake_embedder = FakeEmbedder()
+_fake_reranker = FakeReranker()
+_prompt_builder = GroundedPromptBuilder()
 
 _ollama_client = OllamaGemmaClient(
     base_url=os.getenv("OLLAMA_BASE_URL", settings.OLLAMA_BASE_URL),
@@ -228,8 +220,223 @@ rag_coordinator = RagPipelineCoordinator(
     query_prep_model=os.getenv("OLLAMA_QUERY_PREP_MODEL", settings.OLLAMA_QUERY_PREP_MODEL),
 )
 
-# In-memory progress state tracker: job_id -> { ... }
+# Canonical session telemetry & trackers
+_CANONICAL_MODELS = ("phowhisper-medium", "bge-m3", "bge-reranker-v2-m3", "gemma-4-e2b")
+_INGEST_BLUEPRINT = [
+    {"step_id": "register", "code": "I1", "label": "AudioStore Register", "stage": "Stage 1", "model_key": None},
+    {"step_id": "normalize", "code": "I2", "label": "FFmpeg 16kHz DSP", "stage": "Stage 1", "model_key": None},
+    {"step_id": "asr", "code": "I4", "label": "PhoWhisper-medium ASR", "stage": "Stage 1", "model_key": "phowhisper-medium"},
+    {"step_id": "vram_offload", "code": "VRAM", "label": "ASR VRAM Offload", "stage": "Stage 1->2", "model_key": "phowhisper-medium"},
+    {"step_id": "chunking", "code": "I5", "label": "Recursive Chunker", "stage": "Stage 2", "model_key": None},
+    {"step_id": "embedding", "code": "I6", "label": "BGE-M3 Dual Embed", "stage": "Stage 2", "model_key": "bge-m3"},
+    {"step_id": "store_sync", "code": "DB", "label": "chunks.json + PgVector", "stage": "Stage 2", "model_key": None},
+]
+_RAG_BLUEPRINT = [
+    {"step_id": "q1_query_prep", "code": "Q1", "label": "Gemma 4 Query Prep", "stage": "Online Pass 1", "model_key": "gemma-4-e2b"},
+    {"step_id": "q2_embed_rrf", "code": "Q2", "label": "BGE-M3 + 3-Stream RRF", "stage": "Online Retrieval", "model_key": "bge-m3"},
+    {"step_id": "q3_expand_ctx", "code": "Q3", "label": "3-Way Context Expand", "stage": "Online Retrieval", "model_key": None},
+    {"step_id": "q4_rerank", "code": "Q4", "label": "BGE-Reranker-v2-m3", "stage": "Online Rerank", "model_key": "bge-reranker-v2-m3"},
+    {"step_id": "q5_rag_answer", "code": "Q5", "label": "Gemma 4 + RAG Synthesis", "stage": "Online Pass 2", "model_key": "gemma-4-e2b"},
+    {"step_id": "q6_extra_stages", "code": "Q6+", "label": "Extra Prompt Stages", "stage": "Online Extensible", "model_key": "gemma-4-e2b"},
+    {"step_id": "audit_log", "code": "LOG", "label": "rag.rag_audit_logs", "stage": "Audit", "model_key": None},
+]
+
+
+def _default_model_stat() -> dict:
+    return {
+        "run_count": 0,
+        "real_runs": 0,
+        "mock_runs": 0,
+        "total_duration_ms": 0.0,
+        "last_duration_ms": None,
+        "last_device": None,
+        "last_engine": None,
+        "last_stage": None,
+        "last_mode": None,
+        "last_run_at": None,
+    }
+
+
+session_model_stats: dict[str, dict] = {k: _default_model_stat() for k in _CANONICAL_MODELS}
 job_state_tracker: dict[str, dict] = {}
+job_trace_tracker: dict[str, "RunTraceRecorder"] = {}
+recent_jobs: list[str] = []
+recent_rag_runs: list[dict] = []
+
+
+def _record_model_run(
+    model_key: str,
+    *,
+    stage: str,
+    duration_ms: float,
+    device: str,
+    engine: str,
+    mode: Literal["real", "mock"],
+) -> None:
+    if model_key not in session_model_stats:
+        session_model_stats[model_key] = _default_model_stat()
+    stat = session_model_stats[model_key]
+    stat["run_count"] += 1
+    if mode == "real":
+        stat["real_runs"] += 1
+    else:
+        stat["mock_runs"] += 1
+    stat["total_duration_ms"] = round(stat["total_duration_ms"] + duration_ms, 2)
+    stat["last_duration_ms"] = round(duration_ms, 2)
+    stat["last_device"] = device
+    stat["last_engine"] = engine
+    stat["last_stage"] = stage
+    stat["last_mode"] = mode
+    stat["last_run_at"] = datetime.now(timezone.utc).isoformat()
+
+
+def _is_model_loaded(model_key: str) -> bool:
+    if model_key == "phowhisper-medium":
+        return bool(_last_asr_engine is not None and _last_asr_engine.is_loaded)
+    if model_key == "bge-m3":
+        return bool(_real_embedder is not None and _real_embedder.is_loaded)
+    if model_key == "bge-reranker-v2-m3":
+        return bool(_real_reranker is not None and _real_reranker.is_loaded)
+    if model_key == "gemma-4-e2b":
+        return bool(_transformers_gemma.is_loaded)
+    return False
+
+
+class RunTraceRecorder:
+    """PipelineObserverProtocol adapter recording step-level BE trace for one job."""
+
+    def __init__(self, job_id: str, lecture_id: str, mode: str, source: str) -> None:
+        self.job_id = job_id
+        self.lecture_id = lecture_id
+        self.mode = mode
+        self.source = source
+        self.created_at = datetime.now(timezone.utc).isoformat()
+        self.started_perf = time.perf_counter()
+        self.steps: dict[str, dict] = {
+            bp["step_id"]: {
+                "step_id": bp["step_id"],
+                "code": bp["code"],
+                "label": bp["label"],
+                "stage": bp["stage"],
+                "pipeline": "ingest",
+                "status": "pending",
+                "model_used": None,
+                "adapter": None,
+                "device": None,
+                "dtype": None,
+                "duration_ms": None,
+                "in_summary": None,
+                "out_summary": None,
+                "notes": None,
+                "timestamp": None,
+            }
+            for bp in _INGEST_BLUEPRINT
+        }
+        self.state_transitions: list[dict] = []
+
+    def mark_skipped(self, step_id: str, notes: str) -> None:
+        if step_id in self.steps:
+            self.steps[step_id]["status"] = "skipped"
+            self.steps[step_id]["notes"] = notes
+            self.steps[step_id]["timestamp"] = datetime.now(timezone.utc).isoformat()
+
+    def record_transition(self, status: str, progress: int, message: str) -> None:
+        self.state_transitions.append(
+            {
+                "status": status,
+                "progress": progress,
+                "message": message,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+
+    def emit(self, event: PipelineTraceEvent) -> None:
+        existing = self.steps.get(event.step_id) or {
+            "step_id": event.step_id,
+            "code": event.step_id.upper(),
+            "label": event.label,
+            "stage": event.stage,
+            "pipeline": "ingest",
+        }
+        existing.update(
+            {
+                "status": event.status,
+                "model_used": event.model_used,
+                "adapter": event.adapter,
+                "device": event.device,
+                "dtype": event.dtype,
+                "duration_ms": event.duration_ms,
+                "in_summary": event.in_summary,
+                "out_summary": event.out_summary,
+                "notes": event.notes,
+                "timestamp": event.timestamp,
+            }
+        )
+        self.steps[event.step_id] = existing
+
+        if event.status == "done" and event.model_used:
+            run_mode: Literal["real", "mock"] = "mock" if event.model_used.startswith("fake-") else "real"
+            canonical_key = (
+                "phowhisper-medium"
+                if event.step_id == "asr"
+                else ("bge-m3" if event.step_id == "embedding" else None)
+            )
+            if canonical_key and event.step_id in ("asr", "embedding"):
+                _record_model_run(
+                    canonical_key,
+                    stage=event.stage,
+                    duration_ms=float(event.duration_ms or 0.0),
+                    device=event.device or "cpu",
+                    engine=event.adapter or run_mode,
+                    mode=run_mode,
+                )
+
+    def models_executed(self) -> list[dict]:
+        executed: list[dict] = []
+        offload_done = self.steps.get("vram_offload", {}).get("status") == "done"
+        for step_id in ("asr", "embedding"):
+            step = self.steps.get(step_id)
+            if step and step.get("status") == "done" and step.get("model_used"):
+                executed.append(
+                    {
+                        "model_key": step["model_used"],
+                        "adapter": step.get("adapter"),
+                        "stage": f"{step.get('code', '')} {step.get('stage', '')}".strip(),
+                        "device": step.get("device"),
+                        "dtype": step.get("dtype"),
+                        "duration_ms": step.get("duration_ms"),
+                        "unloaded": offload_done if step_id == "asr" else False,
+                    }
+                )
+        return executed
+
+    def total_duration_ms(self) -> float:
+        step_sum = sum(
+            float(s["duration_ms"])
+            for s in self.steps.values()
+            if isinstance(s.get("duration_ms"), (int, float))
+        )
+        return round(step_sum, 2)
+
+    def to_dict(self) -> dict:
+        return {
+            "job_id": self.job_id,
+            "lecture_id": self.lecture_id,
+            "mode": self.mode,
+            "source": self.source,
+            "created_at": self.created_at,
+            "total_duration_ms": self.total_duration_ms(),
+            "steps": list(self.steps.values()),
+            "models_executed": self.models_executed(),
+            "state_transitions": self.state_transitions,
+        }
+
+
+def _register_recent_job(job_id_str: str) -> None:
+    if job_id_str in recent_jobs:
+        recent_jobs.remove(job_id_str)
+    recent_jobs.insert(0, job_id_str)
+    del recent_jobs[25:]
 
 
 def get_real_text_chunker() -> RecursiveTokenChunker:
@@ -267,7 +474,6 @@ def get_real_reranker() -> BgeRerankerV2M3:
 
 
 def _build_silent_wav_bytes(duration_sec: float = 0.25, sample_rate: int = 16000) -> bytes:
-    """Builds a minimal valid PCM 16-bit mono WAV payload for sample Stage 2 registration."""
     num_samples = max(1, int(duration_sec * sample_rate))
     data_size = num_samples * 2
     header = struct.pack(
@@ -289,8 +495,6 @@ def _build_silent_wav_bytes(duration_sec: float = 0.25, sample_rate: int = 16000
     return header + (b"\x00\x00" * num_samples)
 
 
-# Rich 14-segment Vietnamese university lecture (~1,200 tokens across 4 topics)
-# Ensures RecursiveTokenChunker produces multiple <=512-token chunks with 64-token overlap.
 SAMPLE_VIETNAMESE_SEGMENTS: list[str] = [
     (
         "Chào mừng các em sinh viên đến với học phần Hệ Thống Thông Tin và Mạng Máy Tính nâng cao. "
@@ -381,7 +585,6 @@ SAMPLE_VIETNAMESE_SEGMENTS: list[str] = [
 
 
 def _ensure_lecture_loaded_in_store(lecture_id: uuid.UUID) -> int:
-    """Hydrates InMemoryChunkStore from chunks.json on disk if store is empty (e.g., after reload)."""
     existing = chunk_store.get_lecture_chunks(lecture_id)
     if existing:
         return len(existing)
@@ -410,72 +613,81 @@ async def serve_index():
 
 @app.get("/api/system-diagnostics")
 async def get_system_diagnostics():
-    """Returns runtime telemetry for FFmpeg, PyTorch, CUDA, PhoWhisper, BGE-M3, and PostgreSQL pgvector."""
+    """Returns runtime telemetry, BE configuration, 4-model registry + session stats, and dual pipeline blueprint."""
+    catalog = model_registry.inspect_all()
     ffmpeg_bin = resolve_ffmpeg_binary()
     ffmpeg_available = Path(ffmpeg_bin).exists() if ffmpeg_bin else False
 
     torch_installed = False
+    torch_version = None
     cuda_available = False
     device_name = f"CPU ({os.cpu_count() or 1} vCPUs)"
     vram_mb = 0
+    vram_allocated_mb = 0.0
+    vram_reserved_mb = 0.0
     try:
         import torch
 
         torch_installed = True
+        torch_version = getattr(torch, "__version__", None)
         cuda_available = torch.cuda.is_available()
         if cuda_available:
             device_name = torch.cuda.get_device_name(0)
             vram_mb = int(torch.cuda.get_device_properties(0).total_memory / (1024 * 1024))
+            vram_allocated_mb = round(torch.cuda.memory_allocated(0) / (1024 * 1024), 2)
+            vram_reserved_mb = round(torch.cuda.memory_reserved(0) / (1024 * 1024), 2)
     except ImportError:
         pass
 
-    medium_path = PROJECT_ROOT / "backend" / "models" / "phowhisper-medium"
-    base_path = _resolve_phowhisper_path("base")
-    bge_m3_path = _resolve_bge_m3_path()
-    reranker_path = _resolve_reranker_path()
-    gemma_path = _resolve_gemma_path()
-
-    medium_exists = (medium_path / "pytorch_model.bin").exists() or (medium_path / "model.safetensors").exists()
-    base_exists = (base_path / "pytorch_model.bin").exists() or (base_path / "model.safetensors").exists()
-    bge_m3_exists = (bge_m3_path / "pytorch_model.bin").exists() or (bge_m3_path / "model.safetensors").exists()
-    bge_m3_sparse_exists = (bge_m3_path / "sparse_linear.pt").exists()
-    reranker_exists = (reranker_path / "model.safetensors").exists() or (reranker_path / "pytorch_model.bin").exists()
-    gemma4_exists = _transformers_gemma.is_model_present()
-    ollama_available = _ollama_client.is_available(timeout_seconds=0.8)
-
+    ollama_available = _ollama_client.is_available(timeout_seconds=0.6)
     pg_connected = chunk_store.is_postgres_connected()
 
+    model_items: list[dict] = []
+    for report in catalog.models:
+        item = report.model_dump(mode="json")
+        item["loaded_in_memory"] = _is_model_loaded(report.key)
+        item["session_stats"] = session_model_stats.get(report.key, _default_model_stat())
+        model_items.append(item)
+
     return {
-        "ffmpeg": {
-            "available": ffmpeg_available,
-            "binary": ffmpeg_bin,
-            "is_bundled": "imageio_ffmpeg" in (ffmpeg_bin or "").lower(),
-        },
-        "ai_runtime": {
+        "runtime": {
+            "python_version": catalog.python_version,
+            "transformers_version": catalog.transformers_version,
             "torch_installed": torch_installed,
+            "torch_version": torch_version,
             "cuda_available": cuda_available,
             "device": "cuda" if cuda_available else "cpu",
             "device_name": device_name,
             "vram_mb": vram_mb,
-            "low_vram_mode": settings.LOW_VRAM_MODE,
+            "vram_allocated_mb": vram_allocated_mb,
+            "vram_reserved_mb": vram_reserved_mb,
+            "cpu_count": os.cpu_count() or 1,
             "omp_num_threads": os.getenv("OMP_NUM_THREADS", "default"),
+            "mkl_num_threads": os.getenv("MKL_NUM_THREADS", "default"),
+            "torch_num_threads": os.getenv("TORCH_NUM_THREADS", "default"),
         },
-        "models": {
-            "medium_exists": medium_exists,
-            "base_exists": base_exists,
-            "bge_m3_exists": bge_m3_exists,
-            "bge_m3_sparse_linear_exists": bge_m3_sparse_exists,
-            "reranker_exists": reranker_exists,
-            "gemma4_exists": gemma4_exists,
-            "ollama_available": ollama_available,
-            "ollama_url": _ollama_client.base_url,
+        "be_config": {
+            "device_configured": os.getenv("DEVICE", settings.DEVICE),
+            "low_vram_mode": settings.LOW_VRAM_MODE,
+            "llm_engine_mode": _configured_llm_mode,
+            "ollama_base_url": _ollama_client.base_url,
             "ollama_model": _ollama_client.model,
-            "active_default": "PhoWhisper-medium" if medium_exists else "PhoWhisper-base",
-            "medium_path": str(medium_path),
-            "base_path": str(base_path),
-            "bge_m3_path": str(bge_m3_path),
-            "reranker_path": str(reranker_path),
-            "gemma4_path": str(gemma_path),
+            "ollama_available": ollama_available,
+            "rag_retrieval_top_k": settings.RAG_RETRIEVAL_TOP_K,
+            "chunk_max_tokens": settings.CHUNK_MAX_TOKENS,
+            "chunk_overlap_tokens": settings.CHUNK_OVERLAP_TOKENS,
+            "whisper_chunk_seconds": settings.WHISPER_CHUNK_SECONDS,
+            "whisper_stride_seconds": settings.WHISPER_STRIDE_SECONDS,
+            "max_audio_duration_hours": settings.MAX_AUDIO_DURATION_HOURS,
+            "enable_pgvector_sync": settings.ENABLE_PGVECTOR_SYNC,
+            "storage_root": str(STORAGE_ROOT),
+            "gpu_semaphore_limit": 1,
+            "semantic_cache_enabled": False,
+        },
+        "ffmpeg": {
+            "available": ffmpeg_available,
+            "binary": ffmpeg_bin,
+            "is_bundled": "imageio_ffmpeg" in (ffmpeg_bin or "").lower(),
         },
         "database": {
             "postgres_pgvector_connected": pg_connected,
@@ -484,7 +696,54 @@ async def get_system_diagnostics():
             "port": settings.POSTGRES_PORT,
             "dbname": settings.POSTGRES_DB,
         },
+        "models": {
+            "total_disk_mb": catalog.total_disk_mb,
+            "total_disk_gb": catalog.total_disk_gb,
+            "active_count": catalog.active_count,
+            "staged_count": catalog.staged_count,
+            "ready_on_disk_count": catalog.ready_on_disk_count,
+            "items": model_items,
+        },
+        "pipeline_blueprint": {
+            "ingest": _INGEST_BLUEPRINT,
+            "rag_query": _RAG_BLUEPRINT,
+        },
         "default_prompt": DEFAULT_IT_PROMPT,
+    }
+
+
+@app.get("/api/jobs")
+async def list_recent_jobs():
+    """Returns recent ingest/Stage 2 test runs with executed models and timings."""
+    items: list[dict] = []
+    for job_id_str in recent_jobs:
+        state = job_state_tracker.get(job_id_str, {})
+        recorder = job_trace_tracker.get(job_id_str)
+        chunks_count = None
+        try:
+            art = audio_store.load_chunks(uuid.UUID(job_id_str))
+            if art is not None:
+                chunks_count = art.total_chunks
+        except Exception:
+            pass
+        items.append(
+            {
+                "jobId": job_id_str,
+                "lectureId": state.get("lectureId"),
+                "filename": state.get("filename"),
+                "source": recorder.source if recorder else "upload",
+                "mode": recorder.mode if recorder else state.get("mode", "real"),
+                "status": state.get("status", "UNKNOWN"),
+                "progress": state.get("progress", 0),
+                "total_chunks": chunks_count,
+                "total_duration_ms": recorder.total_duration_ms() if recorder else None,
+                "models_executed": recorder.models_executed() if recorder else [],
+                "created_at": recorder.created_at if recorder else None,
+            }
+        )
+    return {
+        "jobs": items,
+        "recent_rag_runs": recent_rag_runs[:10],
     }
 
 
@@ -504,6 +763,7 @@ async def get_sample_audio():
 async def upload_audio(file: UploadFile = File(...)):
     job_id = uuid.uuid4()
     lecture_id = uuid.uuid4()
+    job_id_str = str(job_id)
 
     ext = Path(file.filename or "audio.wav").suffix.lstrip(".").lower() or "wav"
 
@@ -513,19 +773,27 @@ async def upload_audio(file: UploadFile = File(...)):
     content = await file.read()
     incoming_path.write_bytes(content)
 
-    job_state_tracker[str(job_id)] = {
-        "jobId": str(job_id),
+    job_state_tracker[job_id_str] = {
+        "jobId": job_id_str,
         "lectureId": str(lecture_id),
+        "filename": file.filename or f"{job_id}.{ext}",
         "extension": ext,
         "progress": 5,
         "status": "QUEUED",
         "message": f"Tệp {file.filename} đã tiếp nhận vào incoming volume.",
         "errorMessage": None,
     }
+    job_trace_tracker[job_id_str] = RunTraceRecorder(
+        job_id=job_id_str,
+        lecture_id=str(lecture_id),
+        mode="pending",
+        source="upload",
+    )
+    _register_recent_job(job_id_str)
 
     logger.info("Uploaded test audio for job %s (size: %d bytes)", job_id, len(content))
     return {
-        "jobId": str(job_id),
+        "jobId": job_id_str,
         "lectureId": str(lecture_id),
         "filename": file.filename,
         "sizeBytes": len(content),
@@ -533,19 +801,20 @@ async def upload_audio(file: UploadFile = File(...)):
 
 
 class StateTrackingJobReporter:
-    """Reporter adapter that updates the in-memory web tracker across all 6 stages."""
+    """Reporter adapter updating the in-memory web tracker and RunTraceRecorder transitions."""
 
     _STAGE_MESSAGES = {
-        "PROCESSING_STT": "Đang chuẩn hóa âm thanh & nhận dạng giọng nói PhoWhisper...",
-        "STT_COMPLETED": "Đã hoàn tất Stage 1 (transcript.json). Chuẩn bị Stage 2...",
-        "CHUNKING": "Đang chạy [I5] RecursiveTokenChunker (<=512 tokens, 64 overlap)...",
-        "EMBEDDING": "Đang sinh vector BGE-M3 [I6] halfvec(1024) + lexical_weights...",
+        "PROCESSING_STT": "Stage 1: Chuẩn hóa DSP 16kHz & PhoWhisper-medium ASR...",
+        "STT_COMPLETED": "Hoàn tất Stage 1 (transcript.json). Chuẩn bị offload & Stage 2...",
+        "CHUNKING": "Stage 2 [I5]: RecursiveTokenChunker (<=512 tokens, 64 overlap)...",
+        "EMBEDDING": "Stage 2 [I6]: BGE-M3 Dual Embedding halfvec(1024) + lexical_weights...",
         "READY": "Hoàn tất Stage 1 + Stage 2! Đã lưu chunks.json & ChunkStore.",
         "FAILED": "Pipeline gặp sự cố.",
     }
 
-    def __init__(self, job_id_str: str):
+    def __init__(self, job_id_str: str, recorder: RunTraceRecorder | None = None):
         self.job_id_str = job_id_str
+        self.recorder = recorder
 
     async def report(
         self,
@@ -554,18 +823,20 @@ class StateTrackingJobReporter:
         progress: int,
         error_message: str | None = None,
     ) -> bool:
+        msg = self._STAGE_MESSAGES.get(status, status)
         if self.job_id_str in job_state_tracker:
             job_state_tracker[self.job_id_str]["progress"] = progress
             job_state_tracker[self.job_id_str]["status"] = status
-            job_state_tracker[self.job_id_str]["message"] = self._STAGE_MESSAGES.get(status, status)
+            job_state_tracker[self.job_id_str]["message"] = msg
             if error_message:
                 job_state_tracker[self.job_id_str]["errorMessage"] = error_message
+        if self.recorder is not None:
+            self.recorder.record_transition(status, progress, error_message or msg)
         return True
 
 
 class PipelineRunConfig(BaseModel):
-    mode: str = "real"
-    model: str = "medium"
+    mode: Literal["real", "mock"] = "real"
     dsp: bool = True
     vad: bool = True
     prompt: str | None = None
@@ -577,19 +848,27 @@ async def run_pipeline_task(
     ext: str,
     cfg: PipelineRunConfig,
 ):
+    global _last_asr_engine
     job_id_str = str(job_id)
-    reporter = StateTrackingJobReporter(job_id_str)
+    recorder = job_trace_tracker.get(job_id_str) or RunTraceRecorder(
+        job_id=job_id_str,
+        lecture_id=str(lecture_id),
+        mode=cfg.mode,
+        source="upload",
+    )
+    recorder.mode = cfg.mode
+    job_trace_tracker[job_id_str] = recorder
+    reporter = StateTrackingJobReporter(job_id_str, recorder=recorder)
 
     if cfg.mode == "real":
         logger.info(
-            "Initializing REAL Full Pipeline for job %s (model=%s, dsp=%s, vad=%s)...",
+            "Initializing REAL Full Pipeline for job %s (phowhisper-medium, dsp=%s, vad=%s)...",
             job_id,
-            cfg.model,
             cfg.dsp,
             cfg.vad,
         )
         preprocessor = FFmpegAudioPreprocessor(enable_dsp_filters=cfg.dsp)
-        model_path = _resolve_phowhisper_path(cfg.model)
+        model_path = _resolve_phowhisper_path()
         device = _resolve_runtime_device()
         vad_chunker = EnergyVadChunker() if cfg.vad else None
         prompt_text = cfg.prompt if cfg.prompt is not None else DEFAULT_IT_PROMPT
@@ -600,6 +879,7 @@ async def run_pipeline_task(
             vad_chunker=vad_chunker,
             prompt=prompt_text,
         )
+        _last_asr_engine = asr_engine
         text_chunker = get_real_text_chunker()
         embedder = get_real_embedder()
     else:
@@ -622,6 +902,7 @@ async def run_pipeline_task(
         embedder=embedder,
         chunk_store=chunk_store,
         low_vram_mode=settings.LOW_VRAM_MODE,
+        observer=recorder,
     )
 
     await coordinator.run(job_id, lecture_id, ext)
@@ -631,8 +912,7 @@ async def run_pipeline_task(
 async def process_audio(
     job_id: uuid.UUID,
     background_tasks: BackgroundTasks,
-    mode: str = Query("real"),
-    model: str = Query("medium"),
+    mode: Literal["real", "mock"] = Query("real"),
     dsp: bool = Query(True),
     vad: bool = Query(True),
     prompt: str | None = Query(None),
@@ -642,30 +922,23 @@ async def process_audio(
         raise HTTPException(status_code=404, detail="Job not found in tracker.")
 
     info = job_state_tracker[job_id_str]
+    info["mode"] = mode
     lecture_id = uuid.UUID(info["lectureId"])
     ext = info["extension"]
 
-    cfg = PipelineRunConfig(
-        mode=mode,
-        model=model,
-        dsp=dsp,
-        vad=vad,
-        prompt=prompt,
-    )
-
+    cfg = PipelineRunConfig(mode=mode, dsp=dsp, vad=vad, prompt=prompt)
     background_tasks.add_task(run_pipeline_task, job_id, lecture_id, ext, cfg)
     return {
         "status": "ACCEPTED",
-        "message": f"Full Stage 1 + Stage 2 pipeline started (mode={mode}, model={model}, dsp={dsp}, vad={vad})",
+        "message": f"Full Stage 1 + Stage 2 pipeline started (mode={mode}, asr=phowhisper-medium, dsp={dsp}, vad={vad})",
     }
 
 
 @app.post("/api/test-stage2-sample")
 async def test_stage2_sample(mode: Literal["real", "mock"] = Query("real")):
     """
-    1-click fast endpoint: generates a rich 14-segment Vietnamese university lecture transcript
-    (Computer Networks, Active Directory, Linear Algebra, Gradient Descent) and executes
-    Stage 2 ([I5] RecursiveTokenChunker + [I6] BgeM3Embedder + ChunkStore) immediately.
+    1-click endpoint: generates a 14-segment Vietnamese university lecture transcript
+    and executes Stage 2 ([I5] RecursiveTokenChunker + [I6] BgeM3Embedder + ChunkStore) immediately.
     """
     job_id = uuid.uuid4()
     lecture_id = uuid.uuid4()
@@ -711,16 +984,31 @@ async def test_stage2_sample(mode: Literal["real", "mock"] = Query("real")):
     )
     audio_store.save_transcript(job_id, transcript)
 
+    recorder = RunTraceRecorder(
+        job_id=job_id_str,
+        lecture_id=str(lecture_id),
+        mode=mode,
+        source="stage2_sample",
+    )
+    recorder.mark_skipped("register", "Sample transcript.json (14 segments) pre-registered")
+    recorder.mark_skipped("normalize", "Skipped (no raw audio)")
+    recorder.mark_skipped("asr", "Skipped (using 14-segment Vietnamese sample transcript)")
+    recorder.mark_skipped("vram_offload", "Skipped (ASR was not loaded)")
+
     job_state_tracker[job_id_str] = {
         "jobId": job_id_str,
         "lectureId": str(lecture_id),
+        "filename": "sample_vietnamese_lecture_14segs.json",
         "extension": "wav",
+        "mode": mode,
         "progress": 75,
         "status": "STT_COMPLETED",
         "message": "Đã tạo transcript.json mẫu. Đang chạy Stage 2...",
         "errorMessage": None,
     }
-    reporter = StateTrackingJobReporter(job_id_str)
+    job_trace_tracker[job_id_str] = recorder
+    _register_recent_job(job_id_str)
+    reporter = StateTrackingJobReporter(job_id_str, recorder=recorder)
 
     if mode == "real":
         text_chunker = get_real_text_chunker()
@@ -742,6 +1030,7 @@ async def test_stage2_sample(mode: Literal["real", "mock"] = Query("real")):
         embedder=embedder,
         chunk_store=chunk_store,
         low_vram_mode=settings.LOW_VRAM_MODE,
+        observer=recorder,
     )
 
     artifact = await coordinator.run_stage2(job_id, lecture_id=lecture_id, sync_to_db=True)
@@ -759,6 +1048,7 @@ async def test_stage2_sample(mode: Literal["real", "mock"] = Query("real")):
         "db_chunks_count": db_chunks_count,
         "db_backend": "postgres_pgvector" if chunk_store.is_postgres_connected() else "in_memory_fallback",
         "processing_seconds": artifact.processing_seconds,
+        "trace": recorder.to_dict(),
         "message": f"Hoàn tất Stage 2 ({mode}): {artifact.total_chunks} chunks (<=512 tokens) trong {artifact.processing_seconds}s.",
     }
 
@@ -768,7 +1058,11 @@ async def get_status(job_id: uuid.UUID):
     job_id_str = str(job_id)
     if job_id_str not in job_state_tracker:
         raise HTTPException(status_code=404, detail="Job not found.")
-    return job_state_tracker[job_id_str]
+    payload = dict(job_state_tracker[job_id_str])
+    recorder = job_trace_tracker.get(job_id_str)
+    if recorder is not None:
+        payload["trace"] = recorder.to_dict()
+    return payload
 
 
 @app.get("/api/result/{job_id}")
@@ -784,6 +1078,7 @@ async def get_result(job_id: uuid.UUID):
         _ensure_lecture_loaded_in_store(manifest.lecture_id)
 
     db_chunks = chunk_store.get_lecture_chunks(manifest.lecture_id)
+    recorder = job_trace_tracker.get(str(job_id))
 
     return {
         "manifest": manifest.model_dump(mode="json"),
@@ -792,6 +1087,7 @@ async def get_result(job_id: uuid.UUID):
         "db_chunks_count": len(db_chunks),
         "db_backend": "postgres_pgvector" if chunk_store.is_postgres_connected() else "in_memory_fallback",
         "job_state": job_state_tracker.get(str(job_id)),
+        "trace": recorder.to_dict() if recorder else None,
     }
 
 
@@ -808,22 +1104,28 @@ class TestSearchRequest(BaseModel):
 async def search_hybrid(request: TestSearchRequest):
     """
     Executes 3-stream Vietnamese hybrid RRF search (Dense halfvec + Lexical TSVECTOR + Fuzzy Trigram)
-    and returns ranked chunks with 3-way expanded context (PREVIOUS / CURRENT / NEXT).
+    and returns ranked chunks with latency breakdown and 3-way expanded context.
     """
     t0 = time.perf_counter()
     _ensure_lecture_loaded_in_store(request.lecture_id)
 
-    embedder = get_real_embedder() if request.mode == "real" else FakeEmbedder()
+    embedder = get_real_embedder() if request.mode == "real" else _fake_embedder
     loop = asyncio.get_running_loop()
-    query_emb = await loop.run_in_executor(None, lambda: embedder.encode_query(request.query))
 
+    t_emb = time.perf_counter()
+    query_emb = await loop.run_in_executor(None, lambda: embedder.encode_query(request.query))
+    embed_ms = round((time.perf_counter() - t_emb) * 1000, 2)
+
+    t_rrf = time.perf_counter()
     raw_hits = chunk_store.search_hybrid_rrf(
         lecture_ids=[request.lecture_id],
         query_embedding=query_emb.dense_halfvec,
         query_text=request.query,
         top_k=request.top_k,
     )
+    rrf_ms = round((time.perf_counter() - t_rrf) * 1000, 2)
 
+    t_ctx = time.perf_counter()
     chunk_by_id = {c.id: c for c in chunk_store.get_lecture_chunks(request.lecture_id)}
     enriched_results: list[dict] = []
     for hit in raw_hits:
@@ -862,13 +1164,34 @@ async def search_hybrid(request: TestSearchRequest):
                 ],
             }
         )
+    context_ms = round((time.perf_counter() - t_ctx) * 1000, 2)
+    total_ms = round((time.perf_counter() - t0) * 1000, 2)
+
+    model_used = getattr(embedder, "model_name", "bge-m3" if request.mode == "real" else "fake-embedder")
+    device_used = getattr(embedder, "device", "cpu")
+    _record_model_run(
+        "bge-m3",
+        stage="Search [Q2]",
+        duration_ms=embed_ms,
+        device=device_used,
+        engine=type(embedder).__name__,
+        mode=request.mode,
+    )
 
     return {
         "lecture_id": str(request.lecture_id),
         "query": request.query,
         "mode": request.mode,
+        "model_used": model_used,
+        "device": device_used,
         "backend": "postgres_pgvector" if chunk_store.is_postgres_connected() else "in_memory_fallback",
-        "latency_ms": round((time.perf_counter() - t0) * 1000, 2),
+        "latency_ms": total_ms,
+        "latency_breakdown": {
+            "embed_ms": embed_ms,
+            "rrf_ms": rrf_ms,
+            "context_ms": context_ms,
+            "total_ms": total_ms,
+        },
         "total_results": len(enriched_results),
         "results": enriched_results,
     }
@@ -908,6 +1231,193 @@ class TestRagQueryRequest(BaseModel):
     llm_engine: EngineMode = Field(default=_configured_llm_mode, alias="llmEngine")
 
 
+def _build_rag_flow_trace(
+    *,
+    request: TestRagQueryRequest,
+    response,
+    embedder,
+    reranker,
+) -> tuple[list[dict], list[dict]]:
+    tel = response.telemetry
+    stages_by_id = {st.stage_id: st for st in response.stage_outputs}
+    q1 = stages_by_id.get("q1_query_prep")
+    q5 = stages_by_id.get("q5_rag_answer")
+    extras = [
+        st for st in response.stage_outputs if st.stage_id not in ("q1_query_prep", "q5_rag_answer")
+    ]
+
+    emb_device = getattr(embedder, "device", "cpu")
+    rr_device = getattr(reranker, "device", "cpu")
+    llm_device = _transformers_gemma.device if (q5 and q5.engine == "transformers") else (
+        "ollama-http" if (q5 and q5.engine == "ollama") else "cpu"
+    )
+    offload_note = "LOW_VRAM unload after step" if settings.LOW_VRAM_MODE else "Kept in memory"
+
+    flow_trace = [
+        {
+            "step_id": "q1_query_prep",
+            "code": "Q1",
+            "label": "Gemma 4 Query Prep",
+            "stage": "Online Pass 1",
+            "pipeline": "rag_query",
+            "status": "done" if q1 else "skipped",
+            "model_used": q1.model if q1 else "—",
+            "adapter": f"LLM:{q1.engine}" if q1 else "—",
+            "device": llm_device,
+            "duration_ms": round(tel.query_prep_ms, 2),
+            "in_summary": request.query[:60],
+            "out_summary": (response.prepared_query or "")[:60],
+            "notes": offload_note,
+        },
+        {
+            "step_id": "q2_embed_rrf",
+            "code": "Q2",
+            "label": "BGE-M3 + 3-Stream RRF",
+            "stage": "Online Retrieval",
+            "pipeline": "rag_query",
+            "status": "done",
+            "model_used": getattr(embedder, "model_name", "bge-m3"),
+            "adapter": type(embedder).__name__,
+            "device": emb_device,
+            "duration_ms": round(tel.embed_ms + tel.retrieval_ms, 2),
+            "in_summary": "prepared_query + Drift Guard",
+            "out_summary": f"{tel.candidates_retrieved} cands (emb {tel.embed_ms:.1f}ms, rrf {tel.retrieval_ms:.1f}ms)",
+            "notes": offload_note,
+        },
+        {
+            "step_id": "q3_expand_ctx",
+            "code": "Q3",
+            "label": "3-Way Context Expand",
+            "stage": "Online Retrieval",
+            "pipeline": "rag_query",
+            "status": "done" if request.use_expanded_context else "skipped",
+            "model_used": None,
+            "adapter": type(chunk_store).__name__,
+            "device": "pgvector" if chunk_store.is_postgres_connected() else "memory",
+            "duration_ms": round(tel.expand_ms, 2),
+            "in_summary": f"{tel.candidates_retrieved} chunks",
+            "out_summary": "PREVIOUS / CURRENT / NEXT" if request.use_expanded_context else "Disabled",
+            "notes": "Doubly-linked prev/next pointers",
+        },
+        {
+            "step_id": "q4_rerank",
+            "code": "Q4",
+            "label": "BGE-Reranker-v2-m3",
+            "stage": "Online Rerank",
+            "pipeline": "rag_query",
+            "status": "done" if tel.candidates_retrieved > 0 else "skipped",
+            "model_used": getattr(reranker, "model_name", "bge-reranker-v2-m3"),
+            "adapter": type(reranker).__name__,
+            "device": rr_device,
+            "duration_ms": round(tel.rerank_ms, 2),
+            "in_summary": f"{tel.candidates_retrieved} candidates",
+            "out_summary": f"Top {tel.reranked_count} citations",
+            "notes": offload_note,
+        },
+        {
+            "step_id": "q5_rag_answer",
+            "code": "Q5",
+            "label": "Gemma 4 + RAG Synthesis",
+            "stage": "Online Pass 2",
+            "pipeline": "rag_query",
+            "status": "done" if q5 else "skipped",
+            "model_used": q5.model if q5 else "—",
+            "adapter": f"LLM:{q5.engine}" if q5 else "—",
+            "device": llm_device,
+            "duration_ms": round(q5.latency_ms, 2) if q5 else 0.0,
+            "in_summary": f"{tel.reranked_count} chunks ({request.prompt_profile})",
+            "out_summary": f"{len(response.answer)} chars ({q5.response_format if q5 else 'text'})",
+            "notes": offload_note if not extras else "Pass to [Q6+]",
+        },
+        {
+            "step_id": "q6_extra_stages",
+            "code": "Q6+",
+            "label": "Extra Prompt Stages",
+            "stage": "Online Extensible",
+            "pipeline": "rag_query",
+            "status": "done" if extras else "skipped",
+            "model_used": extras[-1].model if extras else None,
+            "adapter": f"LLM:{extras[-1].engine}" if extras else None,
+            "device": llm_device if extras else None,
+            "duration_ms": round(sum(e.latency_ms for e in extras), 2),
+            "in_summary": f"{len(extras)} stage(s)" if extras else "0 extraStages",
+            "out_summary": f"{len(extras[-1].output)} chars" if extras else "Skipped",
+            "notes": offload_note if extras else None,
+        },
+        {
+            "step_id": "audit_log",
+            "code": "LOG",
+            "label": "rag.rag_audit_logs",
+            "stage": "Audit",
+            "pipeline": "rag_query",
+            "status": "done" if response.citations or response.answer else "skipped",
+            "model_used": None,
+            "adapter": type(telemetry_store).__name__,
+            "device": "pgvector" if chunk_store.is_postgres_connected() else "memory",
+            "duration_ms": 0.0,
+            "in_summary": f"{len(response.citations)} chunk IDs",
+            "out_summary": "Audit persisted (No Semantic Cache)",
+            "notes": "rag.semantic_query_cache disabled",
+        },
+    ]
+
+    llm_mode_actual: Literal["real", "mock"] = "mock" if (q5 and q5.engine == "mock") else "real"
+    llm_total_ms = round(tel.query_prep_ms + tel.llm_ms, 2)
+    models_executed = [
+        {
+            "model_key": "gemma-4-e2b",
+            "adapter": f"Gemma:{q5.engine if q5 else request.llm_engine}",
+            "stage": "[Q1/Q5/Q6+] Online LLM",
+            "device": llm_device,
+            "mode": llm_mode_actual,
+            "duration_ms": llm_total_ms,
+        },
+        {
+            "model_key": "bge-m3",
+            "adapter": type(embedder).__name__,
+            "stage": "[Q2] Query Embed",
+            "device": emb_device,
+            "mode": request.embedder_mode,
+            "duration_ms": round(tel.embed_ms, 2),
+        },
+        {
+            "model_key": "bge-reranker-v2-m3",
+            "adapter": type(reranker).__name__,
+            "stage": "[Q4] Cross-Encoder",
+            "device": rr_device,
+            "mode": request.reranker_mode,
+            "duration_ms": round(tel.rerank_ms, 2),
+        },
+    ]
+
+    _record_model_run(
+        "gemma-4-e2b",
+        stage="RAG [Q1/Q5/Q6+]",
+        duration_ms=llm_total_ms,
+        device=llm_device,
+        engine=q5.engine if q5 else str(request.llm_engine),
+        mode=llm_mode_actual,
+    )
+    _record_model_run(
+        "bge-m3",
+        stage="RAG [Q2]",
+        duration_ms=tel.embed_ms,
+        device=emb_device,
+        engine=type(embedder).__name__,
+        mode=request.embedder_mode,
+    )
+    _record_model_run(
+        "bge-reranker-v2-m3",
+        stage="RAG [Q4]",
+        duration_ms=tel.rerank_ms,
+        device=rr_device,
+        engine=type(reranker).__name__,
+        mode=request.reranker_mode,
+    )
+
+    return flow_trace, models_executed
+
+
 @app.get("/api/rag/presets")
 async def get_rag_presets():
     """Returns built-in Pass 1 ([Q1] query prep) and Pass 2 ([Q5] Gemma 4 + RAG) prompt presets."""
@@ -917,8 +1427,8 @@ async def get_rag_presets():
 @app.post("/api/rag/query")
 async def execute_test_rag_query(request: TestRagQueryRequest):
     """
-    Runs the unified 2-Pass Pre-RAG Gemma 4 pipeline ([Q1]–[Q6+], no Semantic Cache)
-    with selectable real/mock adapters for BGE-M3, Reranker, and Gemma 4.
+    Runs the unified 2-Pass Pre-RAG Gemma 4 pipeline ([Q1]-[Q6+], no Semantic Cache)
+    with selectable real/mock adapters for BGE-M3, Reranker, and Gemma 4 E2B.
     """
     _ensure_lecture_loaded_in_store(request.lecture_id)
 
@@ -950,6 +1460,26 @@ async def execute_test_rag_query(request: TestRagQueryRequest):
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
+    flow_trace, models_executed = _build_rag_flow_trace(
+        request=request,
+        response=response,
+        embedder=embedder,
+        reranker=reranker,
+    )
+
+    recent_rag_runs.insert(
+        0,
+        {
+            "query": request.query,
+            "lecture_id": str(request.lecture_id),
+            "profile": request.prompt_profile,
+            "total_ms": response.telemetry.total_ms,
+            "models_executed": models_executed,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    del recent_rag_runs[20:]
+
     payload = response.model_dump(mode="json")
     payload["backend"] = "postgres_pgvector" if chunk_store.is_postgres_connected() else "in_memory_fallback"
     payload["adapters"] = {
@@ -957,6 +1487,8 @@ async def execute_test_rag_query(request: TestRagQueryRequest):
         "reranker": request.reranker_mode,
         "llm_engine": request.llm_engine,
     }
+    payload["flow_trace"] = flow_trace
+    payload["models_executed"] = models_executed
     return payload
 
 

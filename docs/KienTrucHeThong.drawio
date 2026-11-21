@@ -104,7 +104,7 @@
         <mxCell id="ai-hdr" value="&lt;b style=&quot;font-size:14px; color:#0F172A;&quot;&gt;⚡ FastAPI (AI service)&lt;/b&gt; &lt;span style=&quot;font-size:11px; color:#0F766E;&quot;&gt;Container: ai (:8000) &amp;bull; backend/ai_service/&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=left;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="175" y="488" width="320" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="ai-sec-badge" value="&lt;b style=&quot;font-size:9.5px; color:#0F766E;&quot;&gt;🔒 verify_internal_secret ✅ &amp;bull; /ingest &amp;bull; /chunk-and-embed &amp;bull; /chunks/{id} &amp;bull; /search/hybrid &amp;bull; /health&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCFBF1;strokeColor=#0D9488;strokeWidth=1;arcSize=50;" vertex="1" parent="1">
+        <mxCell id="ai-sec-badge" value="&lt;b style=&quot;font-size:9px; color:#0F766E;&quot;&gt;🔒 verify_internal_secret ✅ &amp;bull; /ingest &amp;bull; /chunk-and-embed &amp;bull; /search/hybrid &amp;bull; /rag/query &amp;bull; /rag/retrieve &amp;bull; /llm/generate &amp;bull; /rag/presets &amp;bull; /health&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCFBF1;strokeColor=#0D9488;strokeWidth=1;arcSize=50;" vertex="1" parent="1">
           <mxGeometry x="492" y="491" width="363" height="28" as="geometry" />
         </mxCell>
 
@@ -126,7 +126,7 @@
         <mxCell id="ai-i3" value="&lt;b style=&quot;font-size:11px; color:#0F172A;&quot;&gt;✂️ VAD Slice ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[I3] EnergyVad&lt;br/&gt;RMS 50ms (-38dB)&lt;br/&gt;Cắt khoảng nghỉ&lt;br/&gt;10s &amp;ndash; 28s&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0D9488;strokeWidth=1.2;arcSize=12;spacing=4;" vertex="1" parent="1">
           <mxGeometry x="409" y="566" width="98" height="132" as="geometry" />
         </mxCell>
-        <mxCell id="ai-i4" value="&lt;b style=&quot;font-size:11px; color:#0F172A;&quot;&gt;🤗 PhoWhisper ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[I4] base/medium&lt;br/&gt;GPU Lock(1), STT&lt;br/&gt;Gán [MM:SS] + unload()&lt;br/&gt;&amp;rarr; transcript.json&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=12;spacing=4;" vertex="1" parent="1">
+        <mxCell id="ai-i4" value="&lt;b style=&quot;font-size:11px; color:#0F172A;&quot;&gt;🤗 PhoWhisper ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[I4] medium (2.85 GiB)&lt;br/&gt;GPU Lock(1), STT&lt;br/&gt;Gán [MM:SS] + unload()&lt;br/&gt;&amp;rarr; transcript.json&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=12;spacing=4;" vertex="1" parent="1">
           <mxGeometry x="521" y="566" width="104" height="132" as="geometry" />
         </mxCell>
         <mxCell id="ai-i5" value="&lt;b style=&quot;font-size:11px; color:#0F172A;&quot;&gt;📄 Chunking ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[I5] Recursive&lt;br/&gt;&amp;le; 512 tokens&lt;br/&gt;64 overlap&lt;br/&gt;prev/next_id&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=12;spacing=4;" vertex="1" parent="1">
@@ -162,11 +162,11 @@
         </mxCell>
 
         <!-- 2 Bước ngang trong Query (online) -->
-        <mxCell id="ai-q1" value="&lt;b style=&quot;font-size:12px; color:#0F766E;&quot;&gt;🤗 BGE-M3 (Embed câu hỏi) ✅/🔴&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[Q1] encode_query() &amp;rarr; halfvec(1024) + /search/hybrid ✅&lt;br/&gt;Check Semantic Cache (SQL ✅ / GĐ3 /query 🔴)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#0D9488;strokeWidth=1.5;arcSize=12;spacing=5;" vertex="1" parent="1">
-          <mxGeometry x="195" y="753" width="265" height="94" as="geometry" />
+        <mxCell id="ai-q1" value="&lt;b style=&quot;font-size:11.5px; color:#0F766E;&quot;&gt;🤗 2-Pass Pre-RAG: [Q1] + [Q2] ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[Q1] Gemma 4 Query Prep + Query Drift Guard&lt;br/&gt;&amp;rarr; [Q2] BGE-M3 encode_query() + 3-Stream RRF (/rag/query ✅)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#0D9488;strokeWidth=1.5;arcSize=12;spacing=5;" vertex="1" parent="1">
+          <mxGeometry x="195" y="753" width="295" height="94" as="geometry" />
         </mxCell>
-        <mxCell id="ai-q2" value="&lt;b style=&quot;font-size:12px; color:#991B1B;&quot;&gt;🤗 Reranker (bge-reranker-v2-m3) 🔴&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[Q2] Cross-Encoder chấm cặp [Query, Top 25 RRF]&lt;br/&gt;Lọc Top 3&amp;ndash;5 đoạn + gọi get_expanded_context()&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#DC2626;strokeWidth=1.2;dashed=1;arcSize=12;spacing=5;" vertex="1" parent="1">
-          <mxGeometry x="505" y="753" width="330" height="94" as="geometry" />
+        <mxCell id="ai-q2" value="&lt;b style=&quot;font-size:11.5px; color:#0F766E;&quot;&gt;🤗 [Q3] Expand + [Q4] BGE-Reranker-v2-m3 ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10px; color:#334155;&quot;&gt;[Q3] get_expanded_context() PREV/CURR/NEXT&lt;br/&gt;&amp;rarr; [Q4] Cross-Encoder (2.14 GiB) lọc Top 3&amp;ndash;5 đoạn + unload()&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=12;spacing=5;" vertex="1" parent="1">
+          <mxGeometry x="515" y="753" width="320" height="94" as="geometry" />
         </mxCell>
         <mxCell id="e-q12" value="" style="endArrow=classic;html=1;strokeColor=#7C3AED;strokeWidth=2;dashed=1;" edge="1" parent="1" source="ai-q1" target="ai-q2">
           <mxGeometry relative="1" as="geometry" />
@@ -191,25 +191,25 @@
           <mxGeometry x="962" y="538" width="256" height="86" as="geometry" />
         </mxCell>
 
-        <mxCell id="db-rag" value="&lt;b style=&quot;font-size:12px; color:#0F172A;&quot;&gt;Schema rag ✅ (CompositeChunkStore ✅)&lt;/b&gt;&lt;br/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#334155;&quot;&gt;&amp;bull; &lt;b&gt;rag.lecture_chunks:&lt;/b&gt; halfvec(1024), HNSW (m=16, ef=64), GIN tsv_content, GIN pg_trgm unaccent, format_timestamp_display() [MM:SS] IMMUTABLE, prev/next_chunk_id&lt;br/&gt;&amp;bull; &lt;b&gt;search_vietnamese_rag_rrf():&lt;/b&gt; 3-Stream Hybrid RRF &amp;rarr; Top 25&lt;br/&gt;&amp;bull; &lt;b&gt;get_expanded_context():&lt;/b&gt; &quot;position&quot; PREV/CURR/NEXT&lt;br/&gt;&amp;bull; &lt;b&gt;semantic_query_cache&lt;/b&gt; &amp;amp; &lt;b&gt;rag_audit_logs&lt;/b&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#38BDF8;strokeWidth=1.5;arcSize=12;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+        <mxCell id="db-rag" value="&lt;b style=&quot;font-size:12px; color:#0F172A;&quot;&gt;Schema rag ✅ (CompositeChunkStore ✅)&lt;/b&gt;&lt;br/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#334155;&quot;&gt;&amp;bull; &lt;b&gt;rag.lecture_chunks:&lt;/b&gt; halfvec(1024), HNSW (m=16, ef=64), GIN tsv_content, GIN pg_trgm unaccent, format_timestamp_display() [MM:SS] IMMUTABLE, prev/next_chunk_id&lt;br/&gt;&amp;bull; &lt;b&gt;search_vietnamese_rag_rrf():&lt;/b&gt; 3-Stream Hybrid RRF &amp;rarr; Top 25&lt;br/&gt;&amp;bull; &lt;b&gt;get_expanded_context():&lt;/b&gt; &quot;position&quot; PREV/CURR/NEXT&lt;br/&gt;&amp;bull; &lt;b&gt;rag.rag_audit_logs&lt;/b&gt; (Đã gỡ Semantic Cache)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#38BDF8;strokeWidth=1.5;arcSize=12;spacing=6;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="962" y="636" width="256" height="238" as="geometry" />
         </mxCell>
 
         <!-- =================================================================== -->
-        <!-- CỘT PHẢI TRONG DOCKER: OLLAMA + GEMMA 4 E4B                          -->
+        <!-- CỘT PHẢI TRONG DOCKER: GEMMA 4 E2B QAT & LOCAL MODELS       -->
         <!-- =================================================================== -->
         <mxCell id="llm-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#7E22CE;strokeWidth=2;arcSize=6;shadow=1;" vertex="1" parent="1">
           <mxGeometry x="1295" y="480" width="225" height="462" as="geometry" />
         </mxCell>
-        <mxCell id="llm-hdr" value="&lt;b style=&quot;font-size:14px; color:#0F172A;&quot;&gt;🦙 Ollama&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#6B21A8;&quot;&gt;Container: llm (:11434)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=center;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="llm-hdr" value="&lt;b style=&quot;font-size:13px; color:#0F172A;&quot;&gt;✨ Gemma 4 E2B Runtime&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:10.5px; color:#6B21A8;&quot;&gt;Transformers QAT (Primary) / Ollama (:11434)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="1305" y="488" width="205" height="44" as="geometry" />
         </mxCell>
 
-        <mxCell id="llm-gemma" value="&lt;b style=&quot;font-size:12px; color:#991B1B;&quot;&gt;✨ Gemma 4 E4B 🔴&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#0F172A;&quot;&gt;&lt;b&gt;Sinh trả lời&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#334155;&quot;&gt;&amp;bull; Model: &lt;i&gt;google/gemma-4-E4B-it&lt;/i&gt;&lt;br/&gt;&amp;bull; Config: &lt;i&gt;temp=0.2, repeat_penalty=1.15&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;Grounding Prompt:&lt;/b&gt; Kitsune Fox Companion, chỉ dùng ngữ cảnh bài giảng, bắt buộc dẫn nguồn &lt;b&gt;[MM:SS]&lt;/b&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#A855F7;strokeWidth=1.5;dashed=1;arcSize=12;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+        <mxCell id="llm-gemma" value="&lt;b style=&quot;font-size:12px; color:#166534;&quot;&gt;✨ Gemma 4 E2B QAT ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:11px; color:#0F172A;&quot;&gt;&lt;b&gt;[Q1] Query Prep &amp;amp; [Q5/Q6+] Sinh trả lời&lt;/b&gt;&lt;/span&gt;&lt;br/&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#334155;&quot;&gt;&amp;bull; Model: &lt;i&gt;google/gemma-4-E2B-it-qat-mobile-transformers&lt;/i&gt;&lt;br/&gt;&amp;bull; Quant &amp;amp; Ctx: &lt;i&gt;QAT wNa8o8 (2/4/8-bit), 128K ctx (131,072)&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;Runtime:&lt;/b&gt; TransformersGemmaClient (&lt;i&gt;tf&amp;ge;5.22&lt;/i&gt;) / Ollama &lt;i&gt;gemma4:e2b&lt;/i&gt; + dẫn nguồn &lt;b&gt;[MM:SS]&lt;/b&gt;.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7E22CE;strokeWidth=1.5;arcSize=12;spacing=6;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="1312" y="544" width="191" height="216" as="geometry" />
         </mxCell>
 
-        <mxCell id="llm-models" value="&lt;b style=&quot;font-size:11px; color:#166534;&quot;&gt;📦 Local Models (~23.7 GB) ✅&lt;/b&gt;&lt;br/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#334155;&quot;&gt;&amp;bull; phowhisper-base/medium ✅&lt;br/&gt;&amp;bull; bge-m3 + sparse_linear.pt ✅&lt;br/&gt;&amp;bull; bge-reranker-v2-m3 (2.27 GB) ⏸️&lt;br/&gt;&amp;bull; gemma-4-e4b (15.88 GB) ⏸️&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAF5FF;strokeColor=#A855F7;strokeWidth=1.2;arcSize=12;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+        <mxCell id="llm-models" value="&lt;b style=&quot;font-size:11px; color:#166534;&quot;&gt;📦 Local Models (11.58 GiB / 12.43 GB) ✅&lt;/b&gt;&lt;br/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#334155;&quot;&gt;&amp;bull; phowhisper-medium (2.85 GiB) ✅&lt;br/&gt;&amp;bull; bge-m3 + sparse_linear (4.27 GiB) ✅&lt;br/&gt;&amp;bull; bge-reranker-v2-m3 (2.14 GiB) ✅&lt;br/&gt;&amp;bull; gemma-4-e2b QAT (2.32 GiB) ✅&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAF5FF;strokeColor=#A855F7;strokeWidth=1.2;arcSize=12;spacing=6;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="1312" y="776" width="191" height="150" as="geometry" />
         </mxCell>
 
@@ -237,8 +237,8 @@
           </mxGeometry>
         </mxCell>
 
-        <!-- FastAPI Query (Reranker) -> Ollama (Gemma 4 E4B) đi vòng dưới db-box để không đè chữ -->
-        <mxCell id="edge-qry-llm" value="&lt;b&gt;Top 3-5 đoạn&lt;/b&gt; (PREV + CURR + NEXT)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;html=1;strokeColor=#7C3AED;strokeWidth=2.2;dashed=1;exitX=0.5;exitY=1;entryX=0;entryY=0.72;fontSize=11;fontColor=#0F172A;labelBackgroundColor=#F1F5F9;" edge="1" parent="1" source="ai-q2" target="llm-gemma">
+        <!-- FastAPI Query (Reranker) -> Gemma 4 E2B ([Q5/Q6+]) đi vòng dưới db-box để không đè chữ -->
+        <mxCell id="edge-qry-llm" value="&lt;b&gt;Top 3-5 đoạn&lt;/b&gt; (PREV + CURR + NEXT)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;html=1;strokeColor=#7C3AED;strokeWidth=2.2;exitX=0.5;exitY=1;entryX=0;entryY=0.72;fontSize=11;fontColor=#0F172A;labelBackgroundColor=#F1F5F9;" edge="1" parent="1" source="ai-q2" target="llm-gemma">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="670" y="914" />
@@ -385,7 +385,7 @@
         <mxCell id="b2-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;strokeWidth=2;arcSize=4;shadow=1;" vertex="1" parent="1">
           <mxGeometry x="30" y="495" width="1620" height="320" as="geometry" />
         </mxCell>
-        <mxCell id="b2-hdr" value="&lt;b style=&quot;font-size:13px; color:#FFFFFF;&quot;&gt;LUỒNG 2 — ONLINE 2-STAGE NEURAL RAG &amp;amp; GROUNDED CITATION PIPELINE (STEP 9 &amp;rarr; STEP 14)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7C3AED;strokeColor=#7C3AED;arcSize=15;" vertex="1" parent="1">
+        <mxCell id="b2-hdr" value="&lt;b style=&quot;font-size:13px; color:#FFFFFF;&quot;&gt;LUỒNG 2 — ONLINE 2-PASS PRE-RAG [Q1–Q6+] &amp;amp; GROUNDED CITATION PIPELINE (STEP 9 &amp;rarr; STEP 14)&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7C3AED;strokeColor=#7C3AED;arcSize=15;" vertex="1" parent="1">
           <mxGeometry x="50" y="506" width="1580" height="28" as="geometry" />
         </mxCell>
 
@@ -394,7 +394,7 @@
           <mxGeometry x="50" y="544" width="500" height="118" as="geometry" />
         </mxCell>
 
-        <mxCell id="s10" value="&lt;b style=&quot;color:#0F766E; font-size:12px;&quot;&gt;Step 10: Query Embedding &amp;amp; Semantic Cache Check ✅/🔴&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;BgeM3Embedder.encode_query() ✅&lt;/b&gt; nhúng câu hỏi thành &lt;i&gt;halfvec(1024)&lt;/i&gt; + &lt;i&gt;lexical_weights&lt;/i&gt;.&lt;br/&gt;&amp;bull; &lt;b&gt;rag.semantic_query_cache&lt;/b&gt; (&lt;i&gt;05_rag_telemetry_cache.sql&lt;/i&gt; ✅): tra cứu Cosine &amp;gt; &lt;b&gt;0.95&lt;/b&gt; (&amp;lt;10ms) trong luồng &lt;i&gt;/query&lt;/i&gt; chờ GĐ3 🔴.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#0D9488;strokeWidth=1.5;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+        <mxCell id="s10" value="&lt;b style=&quot;color:#0F766E; font-size:12px;&quot;&gt;Step 10: [Q1] Pass 1 Query Prep + [Q2] BGE-M3 Query Embed ✅&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;[Q1] Gemma 4 E2B Query Prep:&lt;/b&gt; chuẩn hóa câu hỏi + &lt;b&gt;Query Drift Guard&lt;/b&gt; (&lt;i&gt;_merge_preserved_keywords&lt;/i&gt;) giữ nguyên từ khóa gốc.&lt;br/&gt;&amp;bull; &lt;b&gt;[Q2] BgeM3Embedder.encode_query() ✅&lt;/b&gt; nhúng &lt;i&gt;halfvec(1024)&lt;/i&gt; + &lt;i&gt;lexical_weights&lt;/i&gt; (không dùng Semantic Cache).&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="588" y="544" width="500" height="118" as="geometry" />
         </mxCell>
 
@@ -403,7 +403,7 @@
         </mxCell>
 
         <!-- Row 2: Step 12..14 -->
-        <mxCell id="s12" value="&lt;b style=&quot;color:#991B1B; font-size:12px;&quot;&gt;Step 12: GĐ2 — Cross-Encoder Reranking 🔴&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; &lt;i&gt;(Cần code GĐ3)&lt;/i&gt; Nạp &lt;b&gt;backend/models/bge-reranker-v2-m3&lt;/b&gt; (đã tải ~2.27 GB trên đĩa ✅).&lt;br/&gt;&amp;bull; Chấm điểm tương quan cặp sâu &lt;b&gt;[Query, Chunk&lt;sub&gt;i&lt;/sub&gt;]&lt;/b&gt; cho toàn bộ Top 25 ứng viên.&lt;br/&gt;&amp;bull; Loại bỏ triệt để phân đoạn nhiễu, chỉ giữ &lt;b&gt;Top 3&amp;ndash;5 chunks&lt;/b&gt; đạt điểm cao nhất.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#DC2626;strokeWidth=1.5;dashed=1;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+        <mxCell id="s12" value="&lt;b style=&quot;color:#166534; font-size:12px;&quot;&gt;Step 12: [Q4] Cross-Encoder Reranking (BGE-Reranker-v2-m3) ✅&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;BgeRerankerV2M3 ✅&lt;/b&gt; nạp &lt;b&gt;backend/models/bge-reranker-v2-m3&lt;/b&gt; (2.14 GiB) dưới khóa GPU.&lt;br/&gt;&amp;bull; Chấm điểm tương quan cặp sâu &lt;b&gt;[Query, Chunk&lt;sub&gt;i&lt;/sub&gt;]&lt;/b&gt; cho Top 25 ứng viên.&lt;br/&gt;&amp;bull; Lọc Top 3&amp;ndash;5 chunks xuất sắc nhất + &lt;i&gt;unload()&lt;/i&gt; (&lt;i&gt;LOW_VRAM_MODE&lt;/i&gt;).&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=1.5;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="50" y="684" width="500" height="116" as="geometry" />
         </mxCell>
 
@@ -411,7 +411,7 @@
           <mxGeometry x="588" y="684" width="500" height="116" as="geometry" />
         </mxCell>
 
-        <mxCell id="s14" value="&lt;b style=&quot;color:#991B1B; font-size:12px;&quot;&gt;Step 14: Grounded Synthesis, Audit Log &amp;amp; Tua Audio 🔴&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; Gửi Prompt &lt;b&gt;Kitsune Fox Companion&lt;/b&gt; + ngữ cảnh mở rộng tới Ollama &lt;b&gt;google/gemma-4-E4B-it&lt;/b&gt; (:11434, &lt;i&gt;temp=0.2&lt;/i&gt;) &amp;rarr; sinh câu trả lời bám ngữ cảnh kèm citation &lt;b&gt;[MM:SS]&lt;/b&gt;.&lt;br/&gt;&amp;bull; Lưu độ trễ &amp;amp; điểm vào &lt;i&gt;rag.rag_audit_logs&lt;/i&gt; + cập nhật &lt;i&gt;semantic_query_cache&lt;/i&gt; &amp;rarr; trả JSON về Mobile (&lt;b&gt;CapsuleAudioPlayer&lt;/b&gt; tua đúng mốc giờ).&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#DC2626;strokeWidth=1.5;dashed=1;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
+        <mxCell id="s14" value="&lt;b style=&quot;color:#166534; font-size:12px;&quot;&gt;Step 14: [Q5/Q6+] Gemma 4 E2B Synthesis &amp;amp; Audit Log ✅&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10.5px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;TransformersGemmaClient / OllamaGemmaClient ✅&lt;/b&gt; (&lt;i&gt;google/gemma-4-E2B-it-qat-mobile-transformers&lt;/i&gt;, 2.32 GiB, 128K ctx) sinh trả lời Pass 2 [Q5] (+ extraStages [Q6+]) kèm citation &lt;b&gt;[MM:SS]&lt;/b&gt;.&lt;br/&gt;&amp;bull; Ghi độ trễ &amp;amp; trích dẫn vào &lt;i&gt;rag.rag_audit_logs&lt;/i&gt; (không dùng &lt;i&gt;semantic_query_cache&lt;/i&gt;).&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBF7D0;strokeColor=#16A34A;strokeWidth=2;arcSize=10;spacing=7;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="1126" y="684" width="502" height="116" as="geometry" />
         </mxCell>
 
@@ -467,7 +467,7 @@
           <mxGeometry x="1114" y="882" width="250" height="238" as="geometry" />
         </mxCell>
 
-        <mxCell id="dm6" value="&lt;b style=&quot;color:#0F766E; font-size:11.5px;&quot;&gt;Seam 7: Reporter, Coordinator &amp;amp; Status 📌&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:9.5px; color:#475569;&quot;&gt;job_reporter.py &amp;bull; ingest_pipeline.py &amp;bull; deps&lt;/span&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;JobReporterProtocol:&lt;/b&gt; &lt;i&gt;SpringJobReporter&lt;/i&gt;, &lt;i&gt;RecordingJobReporter&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;Coordinator:&lt;/b&gt; &lt;i&gt;GLOBAL_GPU_SEMAPHORE(1)&lt;/i&gt;, &lt;i&gt;LOW_VRAM_MODE=true&lt;/i&gt;, &lt;i&gt;65 passed&lt;/i&gt; pytest, Docker &lt;i&gt;16GB RAM/4GB VRAM&lt;/i&gt;, &lt;i&gt;.ua/manifest.json&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;Còn lại:&lt;/b&gt; Spring Boot Java (:8080) &amp;amp; GĐ3 Reranker + Gemma 4 E4B.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#D97706;strokeWidth=1.5;arcSize=10;spacing=6;verticalAlign=top;" vertex="1" parent="1">
+        <mxCell id="dm6" value="&lt;b style=&quot;color:#0F766E; font-size:11.5px;&quot;&gt;Seam 7: RAG, Registry, Observer &amp;amp; Status ✅&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size:9.5px; color:#475569;&quot;&gt;reranker &amp;bull; llm_client &amp;bull; model_registry &amp;bull; observer&lt;/span&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div style=&quot;text-align:left; font-size:10px; color:#1E293B;&quot;&gt;&amp;bull; &lt;b&gt;Online RAG Seams:&lt;/b&gt; &lt;i&gt;RerankerProtocol&lt;/i&gt;, &lt;i&gt;LlmClientProtocol&lt;/i&gt;, &lt;i&gt;TelemetryStoreProtocol&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;Observability Seams:&lt;/b&gt; &lt;i&gt;ModelRegistryProtocol&lt;/i&gt; (&lt;i&gt;11.58 GiB&lt;/i&gt;), &lt;i&gt;PipelineObserverProtocol&lt;/i&gt;, &lt;i&gt;GLOBAL_GPU_SEMAPHORE(1)&lt;/i&gt;, &lt;i&gt;.ua/manifest.json&lt;/i&gt;&lt;br/&gt;&amp;bull; &lt;b&gt;Còn lại:&lt;/b&gt; Spring Boot Java Gateway (:8080).&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#0D9488;strokeWidth=1.5;arcSize=10;spacing=6;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="1380" y="882" width="250" height="238" as="geometry" />
         </mxCell>
 

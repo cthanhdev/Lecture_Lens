@@ -8,7 +8,7 @@ Stage 1 of the LectureLens Audio Ingest Pipeline produces an immutable `transcri
 
 1. **Citation Precision & Context Continuity:** Lecture Q&A requires accurate `[MM:SS]` audio citations. Although `BGE-M3` accepts up to 8,192 tokens, indexing entire lectures or large multi-minute blocks dilutes embedding specificity and breaks timestamp precision. Conversely, indexing individual short ASR sentences loses cross-sentence reasoning.
 2. **Vietnamese Lexical + Semantic Retrieval:** Academic Vietnamese queries frequently mix unaccented search text, abbreviations, and specialized terminology where dense cosine similarity alone can miss exact terms.
-3. **Host Resource Constraints (4 GB VRAM / 16 GB RAM):** Development and institutional edge nodes (e.g., 16 vCPU, 16 GB RAM, NVIDIA RTX 3050 4 GB VRAM) cannot hold `PhoWhisper` (~1.2 GB FP16) and `BGE-M3` (~2.2 GB FP16) concurrently in GPU VRAM alongside CUDA activation buffers.
+3. **Host Resource Constraints (4 GB VRAM / 16 GB RAM):** Development and institutional edge nodes (e.g., 16 vCPU, 16 GB RAM, NVIDIA RTX 3050 4 GB VRAM) cannot hold `PhoWhisper-medium` (~1.6 GB FP16 / 2.85 GiB on disk), `BGE-M3` (~2.2 GB FP16), `BGE-Reranker-v2-m3` (~1.2 GB FP16), and `Gemma 4 E2B` QAT Mobile (~2.32 GiB) concurrently in GPU VRAM alongside CUDA activation buffers.
 4. **Runtime Dependency Footprint:** The `FlagEmbedding` Python wrapper introduces heavy transitive dependencies and version conflicts with modern `torch` / `transformers` stacks inside lean Docker images.
 
 ## Decision

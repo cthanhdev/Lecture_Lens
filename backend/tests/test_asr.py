@@ -64,6 +64,10 @@ def test_phowhisper_engine_configuration():
     )
 
     assert engine.device == "cpu"
+    assert engine.model_name == "phowhisper-medium"
+    assert engine.is_loaded is False
+    assert engine.dtype_label == "float32"
+    assert engine.unload_count == 0
     assert engine.vad_chunker is vad
     assert engine.prompt == "Custom prompt keywords"
     assert engine.no_repeat_ngram_size == 4
@@ -71,7 +75,15 @@ def test_phowhisper_engine_configuration():
     assert "Windows Server" in DEFAULT_IT_PROMPT
 
 
-def test_phowhisper_engine_transcribe_missing_file_raises():
-    engine = PhoWhisperEngine(model_path=Path("backend/models/phowhisper-base"), device="cpu")
-    with pytest.raises(FileNotFoundError):
+def test_phowhisper_engine_transcribe_missing_file_raises_before_model_load(tmp_path: Path):
+    engine = PhoWhisperEngine(model_path=tmp_path / "non_existent_model_dir", device="cpu")
+    with pytest.raises(FileNotFoundError, match="WAV"):
         engine.transcribe(Path("non_existent_file.wav"))
+
+
+def test_phowhisper_engine_missing_model_dir_raises_filenotfound(tmp_path: Path):
+    wav_file = tmp_path / "dummy.wav"
+    wav_file.write_bytes(b"RIFF")
+    engine = PhoWhisperEngine(model_path=tmp_path / "missing-phowhisper-medium", device="cpu")
+    with pytest.raises(FileNotFoundError, match="model directory not found"):
+        engine.transcribe(wav_file)

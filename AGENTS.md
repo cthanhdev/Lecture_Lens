@@ -28,19 +28,19 @@ Tài liệu này là **Hiến Chương Kỹ Thuật (Constitution)** bắt buộ
 
 ### Backend & AI Engine (`backend/`)
 - **API Gateway Service (Ingress)**: Java 21, Spring Boot 3.3 (Cổng công khai `8080`, xác thực JWT, RBAC, Audio Upload)
-- **AI & RAG Service (Internal Engine)**: Python 3.10+, FastAPI 0.111 (Cổng nội bộ `8000`, bảo vệ bằng `X-Internal-Secret`). Xem đầy đủ hợp đồng API tại [`docs/API-REFERENCE.md`](./docs/API-REFERENCE.md).
+- **AI & RAG Service (Internal Engine)**: Python 3.11+, FastAPI 0.111, `transformers>=5.22.0` (Cổng nội bộ `8000`, bảo vệ bằng `X-Internal-Secret`). Xem đầy đủ hợp đồng API tại [`docs/API-REFERENCE.md`](./docs/API-REFERENCE.md).
 - **Stage 2 Pipeline Modules (`backend/ai_service/core/`)**:
   - **`[I5]` Recursive Token Chunker (`text_chunker.py`)**: `RecursiveTokenChunker` phân đoạn `transcript.json` với `CHUNK_MAX_TOKENS=512`, `CHUNK_OVERLAP_TOKENS=64` và liên kết hai chiều `prev_chunk_id`/`next_chunk_id` (Doubly-Linked Chunks).
   - **`[I6]` BGE-M3 Dual Embedder (`embedder.py`)**: `BgeM3Embedder` nạp trực tiếp qua `transformers` (`AutoTokenizer`, `AutoModel`) + `sparse_linear.pt` (`weights_only=True`, không dùng `FlagEmbedding`), xuất đồng thời Dense Vector (`halfvec(1024)` FP16 chuẩn hóa L2) và `lexical_weights` (`JSONB`).
   - **Chunk Store (`chunk_store.py`)**: `CompositeChunkStore` ghi `chunks/{job_id}/chunks.json` bất biến và đồng bộ batch vào `rag.lecture_chunks` trên PostgreSQL/`pgvector`.
-- **Vector Database**: PostgreSQL 16 + `pgvector` 0.7+ (Chỉ mục HNSW `halfvec_cosine_ops` `idx_chunks_hnsw_cosine`, GIN trên `tsv_content` & `content_unaccent` `pg_trgm`, B-tree nav `idx_chunks_nav`, 3-Stream RRF, schema phân vùng `app` và `rag`)
-- **Local AI Models & VRAM Management (`LOW_VRAM_MODE`)**:
+- **Vector Database**: PostgreSQL 16 + `pgvector` 0.7+ (Chỉ mục HNSW `halfvec_cosine_ops` `idx_chunks_hnsw_cosine`, GIN trên `tsv_content` & `content_unaccent` `pg_trgm`, B-tree nav `idx_chunks_nav`, 3-Stream RRF, schema phân vùng `app` và `rag`, ghi audit vào `rag.rag_audit_logs` — không sử dụng `rag.semantic_query_cache`)
+- **Local AI Models & VRAM Management (`LOW_VRAM_MODE`) — Tổng `11.58 GiB` (`12.43 GB`) excl. `.cache/`**:
   - Cấu hình Docker dev chuẩn (`backend/docker-compose.ai-dev.yml`): **`16 vCPU / 16 GB RAM / 4 GB VRAM`** (`LOW_VRAM_MODE=true`, `OMP_NUM_THREADS=4`, `MKL_NUM_THREADS=4`, `TORCH_NUM_THREADS=4`, `ai` `6.0` CPU / `6G` RAM, `db` `2.0` CPU / `1536M` RAM / `256mb` shm).
-  - **Sequential VRAM Offloading**: `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)` buộc `PhoWhisperEngine.unload()` giải phóng VRAM ở `STT_COMPLETED` trước khi nạp `BgeM3Embedder` ở giai đoạn `EMBEDDING` (tương thích GPU 4 GB VRAM hoặc fallback CPU).
-  - ASR Tiếng Việt: `phowhisper-base` (tự động gán timestamp `[MM:SS]`)
-  - Dense + Sparse Embedding: `bge-m3` (`halfvec(1024)` + `lexical_weights JSONB`)
-  - Cross-Encoder Reranker: `bge-reranker-v2-m3`
-  - Contextual LLM: `gemma-4-e4b` chạy trên máy chủ Ollama cục bộ
+  - **Sequential VRAM Offloading**: `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)` buộc `PhoWhisperEngine.unload()` giải phóng VRAM ở `STT_COMPLETED` trước khi nạp `BgeM3Embedder` ở giai đoạn `EMBEDDING`, đồng thời tuần tự hóa nạp/xả `BgeRerankerV2M3` và `TransformersGemmaClient` trong 2-Pass Pre-RAG `[Q1]–[Q6+]` (tương thích GPU 4 GB VRAM hoặc fallback CPU).
+  - ASR Tiếng Việt (`[I4]`): `phowhisper-medium` (`vinai/PhoWhisper-medium`, `pytorch_model.bin` `2.85 GiB` / `3.06 GB`, tự động gán timestamp `[MM:SS]`)
+  - Dense + Sparse Embedding (`[I6]`, `[Q2]`): `bge-m3` (`BAAI/bge-m3`, `4.27 GiB` / `4.59 GB` gồm `2.13 GiB` `onnx/` tùy chọn, `halfvec(1024)` + `lexical_weights JSONB`)
+  - Cross-Encoder Reranker (`[Q4]`): `bge-reranker-v2-m3` (`BAAI/bge-reranker-v2-m3`, `2.14 GiB` / `2.29 GB`)
+  - Contextual 2-Pass LLM (`[Q1]`, `[Q5]`, `[Q6+]`): `gemma-4-e2b` (`google/gemma-4-E2B-it-qat-mobile-transformers`, QAT Mobile `wNa8o8`, `2.32 GiB` / `2.49 GB`, chạy trực tiếp qua `TransformersGemmaClient` hoặc Ollama cục bộ `gemma4:e2b`)
 
 ---
 
@@ -84,17 +84,17 @@ Mọi mã nguồn giao diện được sinh ra trong thư mục `mobile/` bắt 
    - Trao đổi âm thanh giữa Spring Boot Gateway và FastAPI AI Service thực hiện qua volume chia sẻ và `jobId` định danh $O(1)$; tệp `transcript.json` là hợp đồng dữ liệu bất biến giữa ASR (Giai đoạn 1) và Vectorization (Giai đoạn 2).
 3. **Kiến Trúc Di Động Native 100% ([ADR 0003](./docs/adr/0003-native-mobile-architecture-expo-sdk58.md)):**
    - Ứng dụng khách chính thức là Mobile App trên Expo SDK 58 (`mobile/`). Web study portal cũ đã được đóng gói và lưu trữ tại `legacy/web-frontend/` (không phát triển tính năng mới vào đây).
-4. **Recursive Chunking, Dual Vector & Sequential VRAM Offloading ([ADR 0004](./docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md)):**
+4. **Recursive Chunking, Dual Vector & Sequential VRAM Offloading ([ADR 0004](./docs/adr/0004-recursive-chunking-and-bge-m3-halfvec-indexing.md) & [ADR 0005](./docs/adr/0005-model-stack-phowhisper-medium-and-gemma4-e2b-qat.md)):**
    - Phân đoạn đệ quy `[I5]` (`<=512` tokens, `64` token overlap, `prev_chunk_id`/`next_chunk_id`) xuất bản hợp đồng bất biến `chunks/{job_id}/chunks.json`.
    - Nhúng kép `[I6]` bằng `BgeM3Embedder` trực tiếp qua `transformers` + `sparse_linear.pt` (`halfvec(1024)` FP16 + `lexical_weights JSONB`, tuyệt đối không phụ thuộc `FlagEmbedding`).
-   - Toàn bộ tác vụ nặng chạy dưới `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)` và `LOW_VRAM_MODE=true` để giải phóng VRAM PhoWhisper ở `STT_COMPLETED` trước khi nạp BGE-M3.
+   - Toàn bộ tác vụ nặng chạy dưới `GLOBAL_GPU_SEMAPHORE = asyncio.Semaphore(1)` và `LOW_VRAM_MODE=true` để giải phóng VRAM PhoWhisper ở `STT_COMPLETED` trước khi nạp BGE-M3, và tuần tự hóa trong 2-Pass Pre-RAG `[Q1]–[Q6+]`.
 5. **Tuân Thủ Hợp Đồng API Nội Bộ & Gateway ([API-REFERENCE.md](./docs/API-REFERENCE.md)):**
    - Mọi endpoint, JSON field, header (`Bearer JWT` / `X-Internal-Secret`), trạng thái job (`QUEUED -> PROCESSING_STT -> STT_COMPLETED -> CHUNKING -> EMBEDDING -> READY | FAILED`), webhook (`PUT /internal/v1/jobs/{jobId}/status`), và SQL RPCs đều phải đối chiếu với [`docs/API-REFERENCE.md`](./docs/API-REFERENCE.md) làm Single Source of Truth.
 6. **Tuân Thủ Ngôn Ngữ Miền (Ubiquitous Language):**
    - Luôn đọc và đối chiếu thuật ngữ với [GLOSSARY.md](./GLOSSARY.md).
-   - Dùng đúng `LectureLens` (không dùng `SmartLecture`, `LectureApp`), dùng đúng `Kitsune Soft`, `Kitsune Fox Companion`, `Capsule Audio Player`, `Cornell Notes`, `2-Stage Neural RAG`, `Recursive Token Chunker ([I5])`, `BGE-M3 Dual Embedder ([I6])`, `Doubly-Linked Chunks`, `Sequential VRAM Offloading`.
+   - Dùng đúng `LectureLens` (không dùng `SmartLecture`, `LectureApp`), dùng đúng `Kitsune Soft`, `Kitsune Fox Companion`, `Capsule Audio Player`, `Cornell Notes`, `2-Stage Neural RAG` (`2-Pass Pre-RAG [Q1]–[Q6+]`), `Query Drift Guard`, `Recursive Token Chunker ([I5])`, `BGE-M3 Dual Embedder ([I6])`, `Gemma 4 E2B` (`QAT Mobile wNa8o8`), `Doubly-Linked Chunks`, `Sequential VRAM Offloading`.
 7. **Bảo Tồn Ranh Giới (Seams):**
-   - Client (`mobile/`) không bao giờ truy vấn trực tiếp cơ sở dữ liệu hoặc AI model weights. Mọi luồng đi qua Gateway hoặc Backend API; mọi persistence backend đi qua Protocol Seams (`AudioStoreProtocol`, `ChunkStoreProtocol`, `EmbedderProtocol`, `JobReporterProtocol`).
+   - Client (`mobile/`) không bao giờ truy vấn trực tiếp cơ sở dữ liệu hoặc AI model weights. Mọi luồng đi qua Gateway hoặc Backend API; mọi persistence, model inspection và execution tracing ở backend đi qua Protocol Seams (`AudioStoreProtocol`, `ChunkStoreProtocol`, `EmbedderProtocol`, `RerankerProtocol`, `LlmClientProtocol`, `JobReporterProtocol`, `ModelRegistryProtocol`, `PipelineObserverProtocol`).
 
 ---
 
@@ -148,13 +148,13 @@ npm run understand:dashboard
 
 Đối với Backend:
 ```bash
-# Kiểm tra toàn bộ test suite Backend (Stage 1 + Stage 2 [I5]/[I6] + Chunk Store)
+# Kiểm tra toàn bộ test suite Backend (Stage 1 + Stage 2 [I5]/[I6] + Online 2-Pass Pre-RAG + ModelRegistry + TEST Studio)
 .\.venv\Scripts\python.exe -m pytest backend/tests -v
 
 # Khởi chạy 1-lệnh Docker Compose (PostgreSQL 16 + pgvector & FastAPI AI Service, profile 16GB RAM / 4GB VRAM)
 docker compose -f backend/docker-compose.ai-dev.yml up --build
 
-# Hoặc khởi chạy LectureLens TEST Studio (Stage 1 + Stage 2 Pipeline Tester UI)
+# Hoặc khởi chạy LectureLens BE & Model Inspector (Ingest + 2-Pass Pre-RAG Test Studio UI)
 docker compose -f TEST/docker-compose.test.yml up --build
 
 # Kiểm tra cấu hình và kết nối cơ sở dữ liệu RAG (khi chạy trên host)

@@ -2,7 +2,7 @@
 -- LECTURELENS RAG DB - 02_rag_chunks_schema.sql
 -- =========================================================================
 -- Đặc tả bảng thực thể cốt lõi chứa các phân đoạn bài giảng và vector
--- Tối ưu hóa lưu trữ đầu ra từ PhoWhisper-base (ASR) và BGE-M3 (Embedder)
+-- Tối ưu hóa lưu trữ đầu ra từ PhoWhisper-medium (ASR) và BGE-M3 (Embedder)
 -- =========================================================================
 
 CREATE TABLE IF NOT EXISTS rag.lecture_chunks (

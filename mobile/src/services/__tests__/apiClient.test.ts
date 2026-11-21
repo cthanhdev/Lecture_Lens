@@ -141,7 +141,7 @@ describe('AudioPipelineService & Polling Invariants', () => {
         },
         stt: {
           status,
-          model: 'phowhisper-base',
+          model: 'phowhisper-medium',
           device: 'cuda:0',
           attempts: 1,
         },
@@ -184,7 +184,7 @@ describe('AudioPipelineService & Polling Invariants', () => {
         },
         stt: {
           status: 'FAILED',
-          model: 'phowhisper-base',
+          model: 'phowhisper-medium',
           device: 'cuda:0',
           attempts: 3,
           last_error: 'Corrupted audio stream header',

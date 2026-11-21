@@ -20,6 +20,10 @@ Tài liệu đặc tả API chuẩn xác 1:1 với mã nguồn hiện hành cho 
   - [4.5. `GET /internal/v1/ai/chunks/{job_id}`](#45-get-internalv1aichunksjob_id)
   - [4.6. `POST /internal/v1/ai/search/hybrid`](#46-post-internalv1aisearchhybrid)
   - [4.7. `GET /internal/v1/ai/chunks/context/{chunk_id}`](#47-get-internalv1aichunkscontextchunk_id)
+  - [4.8. `GET /internal/v1/ai/rag/presets`](#48-get-internalv1airagpresets)
+  - [4.9. `POST /internal/v1/ai/rag/retrieve`](#49-post-internalv1airagretrieve)
+  - [4.10. `POST /internal/v1/ai/llm/generate`](#410-post-internalv1aillmgenerate)
+  - [4.11. `POST /internal/v1/ai/rag/query`](#411-post-internalv1airagquery)
 - [5. Internal Webhook Callback (`FastAPI -> Spring Boot`)](#5-internal-webhook-callback-fastapi---spring-boot)
 - [6. Immutable Artifact Contracts (`volumes/rag_data/`)](#6-immutable-artifact-contracts-volumesrag_data)
 - [7. Vector Database Schema & SQL RPCs (`rag.*`)](#7-vector-database-schema--sql-rpcs-rag)
@@ -40,7 +44,8 @@ Tài liệu đặc tả API chuẩn xác 1:1 với mã nguồn hiện hành cho 
         ├──► HTTP + Header: X-Internal-Secret ──► [FastAPI AI Service :8000]
         │                                               │  (rag-internal-network)
         │                                               ├──► [PostgreSQL 16 + pgvector :5432]
-        │                                               └──► [Ollama Gemma 4 E4B :11434]
+        │                                               └──► [Transformers Gemma 4 E2B QAT]
+        │                                                    (or optional [Ollama gemma4:e2b :11434])
         │
         ◄── PUT /internal/v1/jobs/{jobId}/status (X-Internal-Secret) ──┘
 ```
@@ -121,7 +126,7 @@ Các endpoint công khai dưới tiền tố `/api/v1` là ranh giới duy nhấ
 
 ## 4. Internal AI & RAG Service APIs — FastAPI (`:8000`)
 
-Tất cả endpoint trong mục này nằm tại `backend/ai_service/routers/health.py` và `backend/ai_service/routers/ingest.py`, dùng tiền tố `/internal/v1/ai` và đều yêu cầu header `X-Internal-Secret`. Mọi Pydantic request model đều cấu hình `ConfigDict(populate_by_name=True)`, chấp nhận cả tên trường **camelCase alias** (`jobId`, `lectureId`, `fileExtension`, `syncToDb`, `lectureIds`, `topK`, `includeContext`) lẫn **snake_case** (`job_id`, `lecture_id`, ...).
+Tất cả endpoint trong mục này nằm tại `backend/ai_service/routers/health.py`, `backend/ai_service/routers/ingest.py` và `backend/ai_service/routers/rag.py`, dùng tiền tố `/internal/v1/ai` và đều yêu cầu header `X-Internal-Secret`. Mọi Pydantic request model đều cấu hình `ConfigDict(populate_by_name=True)`, chấp nhận cả tên trường **camelCase alias** (`jobId`, `lectureId`, `fileExtension`, `syncToDb`, `lectureIds`, `topK`, `includeContext`, `retrievalTopK`, `promptProfile`, `responseFormat`, `useExpandedContext`, `extraStages`) lẫn **snake_case** (`job_id`, `lecture_id`, ...).
 
 ---
 
@@ -136,8 +141,11 @@ Trả về trạng thái dịch vụ AI, phần cứng CUDA/VRAM, cấu hình `L
 {
   "status": "HEALTHY",
   "service": "lecturelens-ai-service",
+  "python_version": "3.11.11",
+  "transformers_version": "5.22.2",
   "configured_device": "auto",
   "low_vram_mode": true,
+  "llm_engine_mode": "transformers",
   "cuda_available": true,
   "vram": {
     "device_name": "NVIDIA GeForce RTX 3050 Laptop GPU",
@@ -147,7 +155,23 @@ Trả về trạng thái dịch vụ AI, phần cứng CUDA/VRAM, cấu hình `L
   "pgvector_connected": true,
   "models": {
     "phowhisper_path_exists": true,
-    "bge_m3_path_exists": true
+    "bge_m3_path_exists": true,
+    "bge_reranker_path_exists": true,
+    "gemma4_path_exists": true,
+    "total_disk_gb": 11.58,
+    "catalog": [
+      {
+        "key": "phowhisper-medium",
+        "display_name": "PhoWhisper-medium",
+        "repo_id": "vinai/PhoWhisper-medium",
+        "stage_code": "I4",
+        "wiring_status": "ACTIVE",
+        "weights_ready": true,
+        "disk_size_gb": 2.85,
+        "primary_weight_file": "pytorch_model.bin",
+        "runtime_compatible": true
+      }
+    ]
   }
 }
 ```
@@ -405,6 +429,70 @@ Truy xuất ngữ cảnh 3 chiều (`PREVIOUS`, `CURRENT`, `NEXT`) của một `
 
 ---
 
+### 4.8. `GET /internal/v1/ai/rag/presets`
+
+Trả về cấu hình system prompt mặc định cho Pass 1 (`[Q1]` chuẩn hóa/mở rộng truy vấn) và danh sách các profile cho Pass 2 (`[Q5]` sinh câu trả lời có dẫn nguồn) từ `GroundedPromptBuilder` (`backend/ai_service/routers/rag.py`).
+
+- **Headers:** `X-Internal-Secret: <INTERNAL_API_SECRET_KEY>`
+- **Success Response (`200 OK` — `RagPresetsResponse`):**
+  - `default_query_system_prompt`: System prompt mặc định cho Pass 1 `[Q1]`.
+  - `presets[]`: Danh sách `{id, label, default_response_format, description, system_prompt}` (ví dụ `qa_refine`, `cornell_notes`, `flashcards`, `quiz_gen`).
+
+---
+
+### 4.9. `POST /internal/v1/ai/rag/retrieve`
+
+Thực thi thuần giai đoạn `[Q2]–[Q4]` (không gọi LLM): nhúng truy vấn bằng `BGE-M3` $\rightarrow$ 3-Stream Hybrid RRF $\rightarrow$ mở rộng ngữ cảnh 3 chiều (`[Q3]`) $\rightarrow$ tái xếp hạng chính xác bằng `BGE-Reranker-v2-m3` (`[Q4]`).
+
+- **Headers:** `X-Internal-Secret: <INTERNAL_API_SECRET_KEY>`
+- **Request Body (`RagRetrieveRequest`):** `{"lectureIds": ["uuid"], "query": "str", "topK": 5, "retrievalTopK": 25, "useExpandedContext": true}`
+- **Success Response (`200 OK` — `RagRetrieveResponse`):** Danh sách `citations` (`rerank_logit`, `rerank_score`, `rrf_total_score`, `expanded_context`) kèm `telemetry`.
+
+---
+
+### 4.10. `POST /internal/v1/ai/llm/generate`
+
+Thực thi chuỗi suy luận `[Q5]–[Q6+]` bằng **Gemma 4 E2B QAT** (`TransformersGemmaClient` hoặc `OllamaGemmaClient`) trên danh sách đoạn trích đã có, hỗ trợ nối tiếp nhiều stage (`extraStages: list[LLMStageConfig]`).
+
+- **Headers:** `X-Internal-Secret: <INTERNAL_API_SECRET_KEY>`
+- **Request Body (`LlmGenerateRequest`):** `{"query": "str", "contexts": [...], "promptProfile": "qa_refine", "systemPrompt": "str?", "responseFormat": "text|markdown|json?", "temperature": 0.2, "maxNewTokens": 512, "extraStages": [...]}`
+- **Success Response (`200 OK` — `LlmGenerateResponse`):** `{"answer": "...", "stage_outputs": [...], "model": "gemma-4-e2b", "engine": "transformers|ollama", "latency_ms": 420.5}`
+- **Error Responses:** `401`, `422`, `503 Service Unavailable` nếu trọng số hoặc runtime LLM chưa sẵn sàng.
+
+---
+
+### 4.11. `POST /internal/v1/ai/rag/query`
+
+Endpoint hợp nhất cho **Online 2-Pass Pre-RAG `[Q1]–[Q6+]`** (đã gỡ bỏ `rag.semantic_query_cache`; lưu vết kiểm toán vào `rag.rag_audit_logs`):
+
+1. `[Q1]` **Pass 1 (`gemma-4-e2b`):** Chuẩn hóa & mở rộng câu hỏi theo `querySystemPrompt`, kết hợp **Query Drift Guard** (`_merge_preserved_keywords`) để bảo toàn thuật ngữ chuyên ngành.
+2. `[Q2]` **`bge-m3` + 3-Stream RRF:** Truy xuất `retrievalTopK` ứng viên (mặc định `25`).
+3. `[Q3]` **3-Way Context Expand:** Nạp `PREVIOUS / CURRENT / NEXT` nếu `useExpandedContext=true`.
+4. `[Q4]` **`bge-reranker-v2-m3`:** Tái xếp hạng và giữ Top `topK` trích dẫn (mặc định `5`).
+5. `[Q5]–[Q6+]` **Pass 2 (`gemma-4-e2b`):** Sinh câu trả lời bám ngữ cảnh có dẫn nguồn `[MM:SS]` và chạy tiếp các `extraStages` (nếu có).
+
+- **Headers:** `Content-Type: application/json`, `X-Internal-Secret: <INTERNAL_API_SECRET_KEY>`
+- **Request Body (`RagQueryRequest`):**
+```json
+{
+  "lectureIds": ["a9010344-77bb-4e32-9112-229988776655"],
+  "query": "doc lap tuyen tinh la gi?",
+  "topK": 5,
+  "retrievalTopK": 25,
+  "promptProfile": "qa_refine",
+  "responseFormat": "text",
+  "useExpandedContext": true,
+  "temperature": 0.2,
+  "maxNewTokens": 512,
+  "extraStages": []
+}
+```
+- **Success Response (`200 OK` — `RagQueryResponse`):**
+  Trả về `query`, `prepared_query`, `lecture_ids`, `answer`, `stage_outputs[]`, `citations[]` (`rerank_logit`, `rerank_score`, `rrf_total_score`, `expanded_context`) và `telemetry` (`query_prep_ms`, `embed_ms`, `retrieval_ms`, `expand_ms`, `rerank_ms`, `llm_ms`, `total_ms`, `candidates_retrieved`, `reranked_count`).
+- **Error Responses:** `401 Unauthorized`, `422 Unprocessable Entity`, `503 Service Unavailable`.
+
+---
+
 ## 5. Internal Webhook Callback (`FastAPI -> Spring Boot`)
 
 Được phát bởi `SpringJobReporter` (`backend/ai_service/core/job_reporter.py`) mỗi khi máy trạng thái chuyển bước:
@@ -473,7 +561,7 @@ volumes/rag_data/
   },
   "stt": {
     "status": "COMPLETED",
-    "model": "phowhisper-base",
+    "model": "phowhisper-medium",
     "device": "cuda:0",
     "attempts": 1,
     "last_error": null,
@@ -501,7 +589,7 @@ volumes/rag_data/
   "job_id": "f103b415-992a-4bc8-8f55-1178a9c0012f",
   "lecture_id": "a9010344-77bb-4e32-9112-229988776655",
   "generated": {
-    "model": "phowhisper-base",
+    "model": "phowhisper-medium",
     "language": "vi",
     "device": "cuda",
     "created_at": "2026-11-14T12:01:10+00:00",

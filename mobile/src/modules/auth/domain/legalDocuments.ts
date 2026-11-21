@@ -48,7 +48,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
   {
     id: 'zero-cloud-leakage',
     title: '1. Privacy-First On-Premise AI (Zero Cloud Leakage)',
-    body: 'Under LectureLens Architecture Decision ADR 0001, speech-to-text (PhoWhisper-base / PhoWhisper-medium), 1024-dimensional dense embeddings (BGE-M3), cross-encoder precision reranking (BGE-Reranker-v2-m3), and grounded LLM synthesis (Ollama Gemma 4 E4B) execute 100% locally on institutional on-premise servers. Zero third-party cloud AI services (such as OpenAI, Anthropic, or external cloud STT APIs) ever receive your lecture audio, transcripts, or questions.',
+    body: 'Under LectureLens Architecture Decisions ADR 0001 and ADR 0005, Vietnamese speech-to-text (PhoWhisper-medium), 1024-dimensional dense embeddings and sparse lexical weights (BGE-M3), cross-encoder precision reranking (BGE-Reranker-v2-m3), and 2-Pass grounded LLM synthesis (Gemma 4 E2B QAT Mobile via HuggingFace transformers or optional local Ollama) execute 100% locally on institutional on-premise servers. Zero third-party cloud AI services (such as OpenAI, Anthropic, or external cloud STT APIs) ever receive your lecture audio, transcripts, or questions.',
   },
   {
     id: 'data-processed',
@@ -58,7 +58,7 @@ export const PRIVACY_SECTIONS: readonly LegalSection[] = [
   {
     id: 'network-isolation',
     title: '3. Network Isolation & Course-Scoped Access',
-    body: 'The LectureLens mobile app communicates solely with the Spring Boot Gateway (EXPO_PUBLIC_GATEWAY_URL); PostgreSQL, FastAPI, and Ollama expose zero public network ports and communicate inside an isolated subnet authenticated via X-Internal-Secret. RAG retrieval enforces per-user authorizedLectureIds course access boundaries.',
+    body: 'The LectureLens mobile app communicates solely with the Spring Boot Gateway (EXPO_PUBLIC_GATEWAY_URL); PostgreSQL, FastAPI, and optional local Ollama containers expose zero public network ports and communicate inside an isolated subnet authenticated via X-Internal-Secret. RAG retrieval enforces per-user authorizedLectureIds course access boundaries.',
   },
   {
     id: 'device-permissions-control',

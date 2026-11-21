@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "job_id": "0cffc8d0-0618-4307-94a8-4be5892d4644",
+  "lecture_id": "2f4baa73-8f50-4835-870f-ec79e9f9a148",
+  "original": {
+    "filename": "0cffc8d0-0618-4307-94a8-4be5892d4644.wav",
+    "extension": "wav",
+    "size_bytes": 8044,
+    "sha256": "59460d5690616336b990fc7b1629428e3bd825e422da84469d2c8c8ecfaff43b",
+    "created_at": "2026-11-19T15:19:35.152481+00:00"
+  },
+  "normalized": null,
+  "stt": {
+    "status": "COMPLETED",
+    "model": "phowhisper-medium",
+    "device": "cuda:0",
+    "attempts": 1,
+    "last_error": null,
+    "transcript_rel_path": "transcripts/0cffc8d0-0618-4307-94a8-4be5892d4644/transcript.json"
+  },
+  "chunking": {
+    "status": "COMPLETED",
+    "model": "fake-embedder",
+    "chunk_count": 3,
+    "chunks_rel_path": "chunks/0cffc8d0-0618-4307-94a8-4be5892d4644/chunks.json",
+    "db_synced": false,
+    "last_error": null
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "job_id": "0cffc8d0-0618-4307-94a8-4be5892d4644",
+  "lecture_id": "2f4baa73-8f50-4835-870f-ec79e9f9a148",
+  "generated": {
+    "model": "mock-sample-generator",
+    "language": "vi",
+    "device": "cpu",
+    "created_at": "2026-11-19T15:19:35.153952+00:00",
+    "processing_seconds": 0.01
+  },
+  "audio": {
+    "duration_seconds": 399.0,
+    "sample_rate_hz": 16000
+  },
+  "full_text": "Chào mừng các em sinh viên đến với học phần Hệ Thống Thông Tin và Mạng Máy Tính nâng cao. Trong chương mở đầu hôm nay, chúng ta sẽ ôn tập kiến trúc phân tầng OSI bảy lớp và mô hình TCP/IP đang vận hành trên toàn bộ mạng Internet hiện đại. Giao thức TCP đảm bảo truyền dữ liệu tin cậy thông qua cơ chế bắt tay ba bước SYN, SYN-ACK, ACK, đánh số thứ tự gói tin và kiểm soát tắc nghẽn theo cửa sổ trượt, giúp các ứng dụng web và cơ sở dữ liệu phân tán không bị mất gói. Khi thiết kế hạ tầng mạng doanh nghiệp, kỹ sư hệ thống phải thực hiện chia mạng con subnetting bằng mặt nạ mạng subnet mask và ký hiệu CIDR nhằm tối ưu không gian địa chỉ IPv4 và cô lập miền broadcast. Ví dụ với tiền tố /24 chúng ta có 254 địa chỉ host khả dụng, còn khi chia nhỏ thành bốn subnet /26 thì mỗi phân đoạn mạng phòng ban chỉ chứa tối đa 62 thiết bị, giảm thiểu xung đột lưu lượng nội bộ. Tiếp theo là dịch vụ phân giải tên miền DNS và cấp phát địa chỉ động DHCP trong mạng nội bộ LAN. Máy chủ DHCP tự động cấp phát IP, Default Gateway và DNS Server cho hàng nghìn máy trạm khi khởi động, trong khi DNS chuyển đổi tên miền dễ nhớ như portal.university.edu.vn thành địa chỉ IP tương ứng thông qua các bản ghi A, AAAA, CNAME và SRV phục vụ định vị dịch vụ trong hệ thống lớn. Chuyển sang phần Quản trị Windows Server, trọng tâm cốt lõi là dịch vụ thư mục Active Directory Domain Services. Domain Controller đóng vai trò máy chủ xác thực trung tâm, lưu giữ cơ sở dữ liệu NTDS.dit chứa toàn bộ tài khoản người dùng Users, nhóm bảo mật Groups, máy tính thành viên và các chính sách Group Policy Object. Mọi yêu cầu đăng nhập từ máy trạm đều đi qua giao thức Kerberos để cấp phát vé xác thực an toàn. Để phân cấp quản trị khoa học trong Active Directory, quản trị viên tổ chức các đối tượng vào những đơn vị tổ chức Organizational Unit gọi tắt là OU theo sơ đồ phòng ban hoặc theo chức năng. Nhờ kết hợp OU với Group Policy Object, chúng ta có thể áp đặt đồng bộ quy tắc độ phức tạp mật khẩu, giới hạn quyền Administrator cục bộ, cấu hình tường lửa và ánh xạ ổ đĩa dùng chung cho hàng trăm máy sinh viên. Khi cấp quyền truy cập tài nguyên chia sẻ trong Active Directory, chúng ta luôn tuân thủ mô hình AGDLP tức là đưa tài khoản vào Global Group, lồng vào Domain Local Group và gán quyền Permissions trên thư mục. Việc kiểm tra thuộc tính Member Of của một tài khoản giúp quản trị viên rà soát nhanh phạm vi phân quyền, tránh tình trạng cấp thừa đặc quyền Domain Admin gây rủi ro leo thang đặc quyền trong mạng trường học. Trong phần hai của bài giảng, chúng ta chuyển sang nền tảng Toán cho Trí Tuệ Nhân Tạo với chủ đề Đại Số Tuyến Tính và Không Gian Vector. Một không gian vector V trên trường số thực được trang bị hai phép toán cộng hai vector và nhân vô hướng thỏa mãn tám tiên đề đại số cơ bản. Các vector biểu diễn ngữ nghĩa câu văn từ mô hình ngôn ngữ lớn chính là các điểm nằm trong không gian nhiều chiều này. Khái niệm then chốt tiếp theo là độc lập tuyến tính và hệ sinh của một không gian vector. Một hệ gồm k vector được gọi là độc lập tuyến tính nếu tổ hợp tuyến tính của chúng bằng vector không chỉ xảy ra khi mọi hệ số vô hướng đều đồng thời bằng không. Nếu hệ vector vừa độc lập tuyến tính vừa sinh ra toàn bộ không gian V thì nó tạo thành một cơ sở basis, và số vector trong cơ sở chính là số chiều của không gian. Để đo lường mức độ tương đồng giữa hai vector nhúng 1024 chiều sinh ra bởi mô hình BGE-M3, hệ thống truy xuất thông tin sử dụng chuẩn Euclidean L2 norm và độ đo Cosine Similarity. Khi toàn bộ vector đã được chuẩn hóa về độ dài đơn vị bằng một, phép tính tích vô hướng dot product trở nên tương đương với Cosine Similarity, cho phép chỉ mục HNSW tìm kiếm láng giềng gần nhất chỉ trong vài mili-giây. Phép chiếu trực giao và khai triển giá trị kỳ dị SVD cũng giữ vai trò đặc biệt trong giảm chiều dữ liệu và nén biểu diễn vector mà vẫn bảo toàn phương sai thông tin quan trọng nhất. Trong cơ sở dữ liệu pgvector, việc chuyển đổi lưu trữ từ float32 sang halfvec FP16 giúp tiết kiệm một nửa dung lượng RAM của đồ thị HNSW mà vẫn giữ độ chính xác truy hồi recall trên chín mươi chín phẩy hai phần trăm. Chuyển sang chương cuối về Tối Ưu Hóa Học Máy, chúng ta phân tích thuật toán Gradient Descent dùng để cực tiểu hóa hàm mất mát loss function trong quá trình huấn luyện mạng nơ-ron sâu. Tại mỗi vòng lặp, vector tham số mô hình được cập nhật theo hướng ngược chiều với vector đạo hàm riêng gradient, vì gradient chỉ hướng tăng dốc nhất của bề mặt hàm mục tiêu trong không gian tham số nhiều chiều. Hệ số tốc độ học learning rate ký hiệu alpha quyết định độ dài bước nhảy của thuật toán Gradient Descent. Nếu chọn learning rate quá lớn, quá trình tối ưu sẽ dao động mạnh quanh điểm cực tiểu và có thể phân kỳ; ngược lại nếu learning rate quá nhỏ thì tốc độ hội tụ rất chậm và dễ mắc kẹt tại các điểm yên ngựa hoặc cực tiểu địa phương kém tối ưu trên bề mặt hàm mất mát phi lồi. Trong thực tế huấn luyện với tập dữ liệu lớn hàng triệu mẫu, biến thể Stochastic Gradient Descent và Mini-batch Gradient Descent kết hợp với bộ tối ưu Adam sử dụng momentum bậc nhất và bậc hai được ưu tiên sử dụng. Cách tiếp cận mini-batch vừa tận dụng khả năng tính toán song song trên GPU vừa tạo ra nhiễu có lợi giúp thoát khỏi các vùng phẳng gradient bằng không. Tổng kết buổi học hôm nay: các em hãy thực hành kết hợp kiến thức mạng TCP/IP, phân quyền Active Directory và biểu diễn không gian vector để hiểu trọn vẹn cách LectureLens số hóa bài giảng tiếng Việt. Bài tập về nhà yêu cầu chứng minh bất đẳng thức Cauchy-Schwarz trong không gian tích trong và cài đặt thuật toán tìm kiếm lai ba luồng kết hợp Dense Vector, Lexical Full-Text và Fuzzy Trigram RRF.",
+  "segments": [
+    {
+      "id": 0,
+      "start_time_seconds": 0.0,
+      "end_time_seconds": 28.5,
+      "timestamp_label": "00:00",
+      "text": "Chào mừng các em sinh viên đến với học phần Hệ Thống Thông Tin và Mạng Máy Tính nâng cao. Trong chương mở đầu hôm nay, chúng ta sẽ ôn tập kiến trúc phân tầng OSI bảy lớp và mô hình TCP/IP đang vận hành trên toàn bộ mạng Internet hiện đại. Giao thức TCP đảm bảo truyền dữ liệu tin cậy thông qua cơ chế bắt tay ba bước SYN, SYN-ACK, ACK, đánh số thứ tự gói tin và kiểm soát tắc nghẽn theo cửa sổ trượt, giúp các ứng dụng web và cơ sở dữ liệu phân tán không bị mất gói."
+    },
+    {
+      "id": 1,
+      "start_time_seconds": 28.5,
+      "end_time_seconds": 57.0,
+      "timestamp_label": "00:28",
+      "text": "Khi thiết kế hạ tầng mạng doanh nghiệp, kỹ sư hệ thống phải thực hiện chia mạng con subnetting bằng mặt nạ mạng subnet mask và ký hiệu CIDR nhằm tối ưu không gian địa chỉ IPv4 và cô lập miền broadcast. Ví dụ với tiền tố /24 chúng ta có 254 địa chỉ host khả dụng, còn khi chia nhỏ thành bốn subnet /26 thì mỗi phân đoạn mạng phòng ban chỉ chứa tối đa 62 thiết bị, giảm thiểu xung đột lưu lượng nội bộ."
+    },
+    {
+      "id": 2,
+      "start_time_seconds": 57.0,
+      "end_time_seconds": 85.5,
+      "timestamp_label": "00:57",
+      "text": "Tiếp theo là dịch vụ phân giải tên miền DNS và cấp phát địa chỉ động DHCP trong mạng nội bộ LAN. Máy chủ DHCP tự động cấp phát IP, Default Gateway và DNS Server cho hàng nghìn máy trạm khi khởi động, trong khi DNS chuyển đổi tên miền dễ nhớ như portal.university.edu.vn thành địa chỉ IP tương ứng thông qua các bản ghi A, AAAA, CNAME và SRV phục vụ định vị dịch vụ trong hệ thống lớn."
+    },
+    {
+      "id": 3,
+      "start_time_seconds": 85.5,
+      "end_time_seconds": 114.0,
+      "timestamp_label": "01:25",
+      "text": "Chuyển sang phần Quản trị Windows Server, trọng tâm cốt lõi là dịch vụ thư mục Active Directory Domain Services. Domain Controller đóng vai trò máy chủ xác thực trung tâm, lưu giữ cơ sở dữ liệu NTDS.dit chứa toàn bộ tài khoản người dùng Users, nhóm bảo mật Groups, máy tính thành viên và các chính sách Group Policy Object. Mọi yêu cầu đăng nhập từ máy trạm đều đi qua giao thức Kerberos để cấp phát vé xác thực an toàn."
+    },
+    {
+      "id": 4,
+      "start_time_seconds": 114.0,
+      "end_time_seconds": 142.5,
+      "timestamp_label": "01:54",
+      "text": "Để phân cấp quản trị khoa học trong Active Directory, quản trị viên tổ chức các đối tượng vào những đơn vị tổ chức Organizational Unit gọi tắt là OU theo sơ đồ phòng ban hoặc theo chức năng. Nhờ kết hợp OU với Group Policy Object, chúng ta có thể áp đặt đồng bộ quy tắc độ phức tạp mật khẩu, giới hạn quyền Administrator cục bộ, cấu hình tường lửa và ánh xạ ổ đĩa dùng chung cho hàng trăm máy sinh viên."
+    },
+    {
+      "id": 5,
+      "start_time_seconds": 142.5,
+      "end_time_seconds": 171.0,
+      "timestamp_label": "02:22",
+      "text": "Khi cấp quyền truy cập tài nguyên chia sẻ trong Active Directory, chúng ta luôn tuân thủ mô hình AGDLP tức là đưa tài khoản vào Global Group, lồng vào Domain Local Group và gán quyền Permissions trên thư mục. Việc kiểm tra thuộc tính Member Of của một tài khoản giúp quản trị viên rà soát nhanh phạm vi phân quyền, tránh tình trạng cấp thừa đặc quyền Domain Admin gây rủi ro leo thang đặc quyền trong mạng trường học."
+    },
+    {
+      "id": 6,
+      "start_time_seconds": 171.0,
+      "end_time_seconds": 199.5,
+      "timestamp_label": "02:51",
+      "text": "Trong phần hai của bài giảng, chúng ta chuyển sang nền tảng Toán cho Trí Tuệ Nhân Tạo với chủ đề Đại Số Tuyến Tính và Không Gian Vector. Một không gian vector V trên trường số thực được trang bị hai phép toán cộng hai vector và nhân vô hướng thỏa mãn tám tiên đề đại số cơ bản. Các vector biểu diễn ngữ nghĩa câu văn từ mô hình ngôn ngữ lớn chính là các điểm nằm trong không gian nhiều chiều này."
+    },
+    {
+      "id": 7,
+      "start_time_seconds": 199.5,
+      "end_time_seconds": 228.0,
+      "timestamp_label": "03:19",
+      "text": "Khái niệm then chốt tiếp theo là độc lập tuyến tính và hệ sinh của một không gian vector. Một hệ gồm k vector được gọi là độc lập tuyến tính nếu tổ hợp tuyến tính của chúng bằng vector không chỉ xảy ra khi mọi hệ số vô hướng đều đồng thời bằng không. Nếu hệ vector vừa độc lập tuyến tính vừa sinh ra toàn bộ không gian V thì nó tạo thành một cơ sở basis, và số vector trong cơ sở chính là số chiều của không gian."
+    },
+    {
+      "id": 8,
+      "start_time_seconds": 228.0,
+      "end_time_seconds": 256.5,
+      "timestamp_label": "03:48",
+      "text": "Để đo lường mức độ tương đồng giữa hai vector nhúng 1024 chiều sinh ra bởi mô hình BGE-M3, hệ thống truy xuất thông tin sử dụng chuẩn Euclidean L2 norm và độ đo Cosine Similarity. Khi toàn bộ vector đã được chuẩn hóa về độ dài đơn vị bằng một, phép tính tích vô hướng dot product trở nên tương đương với Cosine Similarity, cho phép chỉ mục HNSW tìm kiếm láng giềng gần nhất chỉ trong vài mili-giây."
+    },
+    {
+      "id": 9,
+      "start_time_seconds": 256.5,
+      "end_time_seconds": 285.0,
+      "timestamp_label": "04:16",
+      "text": "Phép chiếu trực giao và khai triển giá trị kỳ dị SVD cũng giữ vai trò đặc biệt trong giảm chiều dữ liệu và nén biểu diễn vector mà vẫn bảo toàn phương sai thông tin quan trọng nhất. Trong cơ sở dữ liệu pgvector, việc chuyển đổi lưu trữ từ float32 sang halfvec FP16 giúp tiết kiệm một nửa dung lượng RAM của đồ thị HNSW mà vẫn giữ độ chính xác truy hồi recall trên chín mươi chín phẩy hai phần trăm."
+    },
+    {
+      "id": 10,
+      "start_time_seconds": 285.0,
+      "end_time_seconds": 313.5,
+      "timestamp_label": "04:45",
+      "text": "Chuyển sang chương cuối về Tối Ưu Hóa Học Máy, chúng ta phân tích thuật toán Gradient Descent dùng để cực tiểu hóa hàm mất mát loss function trong quá trình huấn luyện mạng nơ-ron sâu. Tại mỗi vòng lặp, vector tham số mô hình được cập nhật theo hướng ngược chiều với vector đạo hàm riêng gradient, vì gradient chỉ hướng tăng dốc nhất của bề mặt hàm mục tiêu trong không gian tham số nhiều chiều."
+    },
+    {
+      "id": 11,
+      "start_time_seconds": 313.5,
+      "end_time_seconds": 342.0,
+      "timestamp_label": "05:13",
+      "text": "Hệ số tốc độ học learning rate ký hiệu alpha quyết định độ dài bước nhảy của thuật toán Gradient Descent. Nếu chọn learning rate quá lớn, quá trình tối ưu sẽ dao động mạnh quanh điểm cực tiểu và có thể phân kỳ; ngược lại nếu learning rate quá nhỏ thì tốc độ hội tụ rất chậm và dễ mắc kẹt tại các điểm yên ngựa hoặc cực tiểu địa phương kém tối ưu trên bề mặt hàm mất mát phi lồi."
+    },
+    {
+      "id": 12,
+      "start_time_seconds": 342.0,
+      "end_time_seconds": 370.5,
+      "timestamp_label": "05:42",
+      "text": "Trong thực tế huấn luyện với tập dữ liệu lớn hàng triệu mẫu, biến thể Stochastic Gradient Descent và Mini-batch Gradient Descent kết hợp với bộ tối ưu Adam sử dụng momentum bậc nhất và bậc hai được ưu tiên sử dụng. Cách tiếp cận mini-batch vừa tận dụng khả năng tính toán song song trên GPU vừa tạo ra nhiễu có lợi giúp thoát khỏi các vùng phẳng gradient bằng không."
+    },
+    {
+      "id": 13,
+      "start_time_seconds": 370.5,
+      "end_time_seconds": 399.0,
+      "timestamp_label": "06:10",
+      "text": "Tổng kết buổi học hôm nay: các em hãy thực hành kết hợp kiến thức mạng TCP/IP, phân quyền Active Directory và biểu diễn không gian vector để hiểu trọn vẹn cách LectureLens số hóa bài giảng tiếng Việt. Bài tập về nhà yêu cầu chứng minh bất đẳng thức Cauchy-Schwarz trong không gian tích trong và cài đặt thuật toán tìm kiếm lai ba luồng kết hợp Dense Vector, Lexical Full-Text và Fuzzy Trigram RRF."
+    }
+  ]
+}

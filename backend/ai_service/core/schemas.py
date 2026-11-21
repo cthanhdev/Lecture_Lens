@@ -49,7 +49,7 @@ class NormalizedAudioMeta(BaseModel):
 
 class SttMeta(BaseModel):
     status: Literal["PENDING", "PROCESSING", "COMPLETED", "FAILED"] = "PENDING"
-    model: str = "phowhisper-base"
+    model: str = "phowhisper-medium"
     device: str = "cuda:0"
     attempts: int = 1
     last_error: str | None = None
@@ -91,7 +91,7 @@ class TranscriptSegment(BaseModel):
 
 
 class TranscriptGeneratedMeta(BaseModel):
-    model: str = "phowhisper-base"
+    model: str = "phowhisper-medium"
     language: str = "vi"
     device: str = "cuda:0"
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())

@@ -14,25 +14,28 @@ _Avoid_: LectureApp, LensApp, SmartLecture, SmartLecture AI.
 Triết lý kiến trúc cốt lõi (ADR 0001): Toàn bộ quy trình ASR, Vectorization, Reranking và suy luận LLM được thực thi 100% cục bộ trên hạ tầng on-premise của tổ chức, cam kết không bao giờ truyền dữ liệu ra đám mây công cộng bên thứ ba.
 _Avoid_: Cloud AI, External SaaS API, OpenAI integration, Third-party STT.
 
-**2-Stage Neural RAG**:
-Quy trình truy vấn bài giảng hai giai đoạn kết hợp Candidate Retrieval (HNSW Cosine trên PostgreSQL pgvector) và Precision Reranking (Cross-Encoder BGE-Reranker-v2-m3) trước khi đưa ngữ cảnh vào LLM suy luận.
-_Avoid_: Single-stage vector search, Naive RAG, Direct LLM QA.
+**2-Stage Neural RAG (2-Pass Pre-RAG `[Q1]–[Q6+]`)**:
+Quy trình truy vấn bài giảng trực tuyến không dùng Semantic Query Cache: Pass 1 `[Q1]` chuẩn hóa/mở rộng truy vấn kèm **Query Drift Guard**, `[Q2]` truy hồi kết hợp 3 luồng (`HNSW Cosine` + `GIN TSVECTOR` + `pg_trgm Fuzzy` RRF), `[Q3]` mở rộng ngữ cảnh 3 chiều (`PREVIOUS / CURRENT / NEXT`), `[Q4]` tái xếp hạng Cross-Encoder `BGE-Reranker-v2-m3`, và Pass 2 `[Q5]/[Q6+]` tổng hợp có dẫn nguồn `[MM:SS]`, ghi nhận kiểm toán vào `rag.rag_audit_logs`.
+_Avoid_: Single-stage vector search, Naive RAG, Direct LLM QA, Semantic Query Cache.
 
 **PhoWhisper**:
-Mô hình ASR tiếng Việt chuyên biệt (`PhoWhisper-base` / `PhoWhisper-medium`), được tối ưu cho ngữ điệu và thuật ngữ bài giảng, tự động gán mốc thời gian chuẩn định dạng `[MM:SS]`.
-_Avoid_: Whisper Cloud, Whisper API, General ASR.
+Mô hình ASR tiếng Việt chuyên biệt (`PhoWhisper-medium`, `vinai/PhoWhisper-medium`), được tối ưu cho ngữ điệu và thuật ngữ bài giảng, tự động gán mốc thời gian chuẩn định dạng `[MM:SS]`.
+_Avoid_: PhoWhisper-base (legacy), Whisper Cloud, Whisper API, General ASR.
 
 **BGE-M3**:
-Mô hình nhúng ngữ nghĩa đa ngữ tiên tiến, trích xuất vector dense 1024 chiều đại diện cho phân đoạn bài giảng và câu hỏi truy vấn.
+Mô hình nhúng ngữ nghĩa đa ngữ tiên tiến (`BAAI/bge-m3`, cửa sổ `8,192` token), trích xuất đồng thời vector dense FP16 1024 chiều (`halfvec(1024)`) và trọng số từ vựng thưa (`lexical_weights` JSONB) cho phân đoạn bài giảng và câu hỏi truy vấn.
 _Avoid_: OpenAI Ada, Text-embedding-3, Sentence-Transformers chung chung.
 
 **BGE-Reranker-v2-m3**:
-Mô hình Cross-Encoder chuyên dụng chấm điểm tương quan cặp (Query - Passage), loại bỏ triệt để phân đoạn nhiễu trước khi tổng hợp câu trả lời.
+Mô hình Cross-Encoder chuyên dụng chấm điểm tương quan cặp (Query - Passage, cửa sổ `8,192` token), loại bỏ triệt để phân đoạn nhiễu trước khi tổng hợp câu trả lời `[Q5]`.
 _Avoid_: Heuristic reranker, Bi-encoder reranking.
 
-**Gemma 4 E4B**:
-Mô hình ngôn ngữ lớn cục bộ chạy qua Ollama, chịu trách nhiệm tổng hợp câu trả lời dựa trên ngữ cảnh trích xuất và bắt buộc dẫn nguồn bằng mốc thời gian `[MM:SS]`.
-_Avoid_: GPT-4, Claude API, Un-grounded LLM.
+**Gemma 4 E2B**:
+Mô hình ngôn ngữ lớn cục bộ đa phương thức nhỏ gọn (`google/gemma-4-E2B-it-qat-mobile-transformers`, QAT Mobile `wNa8o8` 2/4/8-bit, 2.3B effective / 5.1B total PLE, cửa sổ `131,072` token) chạy trực tiếp qua `transformers>=5.22.0` (`TransformersGemmaClient`, mặc định) hoặc qua Ollama cục bộ (`gemma4:e2b`), chịu trách nhiệm chuẩn hóa truy vấn `[Q1]` và tổng hợp câu trả lời bắt buộc dẫn nguồn bằng mốc thời gian `[MM:SS]` ở `[Q5]/[Q6+]`.
+_Avoid_: Gemma 4 E4B (legacy), GPT-4, Claude API, Un-grounded LLM.
+
+**Model Registry & Pipeline Observer Seams**:
+Các ranh giới quan sát nội bộ (`ModelRegistryProtocol` / `LocalModelRegistry` và `PipelineObserverProtocol`) giúp kiểm tra trạng thái trọng số thực trên đĩa (`backend/models/`), mức tiêu thụ RAM/VRAM và dấu vết chạy từng bước `[I1]–[I6]` mà không làm rò rỉ logic hạ tầng vào tầng ứng dụng.
 
 ---
 

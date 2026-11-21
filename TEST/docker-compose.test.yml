@@ -69,7 +69,7 @@ services:
       - "8090:8090"
     environment:
       STORAGE_ROOT: /app/volumes/rag_data
-      MODEL_PATH_PHOWHISPER: /app/backend/models/phowhisper-base
+      MODEL_PATH_PHOWHISPER: /app/backend/models/phowhisper-medium
       MODEL_PATH_BGE_M3: /app/backend/models/bge-m3
       MODEL_PATH_RERANKER: /app/backend/models/bge-reranker-v2-m3
       MODEL_PATH_GEMMA: /app/backend/models/gemma-4-e2b

@@ -7,6 +7,7 @@ import gc
 import logging
 import math
 from pathlib import Path
+import time
 from typing import Protocol
 import wave
 from ai_service.core.schemas import TranscriptSegment
@@ -75,10 +76,27 @@ class PhoWhisperEngine:
         self._model = None
         self._processor = None
         self._prompt_ids = None
+        self.unload_count: int = 0
+        self.last_load_seconds: float | None = None
+
+    @property
+    def model_name(self) -> str:
+        return self.model_path.name
+
+    @property
+    def is_loaded(self) -> bool:
+        return self._model is not None and self._processor is not None
+
+    @property
+    def dtype_label(self) -> str:
+        return "float16" if self.device == "cuda" else "float32"
 
     def _ensure_loaded(self):
         if self._model is not None and self._processor is not None:
             return
+
+        if not self.model_path.is_dir():
+            raise FileNotFoundError(f"PhoWhisper model directory not found: {self.model_path}")
 
         import torch
         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
@@ -92,12 +110,17 @@ class PhoWhisperEngine:
 
         torch_dtype = torch.float16 if actual_device == "cuda" else torch.float32
 
+        t0 = time.perf_counter()
         logger.info("Loading PhoWhisper from %s onto %s (dtype=%s)...", self.model_path, actual_device, torch_dtype)
-        self._processor = AutoProcessor.from_pretrained(str(self.model_path))
+        self._processor = AutoProcessor.from_pretrained(
+            str(self.model_path),
+            local_files_only=True,
+        )
         self._model = AutoModelForSpeechSeq2Seq.from_pretrained(
             str(self.model_path),
             torch_dtype=torch_dtype,
-            low_cpu_mem_usage=True
+            low_cpu_mem_usage=True,
+            local_files_only=True,
         ).to(actual_device)
         self.device = actual_device
 
@@ -109,20 +132,22 @@ class PhoWhisperEngine:
                 logger.warning("Could not encode prompt_ids: %s", e)
                 self._prompt_ids = None
 
-        logger.info("PhoWhisper successfully loaded into VRAM/RAM.")
+        self.last_load_seconds = round(time.perf_counter() - t0, 3)
+        logger.info("PhoWhisper (%s) successfully loaded into VRAM/RAM in %.2fs.", self.model_name, self.last_load_seconds)
 
     def transcribe(
         self,
         wav_path: Path,
         on_progress: Callable[[int], None] | None = None
     ) -> list[TranscriptSegment]:
+        wav_path = Path(wav_path).resolve()
+        if not wav_path.exists():
+            raise FileNotFoundError(f"Normalized WAV file not found: {wav_path}")
+
         import torch
         import numpy as np
 
         self._ensure_loaded()
-        wav_path = Path(wav_path).resolve()
-        if not wav_path.exists():
-            raise FileNotFoundError(f"Normalized WAV file not found: {wav_path}")
 
         # Read 16kHz mono audio samples
         with wave.open(str(wav_path), "rb") as wf:
@@ -235,6 +260,7 @@ class PhoWhisperEngine:
         self._model = None
         self._processor = None
         self._prompt_ids = None
+        self.unload_count += 1
         gc.collect()
         try:
             import torch
@@ -257,11 +283,18 @@ class FakeAsrEngine:
             "Một tập hợp các vector được gọi là độc lập tuyến tính nếu không có vector nào biểu diễn được qua các vector còn lại.",
             "Chúng ta sẽ xem xét ma trận chuyển cơ sở và thuật toán khử Gauss-Jordan."
         ]
+        self.model_name: str = "fake-asr"
+        self.device: str = "cpu"
+        self.dtype_label: str = "synthetic"
+        self.is_loaded: bool = False
         self.unload_calls: int = 0
+        self.unload_count: int = 0
+        self.last_load_seconds: float | None = 0.0
 
     def unload(self) -> None:
         """No-op unload hook tracking invocation count for pipeline tests."""
         self.unload_calls += 1
+        self.unload_count += 1
 
     def transcribe(
         self,

@@ -16,9 +16,9 @@
 [![Spring Boot 3.3](https://img.shields.io/badge/Spring%20Boot-3.3.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PostgreSQL 16 + pgvector](https://img.shields.io/badge/PostgreSQL%2016-pgvector%200.7+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
-[![Ollama Gemma 4](https://img.shields.io/badge/Ollama-Gemma%204%20E4B-111111?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.ai/)
-[![Mobile Tests](https://img.shields.io/badge/Mobile%20Tests-31%20passed-brightgreen?style=for-the-badge)](./mobile)
-[![Backend Tests](https://img.shields.io/badge/Backend%20Tests-65%20passed-brightgreen?style=for-the-badge)](./backend)
+[![Gemma 4 E2B QAT](https://img.shields.io/badge/Gemma%204-E2B%20QAT-111111?style=for-the-badge&logo=huggingface&logoColor=white)](https://ai.google.dev/gemma)
+[![Mobile Tests](https://img.shields.io/badge/Mobile%20Tests-78%20passed-brightgreen?style=for-the-badge)](./mobile)
+[![Backend Tests](https://img.shields.io/badge/Backend%20Tests-87%20passed-brightgreen?style=for-the-badge)](./backend)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge)](./LICENSE)
 
 <br/>
@@ -35,9 +35,9 @@ Trong các giảng đường đại học và môi trường nghiên cứu chuy�
 
 **LectureLens** ra đời như một **Bàn Học Điện Tử Di Động Thông Minh (Smart Study Hub)** được may đo riêng cho người học Việt Nam:
 1. **Ứng dụng di động Native 100% ([ADR 0003](./docs/adr/0003-native-mobile-architecture-expo-sdk58.md)):** Xây dựng trên **Expo SDK 58** (React Native 0.88.1 New Architecture), tối ưu hoàn hảo cho ngón tay cái (**Thumb Zone**) trên khung nhìn chuẩn **`390px`**, tôn trọng Native Safe Areas và vận hành trình phát âm thanh liên tục trong nền (`expo-audio`).
-2. **Thu âm & Chuyển đổi chính xác cao ([ADR 0002](./docs/adr/0002-audio-ingest-storage-and-transcript.md)):** Sử dụng mô hình nhận dạng giọng nói tiếng Việt chuyên biệt (`PhoWhisper-base` / `PhoWhisper-medium`), tự động tách câu và gắn mốc thời gian (*Timestamps*) theo định dạng `[MM:SS]`.
+2. **Thu âm & Chuyển đổi chính xác cao ([ADR 0002](./docs/adr/0002-audio-ingest-storage-and-transcript.md)):** Sử dụng mô hình nhận dạng giọng nói tiếng Việt chuyên biệt (`PhoWhisper-medium`), tự động tách câu và gắn mốc thời gian (*Timestamps*) theo định dạng `[MM:SS]`.
 3. **Cấu trúc hóa tri thức tự động:** Chuyển đổi nội dung bài giảng thành hệ thống ghi chép khoa học chuẩn **Cornell Notes** (Summary tổng quan, Cues từ khóa trọng tâm, và Notes chi tiết).
-4. **Truy vấn ngữ nghĩa 2 giai đoạn (2-Stage Neural RAG):** Cho phép người học đặt câu hỏi trực tiếp trên toàn bộ kho bài giảng, nhận câu trả lời súc tích kèm mốc thời gian dẫn nguồn chính xác để bấm vào nghe lại tức thì.
+4. **Truy vấn ngữ nghĩa 2-Pass Pre-RAG (`[Q1]–[Q6+]`):** Kết hợp Pass 1 chuẩn hóa câu hỏi với Query Drift Guard, tìm kiếm 3-Stream Hybrid RRF, Cross-Encoder reranking và Pass 2 tổng hợp có dẫn nguồn `[MM:SS]`.
 5. **Bộ công cụ ôn tập cá nhân hóa:** Tự động trích xuất thẻ học **Kitsune Flashcard** hai mặt (Active Recall & Spaced Repetition) liên kết trực tiếp với đoạn phát lại âm thanh gốc.
 6. **Linh vật Cáo Kitsune Skia 2D Canvas:** Người bạn đồng hành AI được thể hiện bằng Pixel Art Nhật Bản trên nền tảng **Shopify Skia 2D Canvas** (`FloatingPetals2D` & `KitsuneMascotCanvas`), đạt tần số 60–120 FPS mượt mà và tiết kiệm pin.
 
@@ -63,21 +63,21 @@ Trong các giảng đường đại học và môi trường nghiên cứu chuy�
                                       │
                  ┌────────────────────┴────────────────────┐
                  ▼                                         ▼
-     🔍 2-STAGE NEURAL RAG                     📝 SMART STATIONERY STUDY
-     • 3-Stream Hybrid Search (RRF)            • Ghi chép khoa học Cornell Notes
-     • Cross-Encoder (BGE-Reranker-v2-m3)      • Kitsune Flashcard (Active Recall)
-     • Ollama Gemma 4 E4B (Grounded)           • Lặp lại ngắt quãng Spaced Repetition
+     🔍 2-PASS PRE-RAG [Q1–Q6+]                📝 SMART STATIONERY STUDY
+     • [Q1] Gemma 4 Prep + Drift Guard         • Ghi chép khoa học Cornell Notes
+     • [Q2–Q4] 3-Stream RRF + BGE-Reranker     • Kitsune Flashcard (Active Recall)
+     • [Q5/Q6+] Gemma 4 E2B QAT (Transformers) • Lặp lại ngắt quãng Spaced Repetition
      • Trích dẫn mốc thời gian [MM:SS]         • Linh vật Cáo Kitsune Skia 2D Canvas
 ```
 
 ### 2.1. 🎙️ Nhận Dạng Giọng Nói Chuyên Biệt Cho Tiếng Việt (Vietnamese ASR)
-- Ứng dụng mô hình **PhoWhisper** (`phowhisper-base` / `phowhisper-medium`) được huấn luyện tối ưu cho ngữ điệu học thuật, thuật ngữ chuyên ngành và các phương ngữ địa phương Việt Nam.
+- Ứng dụng mô hình **PhoWhisper-medium** (`vinai/PhoWhisper-medium`, ~769M params) được huấn luyện tối ưu cho ngữ điệu học thuật, thuật ngữ chuyên ngành và các phương ngữ địa phương Việt Nam.
 - Gán timestamp `[MM:SS]` chính xác đến từng câu nói. Khi bấm vào bất kỳ dòng văn bản nào trên giao diện, trình phát âm thanh sẽ tự động nhảy đến đúng thời điểm giảng viên phát biểu.
 
-### 2.2. 🔍 Truy Vấn Ngữ Nghĩa Hai Giai Đoạn (2-Stage Neural RAG)
-- **Giai đoạn 1 — Candidate Retrieval:** Truy vấn lai 3 luồng đồng thời (**Dense HNSW Vector** + **Full-Text Search TSVECTOR** + **Trigram pg_trgm Fuzzy**) được hợp nhất bằng thuật toán **Reciprocal Rank Fusion (RRF)** để trích xuất nhanh Top-25 phân đoạn tiềm năng.
-- **Giai đoạn 2 — Deep Precision Reranking:** Bộ tái định vị Cross-Encoder **BGE-Reranker-v2-m3** chấm điểm tương quan cặp (Query - Passage), loại bỏ triệt để các đoạn văn bản gây nhiễu và chọn lọc Top 3–5 đoạn đắt giá nhất.
-- **Suy luận có dẫn nguồn (Grounded Generation):** Mô hình **Gemma 4 E4B** (qua Ollama) tổng hợp câu trả lời dựa trên văn cảnh trích xuất, bắt buộc đính kèm trích dẫn `[MM:SS]`, triệt tiêu hoàn toàn hiện tượng ảo giác (hallucination).
+### 2.2. 🔍 Truy Vấn Ngữ Nghĩa Hai Lượt (2-Pass Pre-RAG `[Q1]–[Q6+]`)
+- **Pass 1 `[Q1]` — Query Prep & Drift Guard:** Mô hình **Gemma 4 E2B QAT** chuẩn hóa/mở rộng câu hỏi học thuật kèm bảo vệ **Query Drift Guard** (`_merge_preserved_keywords`) để giữ nguyên từ khóa chuyên ngành gốc.
+- **Giai đoạn `[Q2]–[Q4]` — 3-Stream Hybrid RRF & Cross-Encoder Reranking:** Truy vấn lai 3 luồng đồng thời (**Dense HNSW Vector `halfvec(1024)`** + **Full-Text Search `TSVECTOR`** + **Trigram `pg_trgm` Fuzzy**) hợp nhất bằng **Reciprocal Rank Fusion (RRF)** để trích xuất Top-25 ứng viên, mở rộng ngữ cảnh 3 chiều (`[Q3]`), sau đó **BGE-Reranker-v2-m3** (`[Q4]`) tái xếp hạng cặp (Query - Passage) chọn Top 3–5 đoạn đắt giá nhất.
+- **Pass 2 `[Q5]/[Q6+]` — Grounded Generation:** Mô hình **Gemma 4 E2B QAT** (`TransformersGemmaClient` qua `transformers>=5.22.0` hoặc tùy chọn Ollama `gemma4:e2b`) tổng hợp câu trả lời bám ngữ cảnh, bắt buộc đính kèm trích dẫn `[MM:SS]` và ghi log kiểm toán vào `rag.rag_audit_logs` (không dùng Semantic Query Cache).
 
 ### 2.3. 🗂️ Bộ Công Cụ Học Tập Thông Minh (Smart Stationery)
 - **Cấu Trúc Cornell Notes:** Bố cục 3 phần khoa học gồm Summary (khái quát nhanh), Cues (thuật ngữ trọng tâm, gợi ý câu hỏi) và Notes (nội dung bài giảng chi tiết).
@@ -183,8 +183,8 @@ flowchart TD
 
         subgraph AIService ["⚡ FastAPI AI Service (Container: ai - Internal Port: 8000)"]
             direction TB
-            INGEST_FLOW["📥 Stage 1 + Stage 2 Ingest Worker (GLOBAL_GPU_SEMAPHORE=1)<br/>[I4] PhoWhisper ➔ transcript.json ➔ [I5] Recursive Chunking (<=512 tok)<br/>➔ Unload ASR (LOW_VRAM_MODE) ➔ [I6] BGE-M3 Dual Embedding ➔ chunks.json"]
-            QUERY_FLOW["🔍 Query & Context Engine<br/>BGE-M3 Dual Query ➔ 3-Stream RRF ➔ Doubly-Linked Context Expansion"]
+            INGEST_FLOW["📥 Stage 1 + Stage 2 Ingest Worker (GLOBAL_GPU_SEMAPHORE=1)<br/>[I4] PhoWhisper-medium ➔ transcript.json ➔ [I5] Recursive Chunking (<=512 tok)<br/>➔ Unload ASR (LOW_VRAM_MODE) ➔ [I6] BGE-M3 Dual Embedding ➔ chunks.json"]
+            QUERY_FLOW["🔍 Online 2-Pass Pre-RAG [Q1–Q6+]<br/>[Q1] Gemma 4 Query Prep ➔ [Q2] BGE-M3 + 3-Stream RRF ➔ [Q3] Expand<br/>➔ [Q4] BGE-Reranker-v2-m3 ➔ [Q5/Q6+] Gemma 4 Grounded"]
         end
 
         subgraph SharedVol ["💾 Thư Mục Dùng Chung (Shared Volume)"]
@@ -194,11 +194,11 @@ flowchart TD
         subgraph StorageLayer ["🐘 PostgreSQL 16 + pgvector (Container: db)"]
             direction LR
             SCHEMA_APP[("🗄️ Schema: app<br/>users, roles, lectures, jobs (READY)")]
-            SCHEMA_RAG[("📐 Schema: rag<br/>lecture_chunks (halfvec 1024-d HNSW +<br/>lexical_weights JSONB + tsv_content GIN + prev/next)<br/>semantic_query_cache, audit_logs")]
+            SCHEMA_RAG[("📐 Schema: rag<br/>lecture_chunks (halfvec 1024-d HNSW +<br/>lexical_weights JSONB + tsv_content GIN + prev/next)<br/>rag_audit_logs (No Semantic Cache)")]
         end
 
-        subgraph LLMRuntime ["🦙 Ollama Local Inference (Container: llm)"]
-            GEMMA["✨ Gemma 4 E4B<br/>(Grounding Citations: [MM:SS])"]
+        subgraph LLMRuntime ["✨ Gemma 4 E2B QAT Runtime (Transformers Primary / Optional Ollama)"]
+            GEMMA["✨ Gemma 4 E2B IT QAT (wNa8o8)<br/>(2-Pass [Q1] Prep + [Q5/Q6+] Citations: [MM:SS])"]
         end
     end
 
@@ -224,17 +224,17 @@ flowchart TD
 
 ## 🧠 5. Bộ Mô Hình AI On-Premise (Local Weights)
 
-Hệ thống vận hành bằng 4 mô hình trí tuệ nhân tạo chuyên biệt với tổng dung lượng trọng số ~**21.5 GB**:
+Hệ thống vận hành bằng 4 mô hình trí tuệ nhân tạo chuyên biệt (100% `ACTIVE`) với tổng dung lượng trọng số trên đĩa **`11.58 GiB` (`12.43 GB`, không tính `.cache/`)**:
 
 | Thư Mục Mô Hình | Định Danh Hugging Face | Dung Lượng | Kiến Trúc Mạng | Ngữ Cảnh Tối Đa | Nhiệm Vụ Kỹ Thuật |
 | :--- | :--- | :---: | :--- | :---: | :--- |
-| **`phowhisper-base`** / **`medium`** | [`vinai/phowhisper-base`](https://huggingface.co/vinai/phowhisper-base) | ~290 MB - 1.5 GB | Whisper (Encoder-Decoder) | 30s audio / window | Phiên âm tiếng Việt học thuật, gán timestamp `[MM:SS]` |
-| **`bge-m3`** | [`BAAI/bge-m3`](https://huggingface.co/BAAI/bge-m3) | ~2.2 GB | XLM-RoBERTa (1024-d) | 8192 tokens | Sinh Dense Embedding 1024 chiều và trọng số từ vựng |
-| **`bge-reranker-v2-m3`** | [`BAAI/bge-reranker-v2-m3`](https://huggingface.co/BAAI/bge-reranker-v2-m3) | ~2.27 GB | Cross-Encoder | 8192 tokens | Tái xếp hạng ngữ nghĩa sâu Top-25 xuống Top 3–5 đoạn |
-| **`gemma-4-e4b`** | [`google/gemma-4-E4B-it`](https://ai.google.dev/gemma) | ~15.8 GB | Gemma 4 Decoder-only | 8192 tokens | Suy luận ngữ cảnh, trả lời câu hỏi và đính kèm dẫn nguồn |
+| **`phowhisper-medium`** | [`vinai/PhoWhisper-medium`](https://huggingface.co/vinai/PhoWhisper-medium) | `2.85 GiB` (`3.06 GB`) | Whisper (~769M, `d_model=1024`) | 30s audio / window | `[I4]` Phiên âm tiếng Việt học thuật, gán timestamp `[MM:SS]` |
+| **`bge-m3`** | [`BAAI/bge-m3`](https://huggingface.co/BAAI/bge-m3) | `4.27 GiB` (`4.59 GB`, gồm `2.13 GiB` `onnx/`) | XLM-RoBERTa (24L, 1024-d) | 8,192 tokens | `[I6]/[Q2]` Sinh `halfvec(1024)` FP16 + `lexical_weights` (`sparse_linear.pt`) |
+| **`bge-reranker-v2-m3`** | [`BAAI/bge-reranker-v2-m3`](https://huggingface.co/BAAI/bge-reranker-v2-m3) | `2.14 GiB` (`2.29 GB`) | Cross-Encoder (XLM-RoBERTa) | 8,192 tokens | `[Q4]` Tái xếp hạng ngữ nghĩa sâu Top-25 xuống Top 3–5 đoạn |
+| **`gemma-4-e2b`** | [`google/gemma-4-E2B-it-qat-mobile-transformers`](https://huggingface.co/google/gemma-4-E2B-it-qat-mobile-transformers) | `2.32 GiB` (`2.49 GB`) | Gemma 4 (2.3B eff / 5.1B PLE, QAT `wNa8o8`) | 131,072 tokens (128K) | `[Q1]/[Q5]/[Q6+]` Chuẩn hóa truy vấn, suy luận ngữ cảnh & dẫn nguồn `[MM:SS]` |
 
 > [!TIP]
-> **Tải tự động:** Chạy lệnh `python backend/download_models.py` để tải tự động toàn bộ trọng số về thư mục `backend/models/`.
+> **Tải tự động & Runtime:** Chạy `python backend/download_models.py` để tải toàn bộ trọng số về `backend/models/`. `gemma-4-e2b` dùng QAT Mobile (`wNa8o8`, 2/4/8-bit) trực tiếp qua `TransformersGemmaClient` (`Python 3.11+`, `transformers>=5.22.0`), hoặc tuỳ chọn Ollama (`gemma4:e2b`). Chi tiết xem tại [ADR 0005](./docs/adr/0005-model-stack-phowhisper-medium-and-gemma4-e2b-qat.md).
 
 ---
 
@@ -251,8 +251,7 @@ lecturelens_db
 │
 └── 📐 schema: rag (Tri thức số hóa do FastAPI quản trị)
     ├── lecture_chunks (Phân đoạn bài giảng <=512 tok, halfvec(1024), lexical_weights JSONB, prev/next_chunk_id, tsv_content)
-    ├── semantic_query_cache (Bộ đệm câu hỏi tương đồng >0.95, phản hồi <10ms)
-    └── rag_audit_logs (Lưu vết độ trễ và chất lượng truy xuất)
+    └── rag_audit_logs (Lưu vết độ trễ [Q1]–[Q6+] và chunk_ids trích xuất; không dùng semantic_query_cache)
 ```
 
 ### Các Đặc Tính Tối Ưu Nâng Cao:
@@ -292,28 +291,28 @@ lecture_lens/
 ├── backend/                             # ⚙️ HẠ TẦNG BACKEND & AI ENGINE (On-Premise 2-Stage RAG)
 │   ├── ai_service/                      # FastAPI AI & RAG Engine
 │   │   ├── core/                        # asr, preprocessing, vad_chunker, text_chunker [I5], embedder [I6], chunk_store, audio_store
-│   │   ├── pipeline/                    # ingest_pipeline.py (GLOBAL_GPU_SEMAPHORE + LOW_VRAM_MODE offload)
-│   │   └── routers/                     # health.py, ingest.py (7 endpoint nội bộ /internal/v1/ai/*)
+│   │   ├── pipeline/                    # ingest_pipeline.py & rag_pipeline.py (GLOBAL_GPU_SEMAPHORE + LOW_VRAM_MODE offload)
+│   │   └── routers/                     # health.py, ingest.py, rag.py (endpoint nội bộ /internal/v1/ai/*)
 │   ├── db/                              # PostgreSQL 16 + pgvector init scripts (01-06) & verify_rag_db.py
-│   ├── models/                          # Thư mục lưu trữ 4 mô hình AI (~21.5 GB)
-│   ├── tests/                           # Bộ kiểm thử 65 tests pytest (Stage 1, Stage 2 [I5]/[I6], Chunk Store)
+│   ├── models/                          # Thư mục lưu trữ 4 mô hình AI active (~11.58 GiB / 12.43 GB)
+│   ├── tests/                           # Bộ kiểm thử pytest (Stage 1, Stage 2 [I5]/[I6], 2-Pass Pre-RAG, ModelRegistry, TEST)
 │   ├── docker-compose.ai-dev.yml        # Docker compose 1-lệnh cho db + ai (16GB RAM / 4GB VRAM)
-│   ├── download_models.py               # Script tự động tải mô hình từ Hugging Face
+│   ├── download_models.py               # Script tự động tải 4 mô hình từ Hugging Face
 │   └── README.md                        # Đặc tả chi tiết kiến trúc Backend
 │
 ├── docs/                                # 📚 TÀI LIỆU KỸ THUẬT & KIẾN TRÚC
 │   ├── API-REFERENCE.md                 # Single Source of Truth API (Ingress :8080, AI :8000, Webhook, SQL RPCs)
-│   ├── KienTrucHeThong.drawio           # Sơ đồ kiến trúc BE 2 trang (Microservices Topology, 14 Steps & 7 Seams)
+│   ├── KienTrucHeThong.drawio           # Sơ đồ kiến trúc BE 2 trang (Microservices Topology, Pipeline Steps & Seams)
 │   ├── design-system.md                 # Đặc tả hệ thống thiết kế Kitsune Soft
 │   ├── UX-NAVIGATION-FLOW.md            # Đặc tả luồng điều hướng 28 màn hình
-│   ├── adr/                             # Architectural Decision Records (ADR 0001, 0002, 0003, 0004)
+│   ├── adr/                             # Architectural Decision Records (ADR 0001–0005)
 │   └── design-assets/                   # 28 màn hình (SVG, PNG 4x), 74 icons vector, branding
 │
 ├── legacy/                              # 🗄️ LƯU TRỮ LỊCH SỬ
 │   └── web-frontend/                    # Bản web study portal cũ (React 19 / Vite 8 / Three.js)
 │
-├── TEST/                                # 🧪 TEST STUDIO CÔ LẬP
-│   └── server.py / docker-compose.test.yml # Lab kiểm thử độc lập Stage 1 (ASR) + Stage 2 ([I5]/[I6] & RRF Search)
+├── TEST/                                # 🧪 BE & MODEL INSPECTOR WORKBENCH CÔ LẬP
+│   └── server.py / docker-compose.test.yml # Lab kiểm thử độc lập Stage 1 + Stage 2 + 2-Pass Pre-RAG [Q1–Q6+]
 │
 └── volumes/rag_data/                    # 💾 Thư mục dùng chung (incoming, audio/manifest.json, transcripts, chunks)
 ```
@@ -324,7 +323,7 @@ lecture_lens/
 
 ### 8.1. Yêu Cầu Tiên Quyết (Prerequisites)
 - **Node.js:** Phiên bản `v20.x` hoặc `v22.x` (LTS)
-- **Python:** Phiên bản `3.10+` kèm `pip` (khuyến nghị tạo môi trường ảo `.venv`)
+- **Python:** Phiên bản `3.11+` kèm `pip` và `transformers>=5.22.0` (khuyến nghị tạo môi trường ảo `.venv`)
 - **Docker & Docker Compose:** Phiên bản `v2.20+`
 - **Phần cứng hỗ trợ:**
   - **Hồ sơ Dev / Edge (`LOW_VRAM_MODE=true`):** **16 vCPU / 16 GB RAM / NVIDIA RTX 3050 4 GB VRAM** (hoặc fallback CPU). Cấu hình container giới hạn sẵn `ai` (`6.0` CPU / `6G` RAM) và `db` (`2.0` CPU / `1536M` RAM / `256mb` shm) trong [`backend/docker-compose.ai-dev.yml`](./backend/docker-compose.ai-dev.yml).
@@ -368,16 +367,16 @@ python -m venv .venv
 .venv\Scripts\activate        # Trên Windows (hoặc: source .venv/bin/activate trên Linux)
 pip install -r backend/requirements.txt
 
-# 2. Tải toàn bộ trọng số mô hình AI về backend/models/ (~21.5 GB)
+# 2. Tải toàn bộ trọng số mô hình AI về backend/models/ (~11.58 GiB / 12.43 GB)
 python backend/download_models.py
 
 # 3. Khởi chạy 1-lệnh PostgreSQL (pgvector) và FastAPI AI Service (hồ sơ 16GB RAM / 4GB VRAM)
 docker compose -f backend/docker-compose.ai-dev.yml up --build
 
-# 4. (Tùy chọn) Khởi chạy LectureLens TEST Studio cho Stage 1 + Stage 2
+# 4. (Tùy chọn) Khởi chạy LectureLens BE & Model Inspector (TEST/)
 docker compose -f TEST/docker-compose.test.yml up --build
 
-# 5. Chạy bộ 65 bài kiểm thử tự động của Backend (Stage 1, Stage 2 [I5]/[I6] & Chunk Store)
+# 5. Chạy toàn bộ bộ kiểm thử tự động pytest của Backend (Ingest + 2-Pass Pre-RAG + TEST Studio)
 .\.venv\Scripts\python.exe -m pytest backend/tests -v
 
 # 6. Kiểm tra và xác minh CSDL pgvector RAG (trực tiếp hoặc qua mạng Docker khi host chiếm cổng 5432)

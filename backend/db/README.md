@@ -17,7 +17,7 @@ backend/db/
     ├── 02_rag_chunks_schema.sql         # Bảng rag.lecture_chunks chuẩn hóa tiếng Việt & BGE-M3
     ├── 03_rag_indexes.sql               # Chỉ mục HNSW halfvec(1024), GIN Trigram, GIN TSVector
     ├── 04_rag_hybrid_search_rrf.sql     # Hàm Hybrid Search 3 luồng (RRF) & Context Expansion ("position")
-    ├── 05_rag_telemetry_cache.sql       # Bảng Semantic Query Cache & Audit Logs
+    ├── 05_rag_telemetry_cache.sql       # Bảng Audit Logs rag.rag_audit_logs (gỡ bỏ semantic_query_cache)
     └── 06_app_jobs_status_migration.sql # Bổ sung trạng thái STT_COMPLETED, CHUNKING, EMBEDDING cho app.jobs (ADR 0002 & 0004)
 ```
 
@@ -46,7 +46,7 @@ Hợp nhất bằng thuật toán **Reciprocal Rank Fusion (RRF)**:
 $$\text{RRF Score}(d) = \sum_{m \in \{\text{dense, lexical, fuzzy}\}} \frac{1}{60 + \text{rank}_m(d)}$$
 
 ### 4. Mở Rộng Ngữ Cảnh (Context Expansion / Linked Chunks)
-Mỗi phân đoạn giữ liên kết 2 chiều với đoạn liền trước (`prev_chunk_id`) và đoạn liền sau (`next_chunk_id`). Hàm `rag.get_expanded_context(chunk_id)` trích xuất tức thì ngữ cảnh 3 phút trọn vẹn của giảng viên cung cấp cho LLM Gemma 4 E4B.
+Mỗi phân đoạn giữ liên kết 2 chiều với đoạn liền trước (`prev_chunk_id`) và đoạn liền sau (`next_chunk_id`). Hàm `rag.get_expanded_context(chunk_id)` trích xuất tức thì ngữ cảnh 3 phút trọn vẹn của giảng viên cung cấp cho LLM **Gemma 4 E2B** (`2-Pass Pre-RAG [Q1]–[Q6+]`).
 
 ---
 

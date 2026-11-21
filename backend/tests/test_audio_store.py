@@ -74,7 +74,7 @@ def test_save_transcript_updates_manifest(audio_store: LocalVolumeAudioStore):
         job_id=job_id,
         lecture_id=lecture_id,
         generated=TranscriptGeneratedMeta(
-            model="phowhisper-base",
+            model="phowhisper-medium",
             language="vi",
             device="cuda:0",
             processing_seconds=12.5
