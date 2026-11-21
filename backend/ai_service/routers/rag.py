@@ -3,6 +3,8 @@ Online RAG & 2-Pass Pre-RAG Gemma 4 Router ([Q1]–[Q6+], no Semantic Cache) for
 Exposes unified endpoint (`POST /internal/v1/ai/rag/query`) plus modular
 endpoints (`/rag/retrieve`, `/llm/generate`, `/rag/presets`) protected by X-Internal-Secret.
 """
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ai_service.core.prompt_builder import GroundedPromptBuilder
@@ -18,6 +20,8 @@ from ai_service.core.schemas import (
 from ai_service.dependencies import get_prompt_builder, get_rag_pipeline_coordinator
 from ai_service.pipeline.rag_pipeline import RagPipelineCoordinator
 from ai_service.security import verify_internal_secret
+
+logger = logging.getLogger("ai_service.rag_router")
 
 router = APIRouter(
     prefix="/internal/v1/ai",
@@ -52,6 +56,7 @@ async def generate_multi_pass_llm(
     try:
         return await coordinator.run_stage_chain(request)
     except RuntimeError as exc:
+        logger.exception("Online RAG failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(exc),
@@ -71,6 +76,7 @@ async def execute_rag_query(
     try:
         return await coordinator.run_query(request)
     except RuntimeError as exc:
+        logger.exception("Online RAG failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(exc),

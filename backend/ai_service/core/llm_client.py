@@ -7,6 +7,7 @@ Provides a unified LLMClientProtocol seam with:
 - CompositeLLMClient (auto/ollama/transformers/mock routing + sequential VRAM unload)
 """
 import gc
+import inspect
 import json
 import logging
 from pathlib import Path
@@ -243,6 +244,258 @@ class OllamaGemmaClient:
         return None
 
 
+_GEMMA4_QAT_PATCHES_INSTALLED = False
+_LM_HEAD_MIN_OUT_FEATURES = 65536
+_LM_HEAD_CHUNK_ROWS = 32768
+_MULTIMODAL_TOWER_ATTRS = ("vision_tower", "audio_tower", "embed_vision", "embed_audio")
+
+
+def _empty_cuda_cache() -> None:
+    """Safely release cached CUDA allocator blocks when CUDA is present."""
+    try:
+        import torch
+
+        if hasattr(torch, "cuda") and callable(getattr(torch.cuda, "empty_cache", None)):
+            torch.cuda.empty_cache()
+    except Exception:
+        pass
+
+
+def _move_model_to_cpu(model):
+    """Move a loaded model back to CPU, collect unreachable tensors, and clear CUDA cache."""
+    moved = model.to("cpu")
+    gc.collect()
+    _empty_cuda_cache()
+    return moved
+
+
+def _unpack_gemma_int(packed, num_bits: int, width: int, unpack_int4_fn, unpack_int2_fn):
+    """Unpack INT2/INT4 uint8 storage to signed int8, or return INT8 directly."""
+    if num_bits == 4:
+        return unpack_int4_fn(packed, width)
+    if num_bits == 2:
+        return unpack_int2_fn(packed, width)
+    return packed
+
+
+def _chunked_quantized_linear_forward(
+    layer,
+    x,
+    *,
+    apply_srq_fn,
+    unpack_rows_fn,
+    chunk_rows: int = _LM_HEAD_CHUNK_ROWS,
+):
+    """Dequantize and execute `F.linear` in row chunks to bound transient lm_head VRAM."""
+    import torch
+    import torch.nn.functional as F
+
+    x_q = apply_srq_fn(x, layer.input_activation_scale)
+    out_chunks: list[torch.Tensor] = []
+    for start in range(0, layer.out_features, chunk_rows):
+        end = min(start + chunk_rows, layer.out_features)
+        int_chunk = unpack_rows_fn(layer.weight[start:end], layer.num_bits, layer.in_features)
+        w_chunk = int_chunk.to(x_q.dtype) * layer.weight_scale[start:end].to(x_q.dtype)
+        bias_chunk = layer.bias[start:end] if layer.bias is not None else None
+        out_chunks.append(F.linear(x_q, w_chunk, bias_chunk))
+        del int_chunk, w_chunk
+    out = torch.cat(out_chunks, dim=-1)
+    del out_chunks
+    return apply_srq_fn(out, layer.output_activation_scale)
+
+
+class _LazyWeightSlice:
+    """Lazy proxy for `QuantizedEmbedding.weight` enabling single-row dequantization."""
+
+    def __init__(self, qe) -> None:
+        self._qe = qe
+
+    @property
+    def shape(self):
+        import torch
+
+        return torch.Size((self._qe.num_embeddings, self._qe.embedding_dim))
+
+    @property
+    def dtype(self):
+        return self._qe.output_dtype
+
+    @property
+    def device(self):
+        return self._qe.embedding_quantized.device
+
+    @property
+    def requires_grad(self) -> bool:
+        return bool(getattr(self._qe.embedding_quantized, "requires_grad", False))
+
+    def __getitem__(self, idx):
+        row_idx: int | None = None
+        rest: tuple = ()
+        if isinstance(idx, int) and not isinstance(idx, bool):
+            row_idx = idx
+        elif (
+            isinstance(idx, tuple)
+            and len(idx) >= 1
+            and isinstance(idx[0], int)
+            and not isinstance(idx[0], bool)
+        ):
+            row_idx = idx[0]
+            rest = idx[1:]
+
+        if row_idx is not None:
+            num_rows = int(self._qe.embedding_quantized.shape[0])
+            norm_idx = row_idx + num_rows if row_idx < 0 else row_idx
+            if norm_idx < 0 or norm_idx >= num_rows:
+                raise IndexError(
+                    f"index {row_idx} is out of bounds for dimension 0 with size {num_rows}"
+                )
+            q_row = self._qe.embedding_quantized[norm_idx : norm_idx + 1]
+            s_row = self._qe.embedding_scale[norm_idx : norm_idx + 1]
+            row = self._qe._dequantize_weights(q_row, s_row).squeeze(0)
+            if not rest:
+                return row
+            return row[rest[0]] if len(rest) == 1 else row[rest]
+
+        full = self._qe._dequantize_weights(
+            self._qe.embedding_quantized, self._qe.embedding_scale
+        )
+        return full[idx]
+
+
+def _install_gemma4_qat_patches() -> None:
+    """Install idempotent Gemma 4 QAT compatibility and 4 GB VRAM patches into transformers."""
+    global _GEMMA4_QAT_PATCHES_INSTALLED
+    if _GEMMA4_QAT_PATCHES_INSTALLED:
+        return
+
+    try:
+        import torch
+        from transformers.integrations.gemma_quant import (
+            QuantizedEmbedding,
+            QuantizedLinear,
+            _unpack_int2,
+            _unpack_int4,
+            apply_srq,
+        )
+        from transformers.quantizers.quantizer_gemma import GemmaQuantizer
+    except (ImportError, AttributeError):
+        return
+
+    def _unpack_rows(packed: torch.Tensor, num_bits: int, width: int) -> torch.Tensor:
+        return _unpack_gemma_int(packed, num_bits, width, _unpack_int4, _unpack_int2)
+
+    if not getattr(GemmaQuantizer._process_model_before_weight_loading, "_lecturelens_patched", False):
+        orig_process_model = GemmaQuantizer._process_model_before_weight_loading
+
+        def _patched_process_model_before_weight_loading(self, model, **kwargs):
+            result = orig_process_model(self, model, **kwargs)
+            cfg = getattr(model, "config", None)
+            text_cfg = (getattr(cfg, "text_config", None) or cfg) if cfg is not None else None
+            num_layers = getattr(text_cfg, "num_hidden_layers", None) if text_cfg is not None else None
+            if num_layers is not None and int(num_layers) > 1:
+                target_layers = int(num_layers)
+                for mod_name, mod in model.named_modules():
+                    if not mod_name.endswith("embed_tokens_per_layer"):
+                        continue
+                    scale = getattr(mod, "embedding_scale", None)
+                    if scale is None or len(getattr(scale, "shape", ())) == 0 or scale.shape[-1] != 1:
+                        continue
+                    num_embeddings = getattr(mod, "num_embeddings", scale.shape[0])
+                    scale_device = getattr(scale, "device", None)
+                    mod.embedding_scale = torch.nn.Parameter(
+                        torch.ones(
+                            num_embeddings,
+                            target_layers,
+                            dtype=torch.float32,
+                            device=scale_device,
+                        ),
+                        requires_grad=False,
+                    )
+            return result
+
+        _patched_process_model_before_weight_loading._lecturelens_patched = True  # type: ignore[attr-defined]
+        GemmaQuantizer._process_model_before_weight_loading = _patched_process_model_before_weight_loading  # type: ignore[method-assign]
+
+    if not getattr(QuantizedEmbedding._dequantize_weights, "_lecturelens_patched", False):
+        orig_embed_dequant = QuantizedEmbedding._dequantize_weights
+
+        def _patched_embed_dequant(self, quant_rows: torch.Tensor, scale_rows: torch.Tensor) -> torch.Tensor:
+            if scale_rows.shape[-1] == 1:
+                int_rows = _unpack_rows(quant_rows, self.num_bits, self.embedding_dim)
+                return int_rows.to(self.output_dtype) * scale_rows.to(self.output_dtype)
+            return orig_embed_dequant(self, quant_rows, scale_rows)
+
+        _patched_embed_dequant._lecturelens_patched = True  # type: ignore[attr-defined]
+        QuantizedEmbedding._dequantize_weights = _patched_embed_dequant  # type: ignore[method-assign]
+
+    QuantizedEmbedding.weight = property(lambda self: _LazyWeightSlice(self))  # type: ignore[assignment]
+
+    if not getattr(QuantizedLinear.forward, "_lecturelens_patched", False):
+        orig_linear_forward = QuantizedLinear.forward
+
+        def _patched_linear_forward(self, x: torch.Tensor) -> torch.Tensor:
+            if self.out_features >= _LM_HEAD_MIN_OUT_FEATURES and x.is_cuda:
+                return _chunked_quantized_linear_forward(
+                    self,
+                    x,
+                    apply_srq_fn=apply_srq,
+                    unpack_rows_fn=_unpack_rows,
+                )
+            return orig_linear_forward(self, x)
+
+        _patched_linear_forward._lecturelens_patched = True  # type: ignore[attr-defined]
+        QuantizedLinear.forward = _patched_linear_forward  # type: ignore[method-assign]
+
+    _GEMMA4_QAT_PATCHES_INSTALLED = True
+
+
+def _apply_low_vram_cuda_placement(model, target_device: str):
+    """Prune unused multimodal towers and CPU-offload PLE embeddings before CUDA placement."""
+    inner_model = getattr(model, "model", None)
+    if inner_model is not None:
+        for tower_attr in _MULTIMODAL_TOWER_ATTRS:
+            if hasattr(inner_model, tower_attr) and getattr(inner_model, tower_attr) is not None:
+                setattr(inner_model, tower_attr, None)
+
+        language_model = getattr(inner_model, "language_model", None) or inner_model
+        ple = getattr(language_model, "embed_tokens_per_layer", None)
+        if (
+            ple is not None
+            and hasattr(ple, "embedding_quantized")
+            and hasattr(ple, "embedding_scale")
+        ):
+            ple._cpu_quantized = ple.embedding_quantized.detach().to("cpu")
+            ple._cpu_scale = ple.embedding_scale.detach().to("cpu")
+            params = getattr(ple, "_parameters", None)
+            if isinstance(params, dict):
+                params.pop("embedding_quantized", None)
+                params.pop("embedding_scale", None)
+
+            def _cpu_sliced_ple_forward(input_ids):
+                cpu_ids = input_ids.to("cpu")
+                q_slice = ple._cpu_quantized[cpu_ids].to(input_ids.device, non_blocking=True)
+                s_slice = ple._cpu_scale[cpu_ids].to(input_ids.device, non_blocking=True)
+                result = ple._dequantize_weights(q_slice, s_slice)
+                return (result * ple.scalar_embed_scale).to(ple.output_dtype)
+
+            ple.forward = _cpu_sliced_ple_forward
+
+    gc.collect()
+    return model.to(target_device)
+
+
+def _supports_logits_to_keep(model) -> bool:
+    """Return True only when `model.forward` explicitly declares a `logits_to_keep` parameter."""
+    forward_fn = getattr(model, "forward", None)
+    if forward_fn is None:
+        return False
+    try:
+        sig = inspect.signature(forward_fn)
+    except (TypeError, ValueError):
+        return False
+    return "logits_to_keep" in sig.parameters
+
+
 class TransformersGemmaClient:
     """
     Production Local Adapter: Directly loads `backend/models/gemma-4-e2b` (QAT Mobile INT2/4/8
@@ -297,6 +550,7 @@ class TransformersGemmaClient:
             self.model_path,
             actual_device,
         )
+        _install_gemma4_qat_patches()
         tokenizer = AutoTokenizer.from_pretrained(
             str(self.model_path),
             local_files_only=True,
@@ -309,7 +563,15 @@ class TransformersGemmaClient:
             local_files_only=True,
         )
         if actual_device != "cpu":
-            model = model.to(actual_device)
+            try:
+                model = _apply_low_vram_cuda_placement(model, actual_device)
+            except RuntimeError as exc:
+                logger.warning(
+                    "Gemma 4 CUDA placement failed (%s); falling back to CPU.",
+                    exc,
+                )
+                model = _move_model_to_cpu(model)
+                actual_device = "cpu"
         model.eval()
 
         self._tokenizer = tokenizer
@@ -377,9 +639,24 @@ class TransformersGemmaClient:
         if eos_ids:
             deduped_eos = list(dict.fromkeys(eos_ids))
             gen_kwargs["eos_token_id"] = deduped_eos if len(deduped_eos) > 1 else deduped_eos[0]
+        if _supports_logits_to_keep(self._model):
+            gen_kwargs["logits_to_keep"] = 1
 
-        with torch.no_grad():
-            output_ids = self._model.generate(**encoded_on_device, **gen_kwargs)
+        try:
+            with torch.no_grad():
+                output_ids = self._model.generate(**encoded_on_device, **gen_kwargs)
+        except RuntimeError as exc:
+            if self.device == "cpu":
+                raise
+            logger.warning(
+                "Gemma 4 CUDA generation failed (%s); falling back to CPU.",
+                exc,
+            )
+            encoded_on_device = {k: v.to("cpu") for k, v in encoded_on_device.items()}
+            self._model = _move_model_to_cpu(self._model)
+            self.device = "cpu"
+            with torch.no_grad():
+                output_ids = self._model.generate(**encoded_on_device, **gen_kwargs)
 
         new_token_ids = output_ids[0][input_len:]
         completion_tokens = int(new_token_ids.shape[-1])
@@ -392,7 +669,7 @@ class TransformersGemmaClient:
                 cleaned = cleaned.replace(special_tok, "")
         cleaned = cleaned.strip()
 
-        if self.device == "cuda" and torch.cuda.is_available():
+        if str(self.device).startswith("cuda") and torch.cuda.is_available():
             torch.cuda.empty_cache()
 
         return LLMGenerationResult(
