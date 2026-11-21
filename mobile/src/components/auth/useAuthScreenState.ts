@@ -149,9 +149,16 @@ export function useAuthScreenState() {
     setLastErrorCode(null)
   }, [])
 
-  const navigateAfterAuth = useCallback(() => {
-    router.replace(destinationRoute as never)
-  }, [router, destinationRoute])
+  const navigateAfterAuth = useCallback(
+    (options?: { offerUpgrade?: boolean }) => {
+      const target =
+        options?.offerUpgrade && destinationRoute === '/(tabs)/home'
+          ? '/(tabs)/home?offer=plus'
+          : destinationRoute
+      router.replace(target as never)
+    },
+    [router, destinationRoute],
+  )
 
   return {
     authMode,

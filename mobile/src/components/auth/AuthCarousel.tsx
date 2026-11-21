@@ -462,7 +462,7 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
                     })
                   }
                   onOpenInspector={() => setInspectorOpen(true)}
-                  onAuthSuccess={auth.navigateAfterAuth}
+                  onAuthSuccess={() => auth.navigateAfterAuth()}
                   onServiceErrorCode={auth.setLastErrorCode}
                 />
 
@@ -475,7 +475,7 @@ export const AuthCarousel: React.FC<AuthCarouselProps> = ({ initialScreen }) => 
                   onSwitchToSignIn={() => scrollToScreen(0)}
                   onOpenLegal={(tab) => setLegalTab(tab)}
                   onOpenInspector={() => setInspectorOpen(true)}
-                  onAuthSuccess={auth.navigateAfterAuth}
+                  onAuthSuccess={() => auth.navigateAfterAuth({ offerUpgrade: true })}
                   onServiceErrorCode={auth.setLastErrorCode}
                 />
               </Animated.ScrollView>

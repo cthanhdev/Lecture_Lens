@@ -89,13 +89,16 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Đóng modal sheet
+  // Đóng modal sheet (Zero-Dead-End fallback nếu vào bằng deep link)
   const closeSheet = useCallback(() => {
     setActiveSheet(null)
     if (router.canGoBack()) {
       router.back()
+      return
     }
-  }, [router])
+    const fallback = getParentFallback(pathname)
+    router.replace(fallback as any)
+  }, [pathname, router])
 
   // Mở modal sheet
   const openSheet = useCallback((sheet: ModalSheetType) => {

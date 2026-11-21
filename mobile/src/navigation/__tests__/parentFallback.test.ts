@@ -49,9 +49,13 @@ test('Định luật 1: Hierarchy Fallback Matrix cho các route con sâu trên 
     '/review'
   )
 
-  // 6. Search và Audio Record phải fallback về /home
+  // 6. Search, Modal Sheets (Paywall, Add Audio) và Audio Record phải fallback về /home
   assert.strictEqual(getParentFallback('/search'), '/home')
   assert.strictEqual(getParentFallback('/(modal)/search'), '/home')
+  assert.strictEqual(getParentFallback('/paywall'), '/home')
+  assert.strictEqual(getParentFallback('/(modal)/paywall'), '/home')
+  assert.strictEqual(getParentFallback('/add-audio'), '/home')
+  assert.strictEqual(getParentFallback('/(modal)/add-audio'), '/home')
   assert.strictEqual(getParentFallback('/audio/record'), '/home')
   assert.strictEqual(getParentFallback('/(guarded)/audio/record'), '/home')
 

@@ -12,7 +12,7 @@ export interface AudioContextType {
   currentTime: number
   duration: number
   playbackRate: number
-  play: (track?: LectureAudioTrack) => void
+  play: (track?: LectureAudioTrack, startAt?: number) => void
   pause: () => void
   togglePlay: () => void
   seek: (seconds: number) => void

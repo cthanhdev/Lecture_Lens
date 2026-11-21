@@ -15,8 +15,11 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
+import { useGlobalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAppNavigation } from '../../navigation/NavigationContext'
+import { useNetworkStatus } from '../../services/networkMonitor'
+import { parsePreviewOverrideParam } from '../../modules/resilience'
 import { Icon } from '../ui/icons/Icon'
 import {
   KITSUNE_COLORS,
@@ -45,7 +48,7 @@ function useMochiPressAnimation(
   }))
 
   const onPressIn = () => {
-    scale.value = withTiming(pressedScale, { duration: 150 })
+    scale.set(withTiming(pressedScale, { duration: 150 }))
     if (hapticFeedback === 'impact') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
     } else {
@@ -54,7 +57,7 @@ function useMochiPressAnimation(
   }
 
   const onPressOut = () => {
-    scale.value = withTiming(1, { duration: 150 })
+    scale.set(withTiming(1, { duration: 150 }))
   }
 
   return { animatedStyle, onPressIn, onPressOut }
@@ -63,10 +66,16 @@ function useMochiPressAnimation(
 interface TabItemProps {
   readonly item: FloatingTabItem
   readonly isActive: boolean
+  readonly dimmed?: boolean
   readonly onPress: () => void
 }
 
-const TabItem: React.FC<TabItemProps> = ({ item, isActive, onPress }) => {
+const TabItem: React.FC<TabItemProps> = ({
+  item,
+  isActive,
+  dimmed = false,
+  onPress,
+}) => {
   const { animatedStyle, onPressIn, onPressOut } = useMochiPressAnimation(0.95)
   const tintColor = isActive
     ? KITSUNE_COLORS.kitsuneCoral
@@ -80,7 +89,11 @@ const TabItem: React.FC<TabItemProps> = ({ item, isActive, onPress }) => {
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={[styles.tabTouchArea, animatedStyle]}
+      style={[
+        styles.tabTouchArea,
+        dimmed && styles.dimmedTab,
+        animatedStyle,
+      ]}
     >
       <View style={[styles.tabPill, isActive && styles.activeTabPill]}>
         <Icon name={item.icon} size="md" strokeColor={tintColor} />
@@ -123,6 +136,13 @@ export function FloatingIslandTabBar() {
   const insets = useSafeAreaInsets()
   const { width: windowWidth } = useWindowDimensions()
   const nav = useAppNavigation()
+  const network = useNetworkStatus()
+  const { preview } = useGlobalSearchParams<{ preview?: string | string[] }>()
+
+  const isOffline =
+    parsePreviewOverrideParam(preview) === 'offline' ||
+    !network.isConnected ||
+    network.isInternetReachable === false
 
   const tabState = resolveTabBarState(nav.currentRoute)
   if (!tabState.isVisible) return null
@@ -135,6 +155,7 @@ export function FloatingIslandTabBar() {
       key={item.id}
       item={item}
       isActive={tabState.activeTabId === item.id}
+      dimmed={isOffline && item.id === 'search'}
       onPress={() => nav.goTo(item.route)}
     />
   )
@@ -224,6 +245,9 @@ const styles = StyleSheet.create({
     height: TAB_BAR_GEOMETRY.barHeight,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dimmedTab: {
+    opacity: 0.45,
   },
   tabPill: {
     width: TAB_BAR_GEOMETRY.activePillWidth,

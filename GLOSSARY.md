@@ -110,6 +110,22 @@ _Avoid_: Anki card, Quizlet card, Plain question-answer.
 Trung tâm ôn luyện ngắt quãng hỗ trợ sinh viên củng cố tri thức theo chu kỳ quên tự nhiên của não bộ, tích hợp bộ theo dõi chuỗi ngày học (*Streak*).
 _Avoid_: Flashcard list, Quiz section.
 
+**Kitsune Plus**:
+Gói nâng cấp học tập của LectureLens (hiển thị tại màn hình `[07]`), mở khóa giới hạn 20 giờ ASR miễn phí hàng tháng, tóm tắt AI nâng cao, tải xuống ngoại tuyến và xuất tệp PDF/Notion.
+_Avoid_: Pro tier, VIP package, Premium plan.
+
+**Offline Study Mode**:
+Trạng thái vận hành ngoại tuyến tại chỗ (In-Place State `[09]` trên `/home` hoặc `[12]` trên `/library`) khi mất kết nối mạng, cho phép phát các bài giảng đã tải cục bộ và ôn luyện thẻ nhớ không cần internet.
+_Avoid_: Disconnected page, Error 503 screen, Network error modal.
+
+**Device-only Recording**:
+Bản thu âm bài giảng vừa ghi trên thiết bị khi ngoại tuyến, được lưu cục bộ với nhãn `Device only` và tự động đồng bộ (`Syncs when online`) khi kết nối mạng khôi phục.
+_Avoid_: Local cache file, Temp audio draft.
+
+**Daily Streak**:
+Chuỗi ngày học liên tục của sinh viên hiển thị trên Home Study Hub (kèm biểu đồ 7 ngày trong tuần M–S) nhằm duy trì thói quen ôn luyện đều đặn.
+_Avoid_: Login counter, Day tally.
+
 ---
 
 ## 4. 📐 Thiết Kế Mã Nguồn & Ranh Giới (Matt Pocock Codebase Design)

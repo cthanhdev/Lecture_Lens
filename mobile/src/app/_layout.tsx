@@ -14,6 +14,8 @@ import {
 import { NavigationProvider } from '../navigation/NavigationContext'
 import { AudioProvider } from '../modules/audio/AudioContext'
 import { initAuthRuntime } from '../modules/auth/infrastructure/authRuntime'
+import { networkMonitor } from '../services/networkMonitor'
+import { NetInfoNetworkProvider } from '../services/netInfoProvider'
 import { KITSUNE_COLORS } from '../theme/tokens'
 
 // Giữ màn hình khởi động cho đến khi nạp xong phông chữ
@@ -29,6 +31,7 @@ export default function RootLayout() {
   })
 
   useEffect(() => {
+    networkMonitor.setProvider(new NetInfoNetworkProvider())
     void initAuthRuntime().catch(() => {})
   }, [])
 

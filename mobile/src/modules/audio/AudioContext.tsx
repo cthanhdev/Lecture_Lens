@@ -3,19 +3,11 @@ import { usePathname } from 'expo-router'
 import { AudioContext } from './useAudioPlayer'
 import type { LectureAudioTrack, AudioContextType } from './types'
 
-// Dữ liệu audio demo mẫu ban đầu
-const DEFAULT_DEMO_TRACK: LectureAudioTrack = {
-  id: 'macro-101',
-  title: 'Kinh Tế Vĩ Mô - Chương 3: Lạm Phát & Thất Nghiệp',
-  subject: 'Kinh Tế Vĩ Mô',
-  duration: 2715, // 45:15
-}
-
 export function AudioProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const [currentTrack, setCurrentTrack] = useState<LectureAudioTrack | null>(DEFAULT_DEMO_TRACK)
+  const [currentTrack, setCurrentTrack] = useState<LectureAudioTrack | null>(null)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
-  const [currentTime, setCurrentTime] = useState<number>(135) // 02:15
+  const [currentTime, setCurrentTime] = useState<number>(0)
   const [playbackRate, setPlaybackRate] = useState<number>(1.0)
 
   const duration = currentTrack?.duration ?? 0
@@ -24,10 +16,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const isRecordingRoute = pathname.includes('/record')
   const effectiveIsPlaying = isPlaying && !isRecordingRoute
 
-  const play = useCallback((track?: LectureAudioTrack) => {
+  const play = useCallback((track?: LectureAudioTrack, startAt?: number) => {
     if (track) {
       setCurrentTrack(track)
-      setCurrentTime(0)
+      setCurrentTime(startAt !== undefined ? Math.max(0, startAt) : 0)
+    } else if (startAt !== undefined) {
+      setCurrentTime(Math.max(0, startAt))
     }
     setIsPlaying(true)
   }, [])
