@@ -948,6 +948,7 @@ async def execute_test_rag_query(request: TestRagQueryRequest):
             engine_override=request.llm_engine,
         )
     except RuntimeError as exc:
+        logger.exception("Test Studio RAG query failed: %s", exc)
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     payload = response.model_dump(mode="json")

@@ -5,6 +5,7 @@ RagPipelineCoordinator (including Query Drift Guard), and FastAPI /internal/v1/a
 """
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 import uuid
 import pytest
@@ -825,6 +826,394 @@ def test_transformers_gemma_client_ensure_loaded_uses_auto_dtype_for_qat(tmp_pat
     assert "low_cpu_mem_usage" not in captured["model_kwargs"]
     assert fake_model.eval_called is True
     assert fake_model.to_calls == []
+
+
+def test_gemma4_qat_patches_resize_ple_embedding_scale_and_idempotent():
+    import torch
+    import torch.nn as nn
+    from transformers.integrations.gemma_quant import QuantizedEmbedding
+    from transformers.quantizers.auto import AUTO_QUANTIZER_MAPPING
+    from transformers.quantizers.quantizer_gemma import GemmaQuantizer
+    from transformers.utils.quantization_config import GemmaQuantizationConfig
+
+    from ai_service.core.llm_client import _install_gemma4_qat_patches
+
+    _install_gemma4_qat_patches()
+    patched_fn = GemmaQuantizer._process_model_before_weight_loading
+    # Idempotency: calling again must not double-wrap the quantizer hook.
+    _install_gemma4_qat_patches()
+    assert GemmaQuantizer._process_model_before_weight_loading is patched_fn
+
+    class _SkeletonModel(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.config = SimpleNamespace(text_config=SimpleNamespace(num_hidden_layers=35))
+            self._keep_in_fp32_modules = []
+            self.all_tied_weights_keys = {}
+            self.tp_plan = None
+            self.ep_plan = None
+            self.model = nn.Module()
+            self.model.language_model = nn.Module()
+            self.model.language_model.embed_tokens = nn.Embedding(16, 8)
+            self.model.language_model.embed_tokens_per_layer = nn.Embedding(16, 35 * 4)
+            self.lm_head = nn.Linear(8, 16, bias=False)
+
+        def get_output_embeddings(self):
+            return self.lm_head
+
+    skeleton = _SkeletonModel()
+    quantizer = AUTO_QUANTIZER_MAPPING["gemma"](
+        GemmaQuantizationConfig(
+            num_bits=4,
+            quantize_embeddings=True,
+            module_quant_configs={
+                "language_model\\.embed_tokens$": {"num_bits": 2},
+                "language_model\\.embed_tokens_per_layer$": {"num_bits": 4},
+            },
+        )
+    )
+    quantizer._process_model_before_weight_loading(skeleton)
+
+    embed_tok = skeleton.model.language_model.embed_tokens
+    ple = skeleton.model.language_model.embed_tokens_per_layer
+    assert isinstance(embed_tok, QuantizedEmbedding)
+    assert isinstance(ple, QuantizedEmbedding)
+    assert tuple(embed_tok.embedding_scale.shape) == (16, 1)
+    assert tuple(ple.embedding_scale.shape) == (16, 35)
+    assert ple.embedding_scale.dtype == torch.float32
+    assert ple.embedding_scale.requires_grad is False
+
+
+def test_gemma4_qat_lazy_weight_slice_and_fast_broadcast_dequantize_equivalence():
+    import torch
+    from transformers.integrations.gemma_quant import (
+        QuantizedEmbedding,
+        _unpack_int2,
+        _unpack_int4,
+    )
+
+    from ai_service.core.llm_client import _LazyWeightSlice, _install_gemma4_qat_patches
+
+    _install_gemma4_qat_patches()
+
+    def _ref_dequant(quant_rows, scale_rows, *, num_bits: int, dim: int, dtype: torch.dtype):
+        if num_bits == 4:
+            ints = _unpack_int4(quant_rows, dim)
+        elif num_bits == 2:
+            ints = _unpack_int2(quant_rows, dim)
+        else:
+            ints = quant_rows
+        block_size = dim // scale_rows.shape[-1]
+        return ints.to(dtype) * scale_rows.repeat_interleave(block_size, dim=-1).to(dtype)
+
+    gen = torch.Generator().manual_seed(42)
+    for num_bits in (2, 4, 8):
+        qe = QuantizedEmbedding(
+            num_embeddings=12,
+            embedding_dim=16,
+            output_dtype=torch.bfloat16,
+            embed_scale=1.0,
+            num_bits=num_bits,
+        )
+        qe.requires_grad_(False)
+        if num_bits in (2, 4):
+            qe.embedding_quantized.copy_(
+                torch.randint(0, 256, qe.embedding_quantized.shape, generator=gen, dtype=torch.uint8)
+            )
+        else:
+            qe.embedding_quantized.copy_(
+                torch.randint(-128, 128, qe.embedding_quantized.shape, generator=gen, dtype=torch.int8)
+            )
+        qe.embedding_scale.copy_(torch.rand(12, 1, generator=gen, dtype=torch.float32) + 0.1)
+
+        expected_full = _ref_dequant(
+            qe.embedding_quantized, qe.embedding_scale, num_bits=num_bits, dim=16, dtype=torch.bfloat16
+        )
+
+        # Fast broadcast path equivalence
+        actual_full = qe._dequantize_weights(qe.embedding_quantized, qe.embedding_scale)
+        assert torch.equal(actual_full, expected_full)
+
+        # _LazyWeightSlice metadata & single-row optimization
+        lazy_w = qe.weight
+        assert isinstance(lazy_w, _LazyWeightSlice)
+        assert lazy_w.shape == torch.Size((12, 16))
+        assert lazy_w.dtype == torch.bfloat16
+        assert lazy_w.device == qe.embedding_quantized.device
+
+        seen_row_counts: list[int] = []
+        orig_method = qe._dequantize_weights
+
+        def _spy_dequant(q_rows, s_rows, _orig=orig_method):
+            seen_row_counts.append(int(q_rows.shape[0]))
+            return _orig(q_rows, s_rows)
+
+        qe._dequantize_weights = _spy_dequant  # type: ignore[method-assign]
+        row_slice = lazy_w[3, :]
+        neg_slice = lazy_w[-1, :]
+        sub_slice = lazy_w[2, 4:10]
+        scalar_row = lazy_w[5]
+        assert seen_row_counts == [1, 1, 1, 1]
+        assert torch.equal(row_slice, expected_full[3, :])
+        assert torch.equal(neg_slice, expected_full[-1, :])
+        assert torch.equal(sub_slice, expected_full[2, 4:10])
+        assert torch.equal(scalar_row, expected_full[5])
+
+        # Non-integer slices fall back to full dequantization
+        range_slice = lazy_w[1:4, :]
+        expanded_slice = lazy_w[None, None, :, :]
+        assert seen_row_counts[-2:] == [12, 12]
+        assert torch.equal(range_slice, expected_full[1:4, :])
+        assert torch.equal(expanded_slice, expected_full[None, None, :, :])
+
+    # Multi-column scales (e.g. PLE [vocab, 35]) delegate to block-wise dequantization
+    qe_multi = QuantizedEmbedding(12, 16, output_dtype=torch.float32, num_bits=4)
+    qe_multi.embedding_quantized.copy_(torch.randint(0, 256, qe_multi.embedding_quantized.shape, dtype=torch.uint8))
+    multi_scales = torch.rand(12, 4, dtype=torch.float32) + 0.25
+    assert torch.equal(
+        qe_multi._dequantize_weights(qe_multi.embedding_quantized, multi_scales),
+        _ref_dequant(qe_multi.embedding_quantized, multi_scales, num_bits=4, dim=16, dtype=torch.float32),
+    )
+
+
+def test_gemma4_chunked_quantized_linear_equivalence():
+    import torch
+    from transformers.integrations.gemma_quant import (
+        QuantizedLinear,
+        _unpack_int2,
+        _unpack_int4,
+        apply_srq,
+    )
+
+    from ai_service.core.llm_client import _chunked_quantized_linear_forward, _install_gemma4_qat_patches
+
+    _install_gemma4_qat_patches()
+    gen = torch.Generator().manual_seed(7)
+
+    def _unpack_rows(packed, num_bits: int, width: int):
+        if num_bits == 4:
+            return _unpack_int4(packed, width)
+        if num_bits == 2:
+            return _unpack_int2(packed, width)
+        return packed
+
+    for num_bits in (2, 4, 8):
+        layer = QuantizedLinear(in_features=16, out_features=70, bias=True, num_bits=num_bits)
+        layer.requires_grad_(False)
+        if num_bits in (2, 4):
+            layer.weight.copy_(torch.randint(0, 256, layer.weight.shape, generator=gen, dtype=torch.uint8))
+        else:
+            layer.weight.copy_(torch.randint(-128, 128, layer.weight.shape, generator=gen, dtype=torch.int8))
+        layer.weight_scale.copy_(torch.rand(70, 1, generator=gen, dtype=torch.float32) + 0.1)
+        layer.bias.copy_(torch.randn(70, generator=gen, dtype=torch.float32))
+        layer.input_activation_scale.fill_(0.05)
+        layer.output_activation_scale.fill_(0.1)
+
+        x = torch.randn(2, 3, 16, generator=gen, dtype=torch.float32)
+        ref_out = layer(x)
+        chunked_out = _chunked_quantized_linear_forward(
+            layer,
+            x,
+            apply_srq_fn=apply_srq,
+            unpack_rows_fn=_unpack_rows,
+            chunk_rows=32,
+        )
+        assert torch.allclose(chunked_out, ref_out, atol=1e-6, rtol=1e-5)
+
+
+def test_apply_low_vram_cuda_placement_prunes_towers_and_offloads_ple():
+    import torch
+    import torch.nn as nn
+    from transformers.integrations.gemma_quant import QuantizedEmbedding
+
+    from ai_service.core.llm_client import _apply_low_vram_cuda_placement, _install_gemma4_qat_patches
+
+    _install_gemma4_qat_patches()
+
+    class _WrapperModel(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.to_calls: list[str] = []
+            self.model = nn.Module()
+            self.model.vision_tower = nn.Linear(4, 4)
+            self.model.audio_tower = nn.Linear(4, 4)
+            self.model.embed_vision = nn.Linear(4, 4)
+            self.model.embed_audio = nn.Linear(4, 4)
+            self.model.language_model = nn.Module()
+            ple = QuantizedEmbedding(
+                num_embeddings=10,
+                embedding_dim=12,
+                output_dtype=torch.float32,
+                embed_scale=2.0,
+                num_bits=4,
+            )
+            ple.embedding_quantized.copy_(torch.randint(0, 256, ple.embedding_quantized.shape, dtype=torch.uint8))
+            ple.embedding_scale = nn.Parameter(torch.rand(10, 3, dtype=torch.float32) + 0.2, requires_grad=False)
+            self.model.language_model.embed_tokens_per_layer = ple
+
+        def to(self, device, *args, **kwargs):
+            self.to_calls.append(str(device))
+            return super().to(device, *args, **kwargs)
+
+    wrapper = _WrapperModel()
+    ple = wrapper.model.language_model.embed_tokens_per_layer
+    sample_ids = torch.tensor([[1, 4, 7]], dtype=torch.long)
+    expected = ple(sample_ids).clone()
+
+    placed = _apply_low_vram_cuda_placement(wrapper, "cpu")
+    assert placed is wrapper
+    assert wrapper.to_calls == ["cpu"]
+    assert wrapper.model.vision_tower is None
+    assert wrapper.model.audio_tower is None
+    assert wrapper.model.embed_vision is None
+    assert wrapper.model.embed_audio is None
+    assert "embedding_quantized" not in ple._parameters
+    assert "embedding_scale" not in ple._parameters
+    assert ple._cpu_quantized.device.type == "cpu"
+    assert ple._cpu_scale.device.type == "cpu"
+
+    actual = ple(sample_ids)
+    assert torch.equal(actual, expected)
+
+
+def test_transformers_gemma_ensure_loaded_cuda_oom_falls_back_to_cpu(tmp_path: Path, monkeypatch):
+    import torch
+    import transformers
+
+    model_dir = tmp_path / "gemma-4-e2b"
+    model_dir.mkdir(parents=True)
+    (model_dir / "config.json").write_text('{"model_type": "gemma4"}', encoding="utf-8")
+    (model_dir / "model.safetensors").write_bytes(b"stub")
+
+    empty_cache_calls: list[int] = []
+
+    class _OomModel:
+        def __init__(self) -> None:
+            self.is_quantized = True
+            self.to_calls: list[str] = []
+            self.eval_called = False
+
+        def to(self, device: str):
+            self.to_calls.append(device)
+            if device != "cpu":
+                raise RuntimeError("CUDA out of memory")
+            return self
+
+        def eval(self):
+            self.eval_called = True
+            return self
+
+    fake_model = _OomModel()
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch.cuda, "empty_cache", lambda: empty_cache_calls.append(1))
+    monkeypatch.setattr(transformers.AutoTokenizer, "from_pretrained", lambda *a, **kw: object())
+    monkeypatch.setattr(transformers.AutoModelForCausalLM, "from_pretrained", lambda *a, **kw: fake_model)
+
+    client = TransformersGemmaClient(model_path=model_dir, device="cuda")
+    client._ensure_loaded()
+
+    assert client.device == "cpu"
+    assert fake_model.to_calls == ["cuda", "cpu"]
+    assert len(empty_cache_calls) >= 1
+    assert fake_model.eval_called is True
+
+
+def test_transformers_gemma_generate_logits_to_keep_and_cuda_oom_fallback(tmp_path: Path, monkeypatch):
+    import torch
+
+    built = BuiltPrompt(
+        stage_id="q5_rag_answer",
+        profile="qa_refine",
+        system_prompt="System",
+        user_prompt="User",
+        formatted_context="[00:10] Context",
+        response_format="text",
+    )
+
+    class _FakeTokenizer:
+        pad_token_id = 0
+        eos_token_id = 1
+        unk_token_id = 3
+        all_special_tokens = ["<eos>", "<turn|>"]
+
+        def apply_chat_template(self, messages, **kwargs):
+            return {"input_ids": torch.tensor([[2, 10, 11]], dtype=torch.long)}
+
+        def convert_tokens_to_ids(self, tok: str):
+            return 106 if tok == "<turn|>" else 3
+
+        def decode(self, ids, skip_special_tokens=False):
+            return "Trả lời thành công<turn|>"
+
+    def _make_client(forward_impl, *, device: str = "cpu", fail_first_cuda: bool = False):
+        captured: dict = {"gen_calls": [], "to_calls": []}
+
+        class _Model:
+            generation_config = SimpleNamespace(eos_token_id=[1, 106])
+
+            def to(self, target: str):
+                captured["to_calls"].append(target)
+                return self
+
+            def generate(self, **kwargs):
+                captured["gen_calls"].append(kwargs)
+                if fail_first_cuda and len(captured["gen_calls"]) == 1:
+                    raise RuntimeError("CUDA out of memory during generate")
+                return torch.tensor([[2, 10, 11, 42, 43]], dtype=torch.long)
+
+        if forward_impl is not None:
+            _Model.forward = forward_impl
+
+        client = TransformersGemmaClient(model_path=tmp_path, device=device)
+        client._tokenizer = _FakeTokenizer()
+        client._model = _Model()
+        return client, captured
+
+    # 1. Explicit logits_to_keep in forward signature -> sets logits_to_keep=1
+    client_l2k, cap_l2k = _make_client(lambda self, input_ids=None, logits_to_keep=0: None)
+    res_l2k = client_l2k.generate(built, temperature=0.0, max_new_tokens=32)
+    assert res_l2k.text == "Trả lời thành công"
+    assert cap_l2k["gen_calls"][0]["logits_to_keep"] == 1
+
+    # 2. Forward without logits_to_keep & MagicMock forward -> omits logits_to_keep
+    client_no_l2k, cap_no_l2k = _make_client(lambda self, input_ids=None: None)
+    client_no_l2k.generate(built, temperature=0.0, max_new_tokens=32)
+    assert "logits_to_keep" not in cap_no_l2k["gen_calls"][0]
+
+    client_mock, cap_mock = _make_client(MagicMock())
+    client_mock.generate(built, temperature=0.0, max_new_tokens=32)
+    assert "logits_to_keep" not in cap_mock["gen_calls"][0]
+
+    # 3. CUDA OOM during generate -> moves model & inputs to CPU, clears cache, retries once
+    empty_cache_calls: list[int] = []
+    tensor_to_devices: list[str] = []
+    orig_tensor_to = torch.Tensor.to
+
+    def _tracking_to(tensor_self, device, *a, **kw):
+        tensor_to_devices.append(str(device))
+        return orig_tensor_to(tensor_self, "cpu", *a, **kw)
+
+    monkeypatch.setattr(torch.cuda, "empty_cache", lambda: empty_cache_calls.append(1))
+    monkeypatch.setattr(torch.Tensor, "to", _tracking_to)
+
+    client_oom, cap_oom = _make_client(
+        lambda self, input_ids=None, logits_to_keep=0: None,
+        device="cuda",
+        fail_first_cuda=True,
+    )
+    res_oom = client_oom.generate(built, temperature=0.0, max_new_tokens=32)
+    assert res_oom.text == "Trả lời thành công"
+    assert client_oom.device == "cpu"
+    assert cap_oom["to_calls"] == ["cpu"]
+    assert tensor_to_devices == ["cuda", "cpu"]
+    assert len(cap_oom["gen_calls"]) == 2
+    assert len(empty_cache_calls) >= 1
+
+    # 4. CPU RuntimeError propagates without retrying
+    client_cpu_err, cap_cpu_err = _make_client(None, device="cpu", fail_first_cuda=True)
+    with pytest.raises(RuntimeError, match="CUDA out of memory"):
+        client_cpu_err.generate(built, temperature=0.0, max_new_tokens=32)
+    assert len(cap_cpu_err["gen_calls"]) == 1
 
 
 def test_download_models_gemma_e2b_qat_config_and_hf_v2_kwargs(monkeypatch):
