@@ -66,6 +66,13 @@ export const KITSUNE_MOTION = {
     underlayRotateYDeg: 3.5,
     underlayMinScale: 0.965,
     spineShadowMaxOpacity: 0.14,
+    edgeSwipeZonePx: 36,
+    swipeActivateOffsetPx: 20,
+    verticalScrollFailOffsetPx: 12,
+    swipeCommitWidthRatio: 0.22,
+    swipeCommitVelocityPxS: 450,
+    maxDragWidthRatio: 0.6,
+    referenceViewportWidth: 390,
   },
   reducedMotion: {
     durationMs: 0,
