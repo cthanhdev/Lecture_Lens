@@ -45,3 +45,29 @@ export const KITSUNE_SHADOWS = {
     elevation: 8,
   },
 } as const
+
+export const KITSUNE_MOTION = {
+  mochiPress: {
+    scale: 0.97,
+    durationMs: 150,
+    easingBezier: [0.2, 0.8, 0.2, 1] as const,
+  },
+  stackSlide: {
+    durationMs: 280,
+    underlayParallaxFactor: 0.25,
+    easingBezier: [0.22, 1, 0.36, 1] as const,
+  },
+  bookPageTurn: {
+    durationMs: 320,
+    easingBezier: [0.22, 1, 0.36, 1] as const,
+    perspective: 1100,
+    underlayParallaxFactor: 0.28,
+    incomingRotateYDeg: -7.5,
+    underlayRotateYDeg: 3.5,
+    underlayMinScale: 0.965,
+    spineShadowMaxOpacity: 0.14,
+  },
+  reducedMotion: {
+    durationMs: 0,
+  },
+} as const

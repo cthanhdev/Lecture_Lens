@@ -3,7 +3,11 @@
  * Tuân thủ Hiến chương điều hướng tại docs/UX-NAVIGATION-FLOW.md
  */
 
+import type { NavigationDirection } from './navigationHistory.ts'
+
 export type TabRoute = '/(tabs)/home' | '/(tabs)/library' | '/(tabs)/review' | '/(tabs)/search'
+
+export type { NavigationDirection }
 
 export type AppRoute =
   | '/'
@@ -70,6 +74,10 @@ export interface AppNavigator {
   readonly activeSheet: ModalSheetType
   /** Có thể quay lại an toàn trong lịch sử không */
   readonly canGoBack: boolean
+  /** Hướng chuyển trang gần nhất trong lịch sử ('forward' | 'back') */
+  readonly transitionDirection: NavigationDirection
+  /** Đường dẫn trước đó trong lịch sử phiên (null nếu đang ở gốc hoặc deep-link đơn) */
+  readonly previousRoute: string | null
 
   /** Điều hướng tới route mới */
   goTo(route: AppRoute | string, options?: NavigateOptions): void
