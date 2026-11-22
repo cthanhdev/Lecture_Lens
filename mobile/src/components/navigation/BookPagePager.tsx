@@ -26,11 +26,6 @@ const ORDERED_TAB_ROUTES: readonly {
   normalized: normalizeNavigationRoute(tab.route),
 }))
 
-const SWIPE_ACTIVATE_OFFSET_PX = 20
-const VERTICAL_SCROLL_FAIL_OFFSET_PX = 12
-const SWIPE_COMMIT_WIDTH_RATIO = 0.22
-const SWIPE_COMMIT_VELOCITY_PX_S = 450
-
 const BOOK_MOTION = KITSUNE_MOTION.bookPageTurn
 const REDUCED_DURATION_MS = KITSUNE_MOTION.reducedMotion.durationMs
 const BOOK_EASING = Easing.bezier(
@@ -49,14 +44,18 @@ export function BookPagePager({ children }: BookPagePagerProps) {
   const reducedMotion = useReducedMotion()
   const { width: windowWidth } = useWindowDimensions()
 
-  const pageWidth = windowWidth > 0 ? windowWidth : 390
+  const pageWidth =
+    windowWidth > 0 ? windowWidth : BOOK_MOTION.referenceViewportWidth
   const normalizedCurrent = normalizeNavigationRoute(nav.currentRoute || '/home')
   const previousNormalizedRef = useRef<string>(normalizedCurrent)
 
-  // Shared animation values (driven via .get() / .set() for Reanimated + React Compiler safety)
+  // Shared animation & edge-touch tracking values (via .get() / .set())
   const pageProgress = useSharedValue(1)
   const transitionSign = useSharedValue(1) // +1 forward, -1 back
   const dragX = useSharedValue(0)
+  const touchOriginX = useSharedValue(0)
+  const touchOriginY = useSharedValue(0)
+  const isEdgeTouch = useSharedValue(false)
   const isReducedMotionSV = useSharedValue(Boolean(reducedMotion))
 
   useEffect(() => {
@@ -118,14 +117,58 @@ export function BookPagePager({ children }: BookPagePagerProps) {
     nav.goTo(nextTabRoute)
   }, [nav, nextTabRoute])
 
+  // Restrict horizontal swipe initiation to the 36px left/right edge zones so
+  // nested horizontal ScrollViews (RecentlyAddedRail, LibraryFilterBar) scroll freely.
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
-        .activeOffsetX([-SWIPE_ACTIVATE_OFFSET_PX, SWIPE_ACTIVATE_OFFSET_PX])
-        .failOffsetY([
-          -VERTICAL_SCROLL_FAIL_OFFSET_PX,
-          VERTICAL_SCROLL_FAIL_OFFSET_PX,
-        ])
+        .manualActivation(true)
+        .onTouchesDown((event, stateManager) => {
+          const touch = event.allTouches[0]
+          if (!touch) {
+            isEdgeTouch.set(false)
+            stateManager.fail()
+            return
+          }
+          const inLeftEdge = touch.x <= BOOK_MOTION.edgeSwipeZonePx
+          const inRightEdge =
+            touch.x >= pageWidth - BOOK_MOTION.edgeSwipeZonePx
+          if (!inLeftEdge && !inRightEdge) {
+            isEdgeTouch.set(false)
+            stateManager.fail()
+            return
+          }
+          touchOriginX.set(touch.x)
+          touchOriginY.set(touch.y)
+          isEdgeTouch.set(true)
+        })
+        .onTouchesMove((event, stateManager) => {
+          if (!isEdgeTouch.get()) {
+            stateManager.fail()
+            return
+          }
+          const touch = event.allTouches[0]
+          if (!touch) {
+            stateManager.fail()
+            return
+          }
+          const dx = touch.x - touchOriginX.get()
+          const dy = touch.y - touchOriginY.get()
+          if (Math.abs(dy) >= BOOK_MOTION.verticalScrollFailOffsetPx) {
+            isEdgeTouch.set(false)
+            stateManager.fail()
+            return
+          }
+          if (
+            Math.abs(dx) >= BOOK_MOTION.swipeActivateOffsetPx &&
+            Math.abs(dx) > Math.abs(dy)
+          ) {
+            stateManager.activate()
+          }
+        })
+        .onTouchesCancelled(() => {
+          isEdgeTouch.set(false)
+        })
         .onUpdate((event) => {
           if (isReducedMotionSV.get()) {
             return
@@ -135,16 +178,18 @@ export function BookPagePager({ children }: BookPagePagerProps) {
             (rawDx > 0 && !canSwipeBack) || (rawDx < 0 && !canSwipeForward)
               ? rawDx * BOOK_MOTION.underlayParallaxFactor
               : rawDx
-          dragX.set(clamp(resistedDx, -pageWidth * 0.6, pageWidth * 0.6))
+          const maxDrag = pageWidth * BOOK_MOTION.maxDragWidthRatio
+          dragX.set(clamp(resistedDx, -maxDrag, maxDrag))
         })
         .onEnd((event) => {
-          const threshold = pageWidth * SWIPE_COMMIT_WIDTH_RATIO
+          isEdgeTouch.set(false)
+          const threshold = pageWidth * BOOK_MOTION.swipeCommitWidthRatio
           const swipedRight =
             event.translationX > threshold ||
-            event.velocityX > SWIPE_COMMIT_VELOCITY_PX_S
+            event.velocityX > BOOK_MOTION.swipeCommitVelocityPxS
           const swipedLeft =
             event.translationX < -threshold ||
-            event.velocityX < -SWIPE_COMMIT_VELOCITY_PX_S
+            event.velocityX < -BOOK_MOTION.swipeCommitVelocityPxS
 
           if (swipedRight && canSwipeBack) {
             dragX.set(0)
@@ -174,8 +219,11 @@ export function BookPagePager({ children }: BookPagePagerProps) {
       dragX,
       handleSwipeBack,
       handleSwipeForward,
+      isEdgeTouch,
       isReducedMotionSV,
       pageWidth,
+      touchOriginX,
+      touchOriginY,
     ],
   )
 

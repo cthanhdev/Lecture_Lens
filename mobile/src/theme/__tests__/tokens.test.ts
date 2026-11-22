@@ -44,6 +44,13 @@ test('Kitsune Soft Design System Tokens Invariants', async (t) => {
     assert.strictEqual(KITSUNE_MOTION.bookPageTurn.underlayRotateYDeg, 3.5)
     assert.strictEqual(KITSUNE_MOTION.bookPageTurn.underlayMinScale, 0.965)
     assert.strictEqual(KITSUNE_MOTION.bookPageTurn.spineShadowMaxOpacity, 0.14)
+    assert.strictEqual(KITSUNE_MOTION.bookPageTurn.edgeSwipeZonePx, 36)
+    assert.strictEqual(KITSUNE_MOTION.bookPageTurn.swipeActivateOffsetPx, 20)
+    assert.strictEqual(KITSUNE_MOTION.bookPageTurn.verticalScrollFailOffsetPx, 12)
+    assert.strictEqual(KITSUNE_MOTION.bookPageTurn.swipeCommitWidthRatio, 0.22)
+    assert.strictEqual(KITSUNE_MOTION.bookPageTurn.swipeCommitVelocityPxS, 450)
+    assert.strictEqual(KITSUNE_MOTION.bookPageTurn.maxDragWidthRatio, 0.6)
+    assert.strictEqual(KITSUNE_MOTION.bookPageTurn.referenceViewportWidth, 390)
 
     assert.strictEqual(KITSUNE_MOTION.reducedMotion.durationMs, 0)
   })
