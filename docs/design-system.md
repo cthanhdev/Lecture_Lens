@@ -147,12 +147,43 @@ Dự án sử dụng duy nhất kiểu chữ **Plus Jakarta Sans** trên toàn b
 - **Organic Blobs (Backdrop Plates):** Các mảng hình dạng hữu cơ SVG mềm mại (`border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%`) đặt lệch góc 3px lót dưới các icon.
 
 ### 5.2. Hiệu Ứng Nén Xúc Giác Mochi (Mochi Tactile Press Depth)
-Mọi phần tử có thể tương tác (Buttons, Cards, Chips) đều tích hợp phản hồi nảy xúc giác mềm. Trên mobile, hiệu ứng được hiện thực bằng `react-native-reanimated` (`withTiming`) kết hợp `expo-haptics` (xem `Button.tsx`, `Chip.tsx`, `TimestampChip.tsx`, `KawaiiCheckbox.tsx`):
+Mọi phần tử có thể tương tác (Buttons, Cards, Chips) đều tích hợp phản hồi nảy xúc giác mềm. Trên mobile, hiệu ứng được chuẩn hóa qua **`MochiPressable`** (`mobile/src/components/ui/pressable/MochiPressable.tsx`) sử dụng token `KITSUNE_MOTION.mochiPress` (`mobile/src/theme/tokens.ts`), `react-native-reanimated` (`withTiming`) và `expo-haptics` (xem thêm `Button.tsx`, `Chip.tsx`, `TimestampChip.tsx`, `KawaiiCheckbox.tsx`):
+- **Token `KITSUNE_MOTION.mochiPress`:**
+  - `scale`: `0.97`
+  - `durationMs`: `150`
+  - `easingBezier`: `[0.2, 0.8, 0.2, 1]`
 - **Trạng thái Active/Press:**
-  - Thu phóng nhẹ: `transform: scale(0.97)`
-  - Bóng đổ thu gọn: `box-shadow: 0 2px 6px rgba(38, 19, 51, 0.04)`
-  - Thời gian chuyển động: `transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1)`
-  - Mang lại cảm giác mềm mại, đàn hồi như bấm vào một viên bánh mochi tươi.
+  - Thu phóng nhẹ: `transform: scale(0.97)` trong `150ms`, tự động bỏ qua hiệu ứng thu phóng khi `useReducedMotion()` được bật.
+  - Phản hồi xúc giác (`MochiHapticFeedback`): `'light'` (mặc định), `'medium'`, `'selection'`, hoặc `'none'`.
+  - Bóng đổ thu gọn: `box-shadow: 0 2px 6px rgba(38, 19, 51, 0.04)` tạo cảm giác mềm mại, đàn hồi như bấm vào một viên bánh mochi tươi.
+
+### 5.3. Động Lực Học Lật Trang Sách (Book Page-Turn Kinematics & Reduced Motion)
+Mọi chuyển cảnh giữa các tab chính (`BookPagePager` tại `mobile/src/components/navigation/BookPagePager.tsx`) và các màn hình chi tiết trong Stack (`computeBookPageTurnMetrics` tại `mobile/src/navigation/stackTransitionSpec.ts` và `buildKitsuneBookStackOptions` tại `mobile/src/navigation/stackCardInterpolator.ts`) đều lấy tham số tập trung từ `KITSUNE_MOTION` trong `mobile/src/theme/tokens.ts`, tuyệt đối không hardcode hằng số animation trong component.
+
+- **Bảng Token `KITSUNE_MOTION.bookPageTurn` & `KITSUNE_MOTION.reducedMotion`:**
+
+| Token (`mobile/src/theme/tokens.ts`) | Giá Trị Chuẩn | Ý Nghĩa & Vai Trò Động Lực Học |
+| :--- | :---: | :--- |
+| `bookPageTurn.durationMs` | `320` | Thời lượng lật trang chuẩn cho chuyển động tab và stack (`320ms`) |
+| `bookPageTurn.easingBezier` | `[0.22, 1, 0.36, 1]` | Đường cong giảm tốc mượt kiểu giấy lật nhẹ |
+| `bookPageTurn.perspective` | `1100` | Chiều sâu phối cảnh 3D cho phép xoay trục `rotateY` tự nhiên |
+| `bookPageTurn.underlayParallaxFactor` | `0.28` | Tỷ lệ trượt thị sai của trang nền phía dưới (`28%` chiều rộng) |
+| `bookPageTurn.incomingRotateYDeg` | `-7.5` | Góc nghiêng `rotateY` ban đầu của trang lật vào (`-7.5deg` $\rightarrow$ `0deg`) |
+| `bookPageTurn.underlayRotateYDeg` | `3.5` | Góc nghiêng đối xứng nhẹ của trang nền phía dưới (`0deg` $\rightarrow$ `3.5deg`) |
+| `bookPageTurn.underlayMinScale` | `0.965` | Mức thu nhẹ trang nền khi lật để tạo độ sâu lớp giấy |
+| `bookPageTurn.spineShadowMaxOpacity` | `0.14` | Độ mờ tối đa của bóng gáy sách (`spineShadow`) ở giữa nhịp lật (`sin(π * progress)`) |
+| `bookPageTurn.edgeSwipeZonePx` | `36` | Vùng mép trái/phải (`36px`) kích hoạt vuốt lật trang, nhường vùng giữa cho `ScrollView` ngang |
+| `bookPageTurn.swipeActivateOffsetPx` | `20` | Khoảng kéo ngang tối thiểu (`20px`) để nhận diện thao tác vuốt trang |
+| `bookPageTurn.verticalScrollFailOffsetPx` | `12` | Ngưỡng dịch chuyển dọc (`12px`) hủy cử chỉ lật để ưu tiên cuộn dọc |
+| `bookPageTurn.swipeCommitWidthRatio` | `0.22` | Ngưỡng hoàn tất lật trang theo tỷ lệ chiều rộng màn hình (`22%`) |
+| `bookPageTurn.swipeCommitVelocityPxS` | `450` | Ngưỡng vận tốc vuốt nhanh (`450 px/s`) để chốt lật trang tức thì |
+| `bookPageTurn.maxDragWidthRatio` | `0.6` | Giới hạn biên độ kéo tối đa (`60%` chiều rộng) |
+| `bookPageTurn.referenceViewportWidth` | `390` | Chiều rộng tham chiếu chuẩn khi kích thước cửa sổ chưa đo được (`390px`) |
+| `reducedMotion.durationMs` | `0` | Thời lượng hạ cấp tức thì khi hệ thống bật Reduce Motion |
+
+- **Hành vi theo hướng hành động & Reduced Motion:**
+  - Hướng lật trang được quyết định bởi `actionDirection` (`'forward' | 'back'`) từ `NavigationHistoryTracker`, không dựa trên thứ tự chỉ số tab.
+  - Khi `useReducedMotion()` hoặc `AccessibilityInfo.isReduceMotionEnabled()` đang bật, toàn bộ phép biến đổi `rotateY`, parallax ngang, thu `scale` và bóng gáy sách `spineShadowOpacity` được đặt về `0`/`1`, thay bằng chuyển mờ tức thì với `KITSUNE_MOTION.reducedMotion.durationMs` (`0ms`).
 
 ---
 
@@ -197,6 +228,21 @@ Mọi phần tử có thể tương tác (Buttons, Cards, Chips) đều tích h�
 - Thanh capsule bo tròn hoàn hảo treo lơ lửng cách đáy màn hình `16px`.
 - Nền: Kính sữa trong suốt `rgba(255, 255, 255, 0.85)` với `expo-blur` và bóng đổ mận ấm.
 - Con trỏ trượt (**Sliding Pill Indicator**): Trượt mượt mà phía sau tab đang kích hoạt với màu san hô trong suốt `rgba(244, 127, 114, 0.15)`.
+
+### 6.6. Thành Phần Học Tập Dùng Chung & `MochiPressable` (Shared Study UI Components)
+Để tránh trùng lặp giao diện và giữ đồng nhất tuyệt đối giữa các màn hình học tập (`08`–`12` và các màn hình `13`–`28`), mọi thành phần dùng chung được gom tại `mobile/src/components/study/` và `mobile/src/components/ui/pressable/`:
+
+- **`MochiPressable` (`mobile/src/components/ui/pressable/MochiPressable.tsx`):**
+  - Primitive nhấn chuẩn hóa cho mọi thẻ Bento, item danh sách, tile hành động nhanh và chip điều khiển.
+  - Đọc trực tiếp `KITSUNE_MOTION.mochiPress` (`scale: 0.97`, `durationMs: 150`, `easingBezier: [0.2, 0.8, 0.2, 1]`), phát xúc giác qua `haptic` (`'light' | 'medium' | 'selection' | 'none'`) và vô hiệu hóa co giãn khi `useReducedMotion()` bật.
+- **`StudyScreenChrome` (`mobile/src/components/study/StudyScreenChrome.tsx`):**
+  - Khung màn hình dùng chung gồm `StudyTopBar`, `StudyPageHeader` và `StudyScreenChrome`.
+  - Xử lý an toàn vùng khuyết đỉnh màn hình qua `useSafeAreaInsets()`, nền `KITSUNE_COLORS.washiCream` kết hợp ambient orbs (`sakuraPink` và `mistSky`), đồng thời tái sử dụng `FramedBrandLogo`, `Button` và `Icon` chuẩn.
+- **`OfflineNoticeBanner` (`mobile/src/components/study/OfflineNoticeBanner.tsx`):**
+  - Biểu ngữ cảnh báo ngoại tuyến dùng chung cho `09 - Home - Offline State` và `12 - Library - Offline State`.
+  - Sử dụng nền `KITSUNE_COLORS.mochiYellow`, bo góc `KITSUNE_RADII.squircleSmall` (`20px`), icon `wifi-off` chuẩn từ `mobile/src/components/ui/icons/` và thông điệp mặc định `OFFLINE_BANNER_DEFAULT_MESSAGE` (`"You're offline. Downloaded lectures still work."`).
+- **`LectureStatusBadge` (`mobile/src/components/study/LectureStatusBadge.tsx`):**
+  - Nhãn viên thuốc trạng thái bài giảng dùng chung cho danh sách bài học và chế độ Offline Study Vault, hỗ trợ đầy đủ 6 biến thể `LectureStatusBadgeVariant`: `ready`, `transcribing` (kèm `%`), `downloaded`, `device-only`, `failed`, và `needs-connection`.
 
 ---
 

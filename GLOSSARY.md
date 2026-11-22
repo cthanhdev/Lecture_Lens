@@ -78,6 +78,10 @@ _Avoid_: Box button, Square input.
 Hiệu ứng nén xúc giác mềm dẻo khi bấm (`scale 0.97` trong 150ms) thực hiện bằng React Native Reanimated kết hợp rung xúc giác nhẹ qua `expo-haptics`.
 _Avoid_: CSS active, Hard click, No-feedback press.
 
+**MochiPressable**:
+Thành phần chạm tái sử dụng (`mobile/src/components/ui/pressable/MochiPressable.tsx`) chuẩn hóa phản hồi Mochi Tactile Press (`KITSUNE_MOTION.mochiPress`), xúc giác `expo-haptics` và tôn trọng `useReducedMotion()` cho mọi card, chip và tile tương tác.
+_Avoid_: Raw Pressable with inline press scale animations, Unstyled TouchableOpacity.
+
 **Capsule Audio Player**:
 Trình phát bài giảng dạng con nhộng ghim cố định đáy màn hình, phát âm thanh nền liên tục qua `expo-audio`, hỗ trợ đa tốc độ (0.75x đến 2.0x) và tự động nhảy tới mốc `[MM:SS]` khi chạm vào lời thoại.
 _Avoid_: HTML5 Audio, Web audio player, Standard OS player.
@@ -89,6 +93,18 @@ _Avoid_: Bottom Navigation Bar cố định viền, Standard tabstrip.
 **Hierarchy Fallback Matrix**:
 Bản đồ định tuyến cha dự phòng trong `parentFallback.ts`, bảo đảm mọi màn hình con khi truy cập trực tiếp bằng Deep Link đều rollback an toàn về nhánh cha, không bao giờ rơi vào trạng thái cụt đường.
 _Avoid_: window.history.back(), Unhandled back trap.
+
+**Navigation History Stack**:
+Ngăn xếp lịch sử các route đã ghé thăm trong phiên do `NavigationHistoryTracker` (`mobile/src/navigation/navigationHistory.ts`) quản lý, ưu tiên quay lui đúng màn hình trước đó (`A -> B -> Back -> A`) trước khi dùng `Hierarchy Fallback Matrix` và bỏ qua các chuyển trạng thái tại chỗ (in-place).
+_Avoid_: Numeric historyDepth counter, Blind router.back(), Hardcoded back target.
+
+**Book Page-Turn Transition**:
+Chuyển cảnh lật trang sách Kitsune Soft (`KITSUNE_MOTION.bookPageTurn`) điều khiển bởi hướng hành động (`'forward' | 'back'`) từ `NavigationHistoryTracker`, hỗ trợ vuốt cạnh màn hình qua `BookPagePager` và hạ cấp tức thì theo `reducedMotion`.
+_Avoid_: Index-order tab slide, Center-point shrink/collapse, Hardcoded animation numbers.
+
+**Offline Study Vault**:
+Kho bài giảng lưu trữ cục bộ trên thiết bị (`downloaded` / `device-only`), cho phép sinh viên nghe lại bài giảng, đọc transcript và ôn tập khi mất kết nối mạng (`09 - Home - Offline State`, `12 - Library - Offline State`) cùng biểu ngữ `OfflineNoticeBanner`.
+_Avoid_: Unsynced raw file cache, Cloud-only playback gate.
 
 ---
 

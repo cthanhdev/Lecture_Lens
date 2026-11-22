@@ -58,12 +58,14 @@ Mọi mã nguồn giao diện được sinh ra trong thư mục `mobile/` bắt 
    - **Thẻ nội dung Bento**: Bo góc Squircle bầu bĩnh từ **`24px` đến `32px`** (`rounded-2xl` đến `rounded-3xl`).
 3. **Bề mặt kính mờ (Miruku Glass):**
    - Thẻ card sử dụng nền kính sữa trong suốt `rgba(255, 255, 255, 0.76)` kết hợp `backdrop-blur: 16px` (hoặc `expo-blur`) và bóng đổ mận chín ấm `rgba(38, 19, 51, 0.06)`.
-4. **Động lực học Mochi (Mochi Tactile Press):**
-   - Các phần tử tương tác (button, card) khi nhấn (`active` state) phải thu nhỏ nhẹ `scale(0.97)` trong thời gian `0.15s` kết hợp rung xúc giác nhẹ qua `expo-haptics`.
+4. **Động lực học Mochi & Token Chuyển Động Tập Trung (`KITSUNE_MOTION`):**
+   - Mọi phần tử tương tác (card, tile, item danh sách, chip) **BẮT BUỘC** dùng `MochiPressable` (`mobile/src/components/ui/pressable/MochiPressable.tsx`) hoặc `Button` chuẩn để đạt hiệu ứng nén `scale(0.97)` trong `150ms` kèm xúc giác `expo-haptics` và tôn trọng `useReducedMotion()`.
+   - Mọi thông số chuyển động (`mochiPress`, `stackSlide`, `bookPageTurn`, `reducedMotion`) **BẮT BUỘC** đọc từ `KITSUNE_MOTION` trong `mobile/src/theme/tokens.ts`; tuyệt đối không hardcode hằng số thời lượng, góc xoay `rotateY`, hay tỷ lệ kéo trong component.
 5. **Đối chiếu màn hình mẫu:**
    - Luôn đối chiếu với **28 tệp màn hình mẫu** tại `docs/design-assets/screens/svg/` và `docs/design-assets/screens/png/` trước khi xây dựng bất kỳ màn hình hoặc component mới nào.
-6. **Quy Chuẩn Biểu Tượng & Nút Bấm Độc Quyền (Icons & UI Atoms Invariant):**
-   - **BẮT BUỘC** sử dụng bộ 74 Icon chuẩn hóa tại `mobile/src/components/ui/icons/` (dựa trên tệp nguồn tại `docs/design-assets/icons/`) và bộ Button viên thuốc tại `mobile/src/components/ui/button/`.
+6. **Quy Chuẩn Biểu Tượng, UI Atoms & Thành Phần Học Tập Dùng Chung:**
+   - **BẮT BUỘC** sử dụng bộ 74 Icon chuẩn hóa tại `mobile/src/components/ui/icons/` (dựa trên tệp nguồn tại `docs/design-assets/icons/`), bộ Button viên thuốc tại `mobile/src/components/ui/button/`, và `MochiPressable` tại `mobile/src/components/ui/pressable/`.
+   - **BẮT BUỘC** tái sử dụng các thành phần học tập dùng chung tại `mobile/src/components/study/` (`StudyScreenChrome`, `OfflineNoticeBanner`, `LectureStatusBadge`) trên các màn hình `08`–`28` thay vì tự dựng lại top bar, banner ngoại tuyến hay badge trạng thái.
    - **TUYỆT ĐỐI KHÔNG TỰ Ý VẼ LẠI INLINE SVG** trong các component giao diện.
    - **TUYỆT ĐỐI KHÔNG DÙNG THƯ VIỆN BÊN NGOÀI TÙY TIỆN** (như `lucide-react`, `heroicons`,...) làm phá vỡ nét vẽ `1.75px` và phong cách Duotone Soft-Blob của Kitsune Soft. Chi tiết tra cứu tại `mobile/src/components/ui/icons/README.md`.
 7. **Quy Chuẩn Định Dạng Ứng Dụng Di Động Native (Native Mobile Format Invariant):**
@@ -72,6 +74,10 @@ Mọi mã nguồn giao diện được sinh ra trong thư mục `mobile/` bắt 
    - **Vùng chạm ngón tay (Touch Targets)**: Tất cả nút bấm, thanh điều hướng nổi (`FloatingIslandTabBar`), và `CapsuleAudioPlayer` phải được tối ưu cho ngón tay cái (Thumb Zone), chiều cao tối thiểu `44px` - `52px`.
 8. **Quy Chuẩn Ngôn Ngữ Giao Diện (UI Copy Language Invariant):**
    - **Ngôn ngữ hiển thị trên UI là Tiếng Anh (English 100%)**: Mọi tiêu đề màn hình, nhãn điều hướng (tab bar, button, badge, chip, placeholder, thông báo hệ thống) trong `mobile/` bắt buộc dùng **Tiếng Anh**, khớp 1:1 với 28 tệp thiết kế mẫu tại `docs/design-assets/screens/`. Tài liệu hướng dẫn và bình luận kỹ thuật có thể dùng Tiếng Việt/Anh, nhưng văn bản hiển thị cho người dùng trên giao diện ứng dụng luôn là **Tiếng Anh** (không tự ý dịch ngược hoặc hỏi lại).
+9. **Điều Hướng Lịch Sử Đã Ghé Thăm & Lật Trang Sách (Screens 08–28):**
+   - Toàn bộ điều hướng trên các màn hình `08`–`28` **BẮT BUỘC** đi qua `useAppNavigation()` (`mobile/src/navigation/NavigationContext.tsx`), tuyệt đối không gọi trực tiếp `router.back()` hay hardcode đích Back cố định.
+   - Nút Back và Android `BackHandler` ưu tiên pop lịch sử thực tế đã ghé thăm trong `NavigationHistoryTracker` (`A -> B -> Back -> A`, `A -> C -> Back -> A`) trước khi fallback về `ROUTE_PARENT_FALLBACK`; các chuyển trạng thái tại chỗ (`08 <-> 09`, `10 <-> 11 <-> 12`) không tạo entry lịch sử trùng.
+   - Chuyển cảnh Tab (`BookPagePager` trong `mobile/src/components/navigation/BookPagePager.tsx`) và Stack (`buildKitsuneBookStackOptions` trong `mobile/src/navigation/stackCardInterpolator.ts`) phải chạy **Book Page-Turn Transition** theo hướng hành động (`'forward' | 'back'`) và tôn trọng `reducedMotion`.
 
 ---
 

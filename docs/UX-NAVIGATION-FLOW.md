@@ -162,24 +162,27 @@ flowchart TD
 
 Để giải quyết triệt để yêu cầu: **"Chuyển trang có logic và không có trang nào gặp tình trạng vào mà không rollback được"**, toàn bộ router và điều hướng phải tuân thủ nghiêm ngặt 5 định luật sau:
 
-### Định Luật 1: Hierarchy Fallback Matrix (Bản Đồ Quay Lui Khi Vào Bằng Deep-Link)
-- **Vấn đề:** Khi sinh viên truy cập trực tiếp bằng đường dẫn chia sẻ (ví dụ `https://lecturelens.app/lectures/123/cornell`), ngăn xếp trình duyệt `window.history.length === 1`. Nếu bấm nút `<` (Back) trong giao diện, `history.back()` sẽ không làm gì hoặc thoát khỏi trang web.
-- **Quy tắc giải quyết:** Mọi route con đều có một **Parent Route Fallback** xác định trước:
-  ```typescript
-  export const ROUTE_PARENT_FALLBACK: Record<string, string> = {
-    '/lectures/:id/transcript': '/library',
-    '/lectures/:id/highlights': '/library',
-    '/lectures/:id/cornell': '/library',
-    '/lectures/:id/chapters/:chId': '/lectures/:id/cornell',
-    '/subjects/:courseId': '/subjects',
-    '/settings': '/profile',
-    '/review/session/:deckId': '/review',
-    '/review/complete/:deckId': '/review',
-    '/search': '/home',
-    '/auth/create-account': '/auth/sign-in',
-  };
-  ```
-  Nếu `navigation.canGoBack()` trả về `false`, nút quay lại sẽ tự động kích hoạt `goTo(parentFallback)`.
+### Định Luật 1: Visited-History Priority & Hierarchy Fallback Matrix (Ưu Tiên Lịch Sử Thực Tế Trước Fallback Deep-Link)
+- **Vấn đề:** Khi sinh viên di chuyển giữa các màn hình ngang cấp hoặc dùng chung (ví dụ `[08] Home -> [23] Review -> Back -> [08]`, hoặc `[10] Library -> [16] Transcript -> Back -> [10]`, hay `[08] Home -> [16] Transcript -> Back -> [08]`), một số nút Back cứng theo `ROUTE_PARENT_FALLBACK` có thể đẩy nhầm về tab mặc định thay vì màn hình vừa ghé thăm; ngược lại khi vào trực tiếp bằng Deep Link, `stack.length === 1` nên cần route cha an toàn để không kẹt trang.
+- **Quy tắc giải quyết (Thứ tự ưu tiên của `NavigationHistoryTracker` & `NavigationContext`):**
+  1. **Ưu tiên 1 — Pop lịch sử đã ghé thăm (`NavigationHistoryTracker.pop()`):** `NavigationHistoryTracker` (`mobile/src/navigation/navigationHistory.ts`) chuẩn hóa đường dẫn qua `normalizeNavigationRoute()` (ví dụ `/(tabs)/home` $\leftrightarrow$ `/home`, `/(tabs)/library` $\leftrightarrow$ `/library`) và duy trì `routeHistoryStack` thực tế trong phiên. Khi `tracker.canGoBack` là `true` (`stack.length > 1`), `goBack()` pop đúng route trước đó (`A -> B -> Back -> A`, `A -> C -> Back -> A`) và đặt `transitionDirection = 'back'` trước khi xét `ROUTE_PARENT_FALLBACK`.
+  2. **Chống ô nhiễm lịch sử khi chuyển trạng thái tại chỗ (In-Place State Transitions):** Các chuyển đổi trạng thái trên cùng một route chuẩn hóa — như `08 <-> 09` (`/home` online $\leftrightarrow$ offline) và `10 <-> 11 <-> 12` (`/library` archive $\leftrightarrow$ empty $\leftrightarrow$ offline) — có `normalized === tracker.currentRoute`, nên `NavigationHistoryTracker.push()` bỏ qua không tạo entry trùng và không làm sai lệch `lastDirection`.
+  3. **Ưu tiên 2 — Hierarchy Fallback Matrix (`ROUTE_PARENT_FALLBACK`):** Chỉ khi truy cập trực tiếp bằng Deep Link hoặc sau reset (`stack.length <= 1`, `tracker.canGoBack === false`), `goBack()` mới gọi `getParentFallback(pathname)` trong `mobile/src/navigation/parentFallback.ts` và cập nhật stack bằng `tracker.replace(normalizedFallback, 'back')`:
+     ```typescript
+     export const ROUTE_PARENT_FALLBACK: Record<string, string> = {
+       '/lectures/:id/transcript': '/library',
+       '/lectures/:id/highlights': '/library',
+       '/lectures/:id/cornell': '/library',
+       '/lectures/:id/chapters/:chId': '/lectures/:id/cornell',
+       '/subjects/:courseId': '/subjects',
+       '/settings': '/profile',
+       '/review/session/:deckId': '/review',
+       '/review/complete/:deckId': '/review',
+       '/search': '/home',
+       '/auth/create-account': '/auth/sign-in',
+     };
+     ```
+  4. **Double-Back Exit Guard tại gốc Home (`/(tabs)/home`):** Trên Android (`BackHandler`), khi đang ở `/home`, `!tracker.canGoBack` và không có `NavigationGuard` đang mở, `evaluateDoubleBackExit()` yêu cầu bấm Back hai lần trong `BACK_EXIT_WINDOW_MS` (`2000ms`) để thoát ứng dụng an toàn thay vì lặp vòng.
 
 ### Định Luật 2: Replace on Terminal Transitions (Thay Thế Ngăn Xếp Khi Kết Thúc Luồng Trung Gian)
 - **Vấn đề:** Sau khi kết thúc ghi âm tại `[14] Audio - Live Recording`, người dùng vào `[15] Audio - Processing Pipeline`. Khi PhoWhisper xử lý xong, hệ thống chuyển sang `[16] Audio Detail`. Nếu không dùng `replace`, bấm Back từ màn hình 16 sẽ đưa người dùng quay lại màn hình xử lý số 15 (đã kết thúc), gây lỗi lặp hoặc treo vòng quay xử lý!
@@ -257,21 +260,25 @@ flowchart TD
 ┌────────────────────────────────────────────────────────────────────────┐
 │                      INTERFACE: AppNavigator                           │
 │  goTo(route, opts) | goBack() | openSheet(name) | registerGuard(fn)     │
+│  readonly transitionDirection: 'forward' | 'back' | previousRoute       │
 ├────────────────────────────────────────────────────────────────────────┤
 │                     DEEP IMPLEMENTATION:                               │
-│  - History Stack Tracking & Depth Resolver                            │
+│  - NavigationHistoryTracker (Visited Stack, Dedup In-Place, Direction) │
 │  - Parent Route Fallback Resolver (Chống kẹt khi vào Deep-Link)         │
+│  - Book Page-Turn Transition Engine (BookPagePager & JSStack Specs)     │
 │  - Layered Sheet Stack Coordinator (Pop modal trước khi pop trang)     │
 │  - Dirty Guard Interceptor (Xác nhận Mochi Dialog chống mất ghi âm)    │
 │  - Capsule Audio Player Session Anchor (Giữ nhạc không ngắt quãng)     │
-│  - Browser Popstate Sanitizer & Android Back Button Bridge             │
+│  - Android Hardware BackHandler & Double-Back Exit Guard (2000ms)       │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 5.1. Định Nghĩa Interface TypeScript Chuẩn (`mobile/src/navigation/types.ts`)
 
 ```typescript
-export type TabRoute = '/(tabs)/home' | '/(tabs)/library' | '/(tabs)/subjects' | '/(tabs)/review' | '/(tabs)/profile'
+export type TabRoute = '/(tabs)/home' | '/(tabs)/library' | '/(tabs)/review' | '/(tabs)/search'
+
+export type NavigationDirection = 'forward' | 'back'
 
 export type AppRoute =
   | '/'
@@ -281,6 +288,8 @@ export type AppRoute =
   | '/(auth)/sign-in'
   | '/(auth)/create-account'
   | TabRoute
+  | '/(tabs)/subjects'
+  | '/(tabs)/profile'
   | '/home'
   | '/library'
   | '/subjects'
@@ -330,12 +339,16 @@ export interface GuardConfig {
 export interface AppNavigator {
   /** Đường dẫn hiện tại */
   readonly currentRoute: string
-  /** Tab gốc hiện tại (nếu đang ở một trong 5 tab chính) */
+  /** Tab gốc hiện tại (nếu đang ở một trong 4 tab chính) */
   readonly activeTab: TabRoute | null
   /** Modal sheet đang mở trên cùng (nếu có) */
   readonly activeSheet: ModalSheetType
   /** Có thể quay lại an toàn trong lịch sử không */
   readonly canGoBack: boolean
+  /** Hướng chuyển trang gần nhất trong lịch sử ('forward' | 'back') */
+  readonly transitionDirection: NavigationDirection
+  /** Đường dẫn trước đó trong lịch sử phiên (null nếu đang ở gốc hoặc deep-link đơn) */
+  readonly previousRoute: string | null
 
   /** Điều hướng tới route mới */
   goTo(route: AppRoute | string, options?: NavigateOptions): void
@@ -344,7 +357,7 @@ export interface AppNavigator {
    * Quay lui an toàn (Zero-Dead-End Rollback Guarantee).
    * 1. Ưu tiên đóng Modal Sheet nếu đang mở
    * 2. Kiểm tra Route Guard nếu có dữ liệu chưa lưu
-   * 3. Pop history nếu có lịch sử
+   * 3. Pop history từ NavigationHistoryTracker nếu có lịch sử đã ghé thăm
    * 4. Fallback về Parent Route nếu vào bằng Deep-link
    */
   goBack(): void
@@ -362,6 +375,20 @@ export interface AppNavigator {
   registerGuard(config: GuardConfig): () => void
 }
 ```
+
+### 5.2. Cơ Chế Book Page-Turn Transition (Action-Direction, Swipe & Reduced Motion)
+
+Hệ thống chuyển cảnh lật trang sách **Book Page-Turn Transition** được triển khai thống nhất trên cả Tab Container và Stack Screens từ bộ tham số `KITSUNE_MOTION.bookPageTurn` (`mobile/src/theme/tokens.ts`):
+
+1. **Điều khiển theo hướng hành động (`'forward' | 'back'`), không theo thứ tự index tab:**
+   - Khi người dùng chuyển tab hoặc đi tiếp (`goTo`), `NavigationHistoryTracker` đặt `lastDirection = 'forward'`, trang mới lật vào từ cạnh phải (`+width -> 0`, `rotateY: -7.5deg -> 0deg`).
+   - Khi người dùng bấm Back hoặc vuốt quay lại (`goBack`), `NavigationHistoryTracker.pop()` đặt `lastDirection = 'back'`, chuyển cảnh đảo chiều quay lại trang trước đó bất kể vị trí tab đích.
+   - Các chuyển trạng thái tại chỗ (`08 <-> 09` trên `/home`, `10 <-> 11 <-> 12` trên `/library`) giữ nguyên route chuẩn hóa nên không kích hoạt hiệu ứng lật trang giả tạo.
+2. **Tích hợp hai lớp (Tabs + Stack):**
+   - **Tab Container (`mobile/src/components/navigation/BookPagePager.tsx` & `mobile/src/app/(tabs)/_layout.tsx`):** Bọc ngoài `<Tabs>` bên dưới `FloatingIslandTabBar` và `CapsuleAudioPlayer`, dùng Reanimated + `Gesture.Pan().manualActivation(true)` giới hạn vùng vuốt tại mép trái/phải (`edgeSwipeZonePx = 36px`, ngưỡng ngang `swipeActivateOffsetPx = 20px`, hủy nếu cuộn dọc `verticalScrollFailOffsetPx = 12px`) để các `ScrollView` ngang bên trong (như danh sách tệp gần đây hoặc thanh chip lọc) cuộn tự do. Vuốt phải kích hoạt `nav.goBack()`, vuốt trái chuyển tab kế tiếp qua `nav.goTo()`.
+   - **Stack Screens (`mobile/src/navigation/stackTransitionSpec.ts`, `stackCardInterpolator.ts`, `mobile/src/app/_layout.tsx`):** `computeBookPageTurnMetrics()` và `buildKitsuneBookStackOptions()` / `createBookPageTurnInterpolator()` áp dụng hiệu ứng lật trang kèm bóng gáy sách (`spineShadowMaxOpacity = 0.14`) và parallax nền (`underlayParallaxFactor = 0.28`, `underlayMinScale = 0.965`) cho các màn hình chi tiết (`lectures/[id]`, `subjects/[courseId]`, `settings`).
+3. **Hạ cấp theo `reducedMotion`:**
+   - Khi `useReducedMotion()` (Reanimated) hoặc `AccessibilityInfo.isReduceMotionEnabled()` bật, cả `BookPagePager`, `computeBookPageTurnMetrics()`, và `buildKitsuneBookStackOptions()` triệt tiêu `rotateY`, parallax ngang và thu scale, chỉ giữ chuyển mờ tức thì với `KITSUNE_MOTION.reducedMotion.durationMs` (`0ms`).
 
 ---
 
