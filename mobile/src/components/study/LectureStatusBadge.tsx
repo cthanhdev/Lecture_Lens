@@ -9,7 +9,7 @@ import {
   type ViewStyle,
 } from 'react-native'
 import type { LectureStatusBadgeVariant } from '../../modules/study/types'
-import { KITSUNE_COLORS, KITSUNE_RADII } from '../../theme/tokens'
+import { KITSUNE_COLORS, KITSUNE_MOTION, KITSUNE_RADII } from '../../theme/tokens'
 import { Icon } from '../ui/icons/Icon'
 import type { IconName } from '../ui/icons/types'
 
@@ -161,6 +161,6 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.78,
-    transform: [{ scale: 0.97 }],
+    transform: [{ scale: KITSUNE_MOTION.mochiPress.scale }],
   },
 })
