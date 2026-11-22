@@ -3,20 +3,20 @@ import { usePathname } from 'expo-router'
 import { AudioContext } from './useAudioPlayer'
 import type { LectureAudioTrack, AudioContextType } from './types'
 
-// Dữ liệu audio demo mẫu ban đầu
+// Default demo track synchronized with Screens 08-12 (Study Hub & Library)
 const DEFAULT_DEMO_TRACK: LectureAudioTrack = {
-  id: 'macro-101',
-  title: 'Kinh Tế Vĩ Mô - Chương 3: Lạm Phát & Thất Nghiệp',
-  subject: 'Kinh Tế Vĩ Mô',
-  duration: 2715, // 45:15
+  id: 'lecture-7-macro',
+  title: 'Lecture 7: Inflation & Monetary Policy',
+  subject: 'Macroeconomics',
+  duration: 2900, // 48:20
 }
 
 export function AudioProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const [currentTrack, setCurrentTrack] = useState<LectureAudioTrack | null>(DEFAULT_DEMO_TRACK)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
-  const [currentTime, setCurrentTime] = useState<number>(135) // 02:15
-  const [playbackRate, setPlaybackRate] = useState<number>(1.0)
+  const [currentTime, setCurrentTime] = useState<number>(1798) // 29:58
+  const [playbackRate, setPlaybackRate] = useState<number>(1.25)
 
   const duration = currentTrack?.duration ?? 0
 
